@@ -30,7 +30,7 @@ app.use("/api/processus", processusRoute)
 app.use("/api/users", userRoutes)
 app.use("/api/offres", offreRoutes);
 app.use("/api/candidats", candidats)
-app.use("/api/postualtion", postulations)
+app.use("/api/postulations", postulations)
 app.use("/api/referents", referents)
 app.use("/api/notifications", notifications)
 

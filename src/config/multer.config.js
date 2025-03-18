@@ -33,21 +33,49 @@ const storage = (subDir) =>
     });
 
 const fileFilter = (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const cvFiletypes = /jpeg|jpg|png|gif|webp|pdf/;
+    const cvMimetypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf"
+    ];
 
-    if (mimetype && extname) {
-        return cb(null, true);
+    const lettreFiletypes = /pdf|docx|txt|md/;
+    const lettreMimetypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "text/markdown"
+    ];
+
+    if (file.fieldname === "cv") {
+        const mimetype = cvMimetypes.includes(file.mimetype);
+        const extname = cvFiletypes.test(path.extname(file.originalname).toLowerCase());
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        return cb(new Error("Le CV doit être une image (JPEG, JPG, PNG, GIF, WebP) ou un PDF"));
+    } else if (file.fieldname === "lettre_motivation") {
+        const mimetype = lettreMimetypes.includes(file.mimetype);
+        const extname = lettreFiletypes.test(path.extname(file.originalname).toLowerCase());
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        return cb(new Error("La lettre de motivation doit être un fichier PDF, DOCX, TXT ou MD"));
+    } else {
+        return cb(new Error("Champ de fichier non reconnu"));
     }
-    cb(new Error("Seules les images au format JPEG, JPG ou PNG sont autorisées"));
 };
 
 const createUpload = (subDir) =>
     multer({
         storage: storage(subDir),
         fileFilter: fileFilter,
-        limits: { fileSize: 15 * 1024 * 1024 } 
+        limits: { fileSize: 20 * 1024 * 1024 }
     });
 
 module.exports = createUpload;
