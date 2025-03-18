@@ -10,6 +10,7 @@ const offreRoutes = require("./routes/offre.routes");
 const candidats = require("./routes/candidat.routes")
 const postulations = require("./routes/postulation.routes")
 const referents = require("./routes/referent.routes")
+const notifications = require("./routes/notification.routes")
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/offres", offreRoutes);
 app.use("/api/candidats", candidats)
 app.use("/api/postualtion", postulations)
 app.use("/api/referents", referents)
+app.use("/api/notifications", notifications)
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

@@ -144,3 +144,12 @@ model CandidatReferent {
 
   @@id([candidat_id, referent_id])
 }
+
+model Notification {
+  id            Int              @id @default(autoincrement())
+  titre         String
+  contenu       String
+  est_lu        Boolean          @default(false)
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+}

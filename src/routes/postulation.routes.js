@@ -4,7 +4,8 @@ const {
     createPostulation, 
     getPostulation, 
     getAllPostulations, 
-    deletePostulation 
+    deletePostulation,
+    confirmReferenceWithRecommendation
 } = require("../controllers/postulation.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
@@ -234,5 +235,59 @@ router.get("/", IsAuthenticated, getAllPostulations);
  *         description: Erreur interne du serveur
  */
 router.delete("/:id", IsAuthenticatedAdmin, deletePostulation);
+
+/**
+ * @swagger
+ * /api/postulations/confirm-reference:
+ *   post:
+ *     summary: Confirmer une référence avec une recommandation
+ *     tags: [Postulations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recommendation:
+ *                 type: string
+ *                 description: Recommandation fournie par le référent
+ *               postulation_id:
+ *                 type: integer
+ *                 description: ID de la postulation associée
+ *               referent_id:
+ *                 type: integer
+ *                 description: ID du référent qui confirme
+ *             required:
+ *               - recommendation
+ *               - postulation_id
+ *               - referent_id
+ *             example:
+ *               recommendation: "Candidat très compétent et motivé"
+ *               postulation_id: 1
+ *               referent_id: 1
+ *     responses:
+ *       200:
+ *         description: Référence confirmée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Référence confirmée avec succès"
+ *                 referent:
+ *                   $ref: '#/components/schemas/Referent'
+ *       400:
+ *         description: Paramètres manquants
+ *       403:
+ *         description: Référent non associé au candidat
+ *       404:
+ *         description: Postulation ou référent non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/confirm-reference", confirmReferenceWithRecommendation);
 
 module.exports = router;

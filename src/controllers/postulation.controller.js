@@ -81,6 +81,7 @@ exports.createPostulation = async (req, res) => {
         };
 
         const newPostulation = await Postulation.create(postulationData);
+        // Envoyer une email au referent
         res.status(201).json(Postulation.fromPrisma(newPostulation, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
@@ -176,6 +177,43 @@ exports.deletePostulation = async (req, res) => {
         res.status(200).json({ message: "Postulation supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de la postulation:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.confirmReferenceWithRecommendation = async (req, res) => {
+    try {
+        const { recommendation, postulation_id, referent_id } = req.body;
+
+        if (!recommendation || !postulation_id || !referent_id) {
+            return res.status(400).json({ error: "Recommandation, postulation_id et referent_id sont requis" });
+        }
+
+        const postulation = await Postulation.getById(parseInt(postulation_id), req.baseUrl);
+        if (!postulation) {
+            return res.status(404).json({ error: "Postulation non trouvée" });
+        }
+
+        const referent = await Referent.getById(parseInt(referent_id), req.baseUrl);
+        if (!referent) {
+            return res.status(404).json({ error: "Référent non trouvé" });
+        }
+
+        const candidatReferent = await Candidat.getReferent(postulation.candidat_id, referent_id);
+        if (!candidatReferent) {
+            return res.status(403).json({ error: "Ce référent n'est pas associé à ce candidat" });
+        }
+
+        await Referent.update(referent_id, {
+            recommendation,
+            statut: "APPROUVE"
+        });
+        res.status(200).json({
+            message: "Référence confirmée avec succès",
+            referent: await Referent.getById(referent_id, req.baseUrl)
+        });
+    } catch (error) {
+        console.error("Erreur lors de la confirmation de la référence:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
