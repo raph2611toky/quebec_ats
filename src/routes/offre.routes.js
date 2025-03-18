@@ -10,7 +10,9 @@ const {
 const { createOffreValidationRules, updateOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
-const upload = require("../config/multer.config");
+const createUpload = require("../config/multer.config");
+
+const upload = createUpload("offres");
 
 /**
  * @swagger

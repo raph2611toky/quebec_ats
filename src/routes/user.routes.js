@@ -11,7 +11,9 @@ const {
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
-const upload = require("../config/multer.config");
+const createUpload = require("../config/multer.config");
+
+const upload = createUpload("users");
 
 /**
  * @swagger

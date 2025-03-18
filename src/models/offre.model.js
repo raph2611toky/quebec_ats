@@ -53,7 +53,7 @@ class Offre {
             offre.lieu,
             offre.pays,
             offre.type_emploi,
-            offre.salaire,
+            offre.salaire.toString(),
             offre.devise,
             offre.horaire_ouverture,
             offre.horaire_fermeture,
