@@ -128,7 +128,8 @@ const upload = createUpload("candidats");
  *                 description: Indique si des référents sont inclus
  *               referents:
  *                 type: string
- *                 description: Tableau JSON de référents (ex. '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]')
+ *                 description: Tableau JSON de référents
+ *                 example: '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]'
  *             required:
  *               - cv
  *               - email
