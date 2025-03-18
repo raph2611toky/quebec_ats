@@ -83,6 +83,14 @@ class Postulation {
         await prisma.postulation.delete({ where: { id } });
         return true;
     }
+
+    static async findByCandidatId(candidat_id, base_url) {
+        const postulation = await prisma.postulation.findFirst({
+            where: { candidat_id },
+            include: { offre: true, candidat: true }
+        });
+        return postulation ? Postulation.fromPrisma(postulation, base_url) : null;
+    }
 }
 
 module.exports = Postulation;

@@ -1,5 +1,7 @@
+require("dotenv").config()
 const User = require("../models/user.model");
-const { generateToken } = require("../utils/securite/jwt");
+const { generateToken, verifyToken } = require("../utils/securite/jwt");
+const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
@@ -102,17 +104,12 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        const otp = generateOtp();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        await prisma.otpVerification.create({
-            data: {
-                user_id: user.id,
-                otp,
-                expires_at: expiresAt
-            }
-        });
+        const token = generateToken({ id: user.id });
 
-        const resetLink = `${req.baseUrl}/api/users/reset-password?otp=${otp}&email=${email}`;
+        const encryptedToken = encryptAES(token);
+
+        const resetLink = `${process.env.FRONTEND_URL}/security/password/reset/${encodeURIComponent(encryptedToken)}`;
+
         await sendEmail({
             to: user.email,
             subject: "Réinitialisation de mot de passe",
@@ -129,22 +126,28 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
     try {
-        const { email, otp, newPassword } = req.body;
-        const user = await User.findByEmail(email);
+        const { encryptedToken, newPassword } = req.body;
+
+        let token;
+        try {
+            token = decryptAES(encryptedToken);
+        } catch (error) {
+            return res.status(400).json({ error: "Lien de réinitialisation invalide" });
+        }
+
+        let decoded;
+        try {
+            decoded = verifyToken(token);
+        } catch (error) {
+            return res.status(400).json({ error: "Lien de réinitialisation expiré ou invalide" });
+        }
+
+        const user = await User.getById(decoded.id);
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        const otpRecord = await prisma.otpVerification.findFirst({
-            where: { user_id: user.id, otp }
-        });
-
-        if (!otpRecord || new Date() > otpRecord.expires_at) {
-            return res.status(400).json({ error: "OTP invalide ou expiré" });
-        }
-
         await User.update(user.id, { password: newPassword });
-        await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
 
         res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
     } catch (error) {

@@ -252,20 +252,15 @@ router.delete("/:id", IsAuthenticatedAdmin, deletePostulation);
  *               recommendation:
  *                 type: string
  *                 description: Recommandation fournie par le référent
- *               postulation_id:
- *                 type: integer
- *                 description: ID de la postulation associée
- *               referent_id:
- *                 type: integer
- *                 description: ID du référent qui confirme
+ *               encryptedToken:
+ *                 type: string
+ *                 description: Token chiffré contenant referent_id et candidat_id
  *             required:
  *               - recommendation
- *               - postulation_id
- *               - referent_id
+ *               - encryptedToken
  *             example:
  *               recommendation: "Candidat très compétent et motivé"
- *               postulation_id: 1
- *               referent_id: 1
+ *               encryptedToken: "iv:encrypted_data:auth_tag"
  *     responses:
  *       200:
  *         description: Référence confirmée avec succès
@@ -280,7 +275,7 @@ router.delete("/:id", IsAuthenticatedAdmin, deletePostulation);
  *                 referent:
  *                   $ref: '#/components/schemas/Referent'
  *       400:
- *         description: Paramètres manquants
+ *         description: Paramètres manquants ou token invalide/expiré
  *       403:
  *         description: Référent non associé au candidat
  *       404:

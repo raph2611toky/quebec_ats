@@ -1,9 +1,12 @@
+require("dotenv").config()
 const Postulation = require("../models/postulation.model");
 const Candidat = require("../models/candidat.model");
 const Referent = require("../models/referent.model");
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
+const { generateToken, verifyToken } = require("../utils/securite/jwt")
+const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
 const { sendEmail } = require("../services/notifications/email");
 
 exports.createPostulation = async (req, res) => {
@@ -14,6 +17,7 @@ exports.createPostulation = async (req, res) => {
 
         const subDir = "candidats";
         const uploadDir = path.join(__dirname, "../uploads", subDir);
+        const base_url = process.env.FRONTEND_URL;
 
         const cvFile = req.files.cv[0];
         const cvOriginalName = cvFile.originalname;
@@ -33,27 +37,28 @@ exports.createPostulation = async (req, res) => {
             const lettreTempPath = path.join(uploadDir, lettreFile.filename);
             const lettreFinalPath = path.join(uploadDir, lettreOriginalName);
             if (await fs.stat(lettreFinalPath).catch(() => false)) {
-                console.log("file exist..");
-                
+                console.log("Fichier existant, suppression du temporaire...");
+                await fs.unlink(lettreTempPath);
             } else {
                 await fs.rename(lettreTempPath, lettreFinalPath);
             }
             lettreRelativeUrl = `/uploads/candidats/${lettreOriginalName}`;
         }
-
-        const offre = await Offre.getById(parseInt(req.body.offre_id), req.base_url);
+        const offre = await Offre.getById(parseInt(req.body.offre_id), base_url);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
-
-        let candidat = await Candidat.findByEmail(req.body.email);
+        let candidat = await Candidat.findByEmail(req.body.email, base_url);
         if (!candidat) {
-            candidat = await Candidat.create({
-                email: req.body.email,
-                nom: req.body.nom,
-                telephone: req.body.telephone || null,
-                image: `/uploads/candidats/default.png`
-            });
+            candidat = await Candidat.create(
+                {
+                    email: req.body.email,
+                    nom: req.body.nom,
+                    telephone: req.body.telephone || null,
+                    image: `/uploads/candidats/default.png`
+                },
+                base_url
+            );
         }
 
         if (req.body.hasReferent === "true" && req.body.referents) {
@@ -71,7 +76,15 @@ exports.createPostulation = async (req, res) => {
                 }
                 await Candidat.addReferent(candidat.id, referent.id);
 
-                const confirmationLink = `${req.base_url}/api/referents/confirm?referent_id=${referent.id}&candidat_id=${candidat.id}`;
+                const token = generateToken({
+                    referent_id: referent.id,
+                    candidat_id: candidat.id
+                });
+
+                const encryptedToken = encryptAES(token);
+
+                const confirmationLink = `${process.env.FRONTEND_URL}/referents/confirm/${encodeURIComponent(encryptedToken)}`;
+
                 await sendEmail({
                     to: referent.email,
                     subject: "Confirmation de référence",
@@ -81,7 +94,6 @@ exports.createPostulation = async (req, res) => {
                 });
             }
         }
-
         const postulationData = {
             candidat_id: candidat.id,
             offre_id: parseInt(req.body.offre_id),
@@ -92,7 +104,6 @@ exports.createPostulation = async (req, res) => {
         };
 
         const newPostulation = await Postulation.create(postulationData);
-
         await sendEmail({
             to: candidat.email,
             subject: "Accusé de réception de votre postulation",
@@ -101,7 +112,7 @@ exports.createPostulation = async (req, res) => {
             saveToNotifications: true
         });
 
-        res.status(201).json(Postulation.fromPrisma(newPostulation, req.base_url));
+        res.status(201).json(Postulation.fromPrisma(newPostulation, base_url));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -203,23 +214,39 @@ exports.deletePostulation = async (req, res) => {
 
 exports.confirmReferenceWithRecommendation = async (req, res) => {
     try {
-        const { recommendation, postulation_id, referent_id } = req.body;
+        const { recommendation, encryptedToken } = req.body;
 
-        if (!recommendation || !postulation_id || !referent_id) {
-            return res.status(400).json({ error: "Recommandation, postulation_id et referent_id sont requis" });
+        if (!recommendation || !encryptedToken) {
+            return res.status(400).json({ error: "Recommandation et encryptedToken sont requis" });
         }
 
-        const postulation = await Postulation.getById(parseInt(postulation_id), req.base_url);
+        let token;
+        try {
+            token = decryptAES(encryptedToken);
+        } catch (error) {
+            return res.status(400).json({ error: "Lien de confirmation invalide" });
+        }
+
+        let decoded;
+        try {
+            decoded = verifyToken(token);
+        } catch (error) {
+            return res.status(400).json({ error: "Lien de confirmation expiré ou invalide" });
+        }
+
+        const { referent_id, candidat_id } = decoded;
+
+        const postulation = await Postulation.findByCandidatId(candidat_id, process.env.FRONTEND_URL);
         if (!postulation) {
-            return res.status(404).json({ error: "Postulation non trouvée" });
+            return res.status(404).json({ error: "Postulation non trouvée pour ce candidat" });
         }
 
-        const referent = await Referent.getById(parseInt(referent_id), req.base_url);
+        const referent = await Referent.getById(parseInt(referent_id), process.env.FRONTEND_URL);
         if (!referent) {
             return res.status(404).json({ error: "Référent non trouvé" });
         }
 
-        const candidatReferent = await Candidat.getReferent(postulation.candidat_id, referent_id);
+        const candidatReferent = await Candidat.getReferent(candidat_id, referent_id);
         if (!candidatReferent) {
             return res.status(403).json({ error: "Ce référent n'est pas associé à ce candidat" });
         }
@@ -228,9 +255,10 @@ exports.confirmReferenceWithRecommendation = async (req, res) => {
             recommendation,
             statut: "APPROUVE"
         });
+
         res.status(200).json({
             message: "Référence confirmée avec succès",
-            referent: await Referent.getById(referent_id, req.base_url)
+            referent: await Referent.getById(referent_id, process.env.FRONTEND_URL)
         });
     } catch (error) {
         console.error("Erreur lors de la confirmation de la référence:", error);
