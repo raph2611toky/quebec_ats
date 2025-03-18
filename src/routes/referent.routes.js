@@ -5,6 +5,7 @@ const {
     getAllReferents,
     deleteReferent 
 } = require("../controllers/referent.controller");
+const { IsAuthenticated } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger
@@ -83,6 +84,8 @@ const {
  *   get:
  *     summary: Récupérer un référent par ID
  *     tags: [Referents]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -102,7 +105,7 @@ const {
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/:id", getReferent);
+router.get("/:id", IsAuthenticated, getReferent);
 
 /**
  * @swagger
@@ -110,6 +113,8 @@ router.get("/:id", getReferent);
  *   get:
  *     summary: Récupérer tous les référents
  *     tags: [Referents]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des référents récupérée avec succès
@@ -122,7 +127,7 @@ router.get("/:id", getReferent);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/", getAllReferents);
+router.get("/", IsAuthenticated, getAllReferents);
 
 /**
  * @swagger
@@ -130,6 +135,8 @@ router.get("/", getAllReferents);
  *   delete:
  *     summary: Supprimer un référent
  *     tags: [Referents]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -153,6 +160,6 @@ router.get("/", getAllReferents);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.delete("/:id", deleteReferent);
+router.delete("/:id", IsAuthenticated, deleteReferent);
 
 module.exports = router;

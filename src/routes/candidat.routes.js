@@ -7,6 +7,7 @@ const {
     addReferent, 
     removeReferent 
 } = require("../controllers/candidat.controller");
+const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger
@@ -80,6 +81,8 @@ const {
  *   get:
  *     summary: Récupérer un candidat par ID
  *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -99,7 +102,7 @@ const {
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/:id", getCandidat);
+router.get("/:id", IsAuthenticated, getCandidat);
 
 /**
  * @swagger
@@ -107,6 +110,8 @@ router.get("/:id", getCandidat);
  *   get:
  *     summary: Récupérer tous les candidats
  *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des candidats récupérée avec succès
@@ -119,7 +124,7 @@ router.get("/:id", getCandidat);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/", getAllCandidats);
+router.get("/", IsAuthenticated, getAllCandidats);
 
 /**
  * @swagger
@@ -127,6 +132,8 @@ router.get("/", getAllCandidats);
  *   delete:
  *     summary: Supprimer un candidat
  *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -150,7 +157,7 @@ router.get("/", getAllCandidats);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.delete("/:id", deleteCandidat);
+router.delete("/:id", IsAuthenticatedAdmin, deleteCandidat);
 
 /**
  * @swagger
@@ -158,6 +165,8 @@ router.delete("/:id", deleteCandidat);
  *   post:
  *     summary: Ajouter un référent à un candidat
  *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -193,7 +202,7 @@ router.delete("/:id", deleteCandidat);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/:id/referents", addReferent);
+router.post("/:id/referents", IsAuthenticated, addReferent);
 
 /**
  * @swagger
@@ -201,6 +210,8 @@ router.post("/:id/referents", addReferent);
  *   delete:
  *     summary: Supprimer un référent d'un candidat
  *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -236,6 +247,6 @@ router.post("/:id/referents", addReferent);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.delete("/:id/referents", removeReferent);
+router.delete("/:id/referents", IsAuthenticated, removeReferent);
 
 module.exports = router;

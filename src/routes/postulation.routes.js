@@ -6,6 +6,7 @@ const {
     getAllPostulations, 
     deletePostulation 
 } = require("../controllers/postulation.controller");
+const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
 
 const upload = createUpload("candidats");
@@ -185,6 +186,8 @@ router.get("/:id", getPostulation);
  *   get:
  *     summary: Récupérer toutes les postulations
  *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des postulations récupérée avec succès
@@ -197,7 +200,7 @@ router.get("/:id", getPostulation);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/", getAllPostulations);
+router.get("/", IsAuthenticated, getAllPostulations);
 
 /**
  * @swagger
@@ -205,6 +208,8 @@ router.get("/", getAllPostulations);
  *   delete:
  *     summary: Supprimer une postulation
  *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -228,6 +233,6 @@ router.get("/", getAllPostulations);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.delete("/:id", deletePostulation);
+router.delete("/:id", IsAuthenticatedAdmin, deletePostulation);
 
 module.exports = router;

@@ -124,8 +124,6 @@ const upload = createUpload("offres");
  *   get:
  *     summary: Récupérer toutes les offres
  *     tags: [Offres]
- *     security:
- *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des offres
@@ -146,7 +144,7 @@ const upload = createUpload("offres");
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.get("/", IsAuthenticated, getAllOffres);
+router.get("/", getAllOffres);
 
 /**
  * @swagger
