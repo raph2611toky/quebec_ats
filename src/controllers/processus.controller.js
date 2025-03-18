@@ -43,7 +43,7 @@ exports.deleteProcessus = async (req, res) => {
         if (!processus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
-        if(existingProcessus.statut == StatutProcessus.EN_COURS){
+        if(processus.statut == StatutProcessus.EN_COURS){
             return res.status(400).json({ error: "Processus en cours, ne peux pas être supprimer" });
         }
         await Processus.delete(parseInt(req.params.id));

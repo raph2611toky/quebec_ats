@@ -76,7 +76,7 @@ CREATE TABLE `Referent` (
     `nom` VARCHAR(191) NOT NULL,
     `telephone` VARCHAR(191) NOT NULL,
     `recommendation` VARCHAR(191) NULL,
-    `statut` VARCHAR(191) NOT NULL,
+    `statut` ENUM('APPROUVE', 'NON_APPROUVE') NOT NULL DEFAULT 'NON_APPROUVE',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -91,6 +91,29 @@ CREATE TABLE `CandidatReferent` (
     `assigned_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`candidat_id`, `referent_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Notification` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `titre` VARCHAR(191) NOT NULL,
+    `contenu` VARCHAR(191) NOT NULL,
+    `est_lu` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `OtpVerification` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `otp` VARCHAR(8) NOT NULL,
+    `expires_at` DATETIME(3) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -122,3 +145,6 @@ ALTER TABLE `CandidatReferent` ADD CONSTRAINT `CandidatReferent_candidat_id_fkey
 
 -- AddForeignKey
 ALTER TABLE `CandidatReferent` ADD CONSTRAINT `CandidatReferent_referent_id_fkey` FOREIGN KEY (`referent_id`) REFERENCES `Referent`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `OtpVerification` ADD CONSTRAINT `OtpVerification_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

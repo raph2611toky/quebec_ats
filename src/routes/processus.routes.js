@@ -65,7 +65,7 @@ const errorHandler = require('../middlewares/error.handler');
  *     summary: Créer un nouveau processus
  *     tags: [Processus]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -165,13 +165,37 @@ router.get('/:id', processusController.getProcessus);
  *     summary: Mettre à jour un processus
  *     tags: [Processus]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titre:
+ *                 type: string
+ *                 description: Titre du processus
+ *                 example: "Test de compétence SQL"
+ *               type:
+ *                 type: string
+ *                 enum: [VISIO_CONFERENCE, TACHE, QUESTIONNAIRE]
+ *                 default: VISIO_CONFERENCE
+ *                 description: Type de processus
+ *               description:
+ *                 type: string
+ *                 description: Description détaillée du processus
+ *                 example: "vidéo conférence pour tester compétence SQL"
+ *               duree:
+ *                 type: integer
+ *                 description: Durée en minutes
+ *                 example: 60
  *     responses:
  *       200:
  *         description: Processus mis à jour
@@ -185,7 +209,7 @@ router.put('/:id', IsAuthenticatedAdmin, updateProcessusValidator,errorHandler,p
  *     summary: Supprimer un processus
  *     tags: [Processus]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

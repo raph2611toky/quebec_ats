@@ -73,17 +73,17 @@ enum StatutProcessus {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  name        String
-  email       String        @unique
-  password    String
-  phone       String
-  profile     String        @default("profile.png")
-  role        Role          @default(MODERATEUR)
-  is_active   Boolean       @default(false)
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  offres      Offre[]       @relation("UserOffres")
+  id              Int               @id @default(autoincrement())
+  name            String
+  email           String            @unique
+  password        String
+  phone           String
+  profile         String            @default("profile.png")
+  role            Role              @default(MODERATEUR)
+  is_active       Boolean           @default(false)
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  offres          Offre[]           @relation("UserOffres")
   otp_verfication OtpVerification[]
 }
 
@@ -138,15 +138,15 @@ model Postulation {
 }
 
 model Referent {
-  id            Int              @id @default(autoincrement())
-  email         String           @unique
-  nom           String
-  telephone     String
-  recommendation String?   
-  statut        StatutReferent   @default(NON_APPROUVE)
-  created_at    DateTime         @default(now())
-  updated_at    DateTime         @updatedAt
-  candidats     CandidatReferent[] @relation("ReferentToCandidat")
+  id             Int                @id @default(autoincrement())
+  email          String             @unique
+  nom            String
+  telephone      String
+  recommendation String?
+  statut         StatutReferent     @default(NON_APPROUVE)
+  created_at     DateTime           @default(now())
+  updated_at     DateTime           @updatedAt
+  candidats      CandidatReferent[] @relation("ReferentToCandidat")
 }
 
 model CandidatReferent {
@@ -160,12 +160,12 @@ model CandidatReferent {
 }
 
 model Notification {
-  id            Int              @id @default(autoincrement())
-  titre         String
-  contenu       String
-  est_lu        Boolean          @default(false)
-  created_at    DateTime         @default(now())
-  updated_at    DateTime         @updatedAt
+  id         Int      @id @default(autoincrement())
+  titre      String
+  contenu    String
+  est_lu     Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model OtpVerification {
