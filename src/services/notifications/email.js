@@ -1,11 +1,12 @@
+require("dotenv").config()
 const nodemailer = require("nodemailer");
 const Notification = require("../../models/notification.model");
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+        user: process.env.USER_MAIL_LOGIN,
+        pass: process.env.USER_MAIL_PASSWORD
     }
 });
 
@@ -255,5 +256,6 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
         await Notification.create(notificationData);
     }
 }
+
 
 module.exports = { sendEmail };
