@@ -30,7 +30,9 @@ exports.createOffre = async (req, res) => {
         };
 
         const newOffre = await Offre.create(offreData);
-        res.status(201).json(Offre.fromPrisma(newOffre, req.baseUrl));
+        console.log(req.base_url);
+        
+        res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -39,7 +41,7 @@ exports.createOffre = async (req, res) => {
 
 exports.updateOffre = async (req, res) => {
     try {
-        const existingOffre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
+        const existingOffre = await Offre.getById(parseInt(req.params.id), req.base_url);
         if (!existingOffre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -55,7 +57,7 @@ exports.updateOffre = async (req, res) => {
             const finalPath = path.join(uploadDir, originalName);
 
             if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
-                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.baseUrl, ""));
+                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
                 await fs.unlink(oldImagePath).catch(() => {});
             }
 
@@ -87,7 +89,7 @@ exports.updateOffre = async (req, res) => {
         if (updateData.date_limite) updateData.date_limite = new Date(updateData.date_limite);
 
         const updatedOffre = await Offre.update(parseInt(req.params.id), updateData);
-        res.status(200).json(Offre.fromPrisma(updatedOffre, req.baseUrl));
+        res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -96,12 +98,12 @@ exports.updateOffre = async (req, res) => {
 
 exports.deleteOffre = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
+        const offre = await Offre.getById(parseInt(req.params.id), req.base_url);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
         if (offre.image_url && !offre.image_url.includes("default-offre.png")) {
-            const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.baseUrl, ""));
+            const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.base_url, ""));
             await fs.unlink(imagePath).catch(() => {});
         }
         await Offre.delete(parseInt(req.params.id));
@@ -114,7 +116,7 @@ exports.deleteOffre = async (req, res) => {
 
 exports.getOffre = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
+        const offre = await Offre.getById(parseInt(req.params.id), req.base_url);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -127,7 +129,9 @@ exports.getOffre = async (req, res) => {
 
 exports.getAllOffres = async (req, res) => {
     try {
-        const offres = await Offre.getAll(req.baseUrl);
+        console.log(req.base_url);
+        
+        const offres = await Offre.getAll(req.base_url);
         res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la récupération des offres:", error);

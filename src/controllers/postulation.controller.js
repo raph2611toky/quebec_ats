@@ -39,7 +39,7 @@ exports.createPostulation = async (req, res) => {
             lettreRelativeUrl = `/uploads/candidats/${lettreOriginalName}`;
         }
 
-        const offre = await Offre.getById(parseInt(req.body.offre_id), req.baseUrl);
+        const offre = await Offre.getById(parseInt(req.body.offre_id), req.base_url);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -81,7 +81,7 @@ exports.createPostulation = async (req, res) => {
         };
 
         const newPostulation = await Postulation.create(postulationData);
-        res.status(201).json(Postulation.fromPrisma(newPostulation, req.baseUrl));
+        res.status(201).json(Postulation.fromPrisma(newPostulation, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -90,7 +90,7 @@ exports.createPostulation = async (req, res) => {
 
 exports.getPostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id), req.baseUrl);
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
@@ -103,7 +103,7 @@ exports.getPostulation = async (req, res) => {
 
 exports.getAllPostulations = async (req, res) => {
     try {
-        const postulations = await Postulation.getAll(req.baseUrl);
+        const postulations = await Postulation.getAll(req.base_url);
         res.status(200).json(postulations);
     } catch (error) {
         console.error("Erreur lors de la récupération des postulations:", error);
@@ -113,7 +113,7 @@ exports.getAllPostulations = async (req, res) => {
 
 exports.updatePostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id), req.baseUrl);
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
@@ -149,7 +149,7 @@ exports.updatePostulation = async (req, res) => {
         }
 
         const updatedPostulation = await Postulation.update(postulation.id, updateData);
-        res.status(200).json(Postulation.fromPrisma(updatedPostulation, req.baseUrl));
+        res.status(200).json(Postulation.fromPrisma(updatedPostulation, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -158,17 +158,17 @@ exports.updatePostulation = async (req, res) => {
 
 exports.deletePostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id), req.baseUrl);
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
 
         if (postulation.cv) {
-            const cvPath = path.join(__dirname, "../", postulation.cv.replace(req.baseUrl, ""));
+            const cvPath = path.join(__dirname, "../", postulation.cv.replace(req.base_url, ""));
             await fs.unlink(cvPath).catch(() => {});
         }
         if (postulation.lettre_motivation) {
-            const lettrePath = path.join(__dirname, "../", postulation.lettre_motivation.replace(req.baseUrl, ""));
+            const lettrePath = path.join(__dirname, "../", postulation.lettre_motivation.replace(req.base_url, ""));
             await fs.unlink(lettrePath).catch(() => {});
         }
 

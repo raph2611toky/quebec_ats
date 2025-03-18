@@ -20,7 +20,7 @@ app.use(cors());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use((req, res, next) => {
-    req.baseUrl = `${req.protocol}://${req.get("host")}`;
+    req.base_url = `${req.protocol}://${req.get("host")}`;
     next();
 });
 

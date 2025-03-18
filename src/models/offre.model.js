@@ -1,9 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const getFullImageUrl = (relativePath, baseUrl) => {
+const getFullImageUrl = (relativePath, base_url) => {
     if (!relativePath) return null;
-    return `${baseUrl}${relativePath}`;
+    return `${base_url}${relativePath}`;
 };
 
 class Offre {
@@ -25,12 +25,12 @@ class Offre {
         horaire_fermeture,
         created_at = null,
         updated_at = null,
-        baseUrl = ""
+        base_url = ""
     ) {
         this.id = id;
         this.titre = titre;
         this.user_id = user_id;
-        this.image_url = getFullImageUrl(image_url, baseUrl);
+        this.image_url = getFullImageUrl(image_url, base_url);
         this.description = description;
         this.date_limite = date_limite;
         this.status = status;
@@ -46,7 +46,7 @@ class Offre {
         this.updated_at = updated_at;
     }
 
-    static fromPrisma(offre, baseUrl = "") {
+    static fromPrisma(offre, base_url = "") {
         return new Offre(
             offre.id,
             offre.titre,
@@ -65,23 +65,23 @@ class Offre {
             offre.horaire_fermeture,
             offre.created_at,
             offre.updated_at,
-            baseUrl
+            base_url
         );
     }
 
-    static async getById(id, baseUrl) {
+    static async getById(id, base_url) {
         const offre = await prisma.offre.findUnique({
             where: { id },
             include: { user: true, postulations: true }
         });
-        return offre ? Offre.fromPrisma(offre, baseUrl) : null;
+        return offre ? Offre.fromPrisma(offre, base_url) : null;
     }
 
-    static async getAll(baseUrl) {
+    static async getAll(base_url) {
         const offres = await prisma.offre.findMany({
             include: { user: true, postulations: true }
         });
-        return offres.map(offre => Offre.fromPrisma(offre, baseUrl));
+        return offres.map(offre => Offre.fromPrisma(offre, base_url));
     }
 
     static async create(data) {
