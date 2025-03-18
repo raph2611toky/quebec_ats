@@ -4,6 +4,7 @@ const Referent = require("../models/referent.model");
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
+const { sendEmail } = require("../services/email.service");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -39,7 +40,7 @@ exports.createPostulation = async (req, res) => {
             lettreRelativeUrl = `/uploads/candidats/${lettreOriginalName}`;
         }
 
-        const offre = await Offre.getById(parseInt(req.body.offre_id), req.base_url);
+        const offre = await Offre.getById(parseInt(req.body.offre_id), req.baseUrl);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -68,6 +69,15 @@ exports.createPostulation = async (req, res) => {
                     });
                 }
                 await Candidat.addReferent(candidat.id, referent.id);
+
+                const confirmationLink = `${req.baseUrl}/api/referents/confirm?referent_id=${referent.id}&candidat_id=${candidat.id}`;
+                await sendEmail({
+                    to: referent.email,
+                    subject: "Confirmation de référence",
+                    type: "referentConfirmation",
+                    data: { candidatName: candidat.nom, offreTitre: offre.titre, confirmationLink },
+                    saveToNotifications: true
+                });
             }
         }
 
@@ -81,8 +91,16 @@ exports.createPostulation = async (req, res) => {
         };
 
         const newPostulation = await Postulation.create(postulationData);
-        // Envoyer une email au referent
-        res.status(201).json(Postulation.fromPrisma(newPostulation, req.base_url));
+
+        await sendEmail({
+            to: candidat.email,
+            subject: "Accusé de réception de votre postulation",
+            type: "postulationAcknowledgment",
+            data: { candidatName: candidat.nom, offreTitre: offre.titre },
+            saveToNotifications: true
+        });
+
+        res.status(201).json(Postulation.fromPrisma(newPostulation, req.baseUrl));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });

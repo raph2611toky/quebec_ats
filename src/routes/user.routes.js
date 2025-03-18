@@ -6,7 +6,7 @@ const {
     getAdminProfile, 
     updateAdminProfile,
     logout,
-    getAllUsers
+    getAllUsers, confirmRegistration, forgotPassword, resetPassword
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -167,7 +167,7 @@ router.get("/me", IsAuthenticated, getAdminProfile);
  * @swagger
  * /api/users/register:
  *   post:
- *     summary: Enregistrer un nouvel utilisateur
+ *     summary: Inscription d'un administrateur
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -175,41 +175,26 @@ router.get("/me", IsAuthenticated, getAdminProfile);
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               profile:
+ *                 type: string
+ *                 format: binary
  *             required:
  *               - name
  *               - email
  *               - password
  *               - phone
- *             properties:
- *               name:
- *                 type: string
- *                 description: Nom complet de l'utilisateur
- *                 example: "John Doe"
- *               email:
- *                 type: string
- *                 format: email
- *                 description: Adresse email
- *                 example: "john.doe@example.com"
- *               password:
- *                 type: string
- *                 description: Mot de passe
- *                 example: "Password@123"
- *               phone:
- *                 type: string
- *                 description: Numéro de téléphone
- *                 example: "+261341234567"
- *               profile:
- *                 type: string
- *                 format: binary
- *                 description: Image de profil (optionnel, image par défaut si non fournie)
- *               role:
- *                 type: string
- *                 enum: [MODERATEUR, ADMINISTRATEUR]
- *                 description: Rôle de l'utilisateur (optionnel, MODERATEUR par défaut)
- *                 example: "ADMINISTRATEUR"
  *     responses:
  *       201:
- *         description: Utilisateur créé avec succès
+ *         description: Administrateur créé, OTP envoyé
  *         content:
  *           application/json:
  *             schema:
@@ -217,32 +202,131 @@ router.get("/me", IsAuthenticated, getAdminProfile);
  *               properties:
  *                 email:
  *                   type: string
- *                   example: "john.doe@example.com"
- *                 token:
+ *                 message:
  *                   type: string
- *                   example: "eyJhbGciOi..."
  *       401:
- *         description: L'utilisateur existe déjà
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Cet utilisateur s'est déjà enregistré"
+ *         description: Email déjà utilisé
  *       500:
  *         description: Erreur interne du serveur
+ */
+router.post("/register", upload.single("profile"), registerAdmin);
+
+/**
+ * @swagger
+ * /api/users/confirm:
+ *   post:
+ *     summary: Confirmer l'inscription avec OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *             required:
+ *               - email
+ *               - otp
+ *     responses:
+ *       200:
+ *         description: Inscription confirmée
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 error:
+ *                 email:
  *                   type: string
- *                   example: "Erreur interne du serveur"
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: OTP invalide ou expiré
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
  */
-router.post("/register", upload.single("profile"), createUserValidationRules, validateHandler, registerAdmin);
+router.post("/confirm", confirmRegistration);
+
+/**
+ * @swagger
+ * /api/users/forgot-password:
+ *   post:
+ *     summary: Demander une réinitialisation de mot de passe
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Email de réinitialisation envoyé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/forgot-password", forgotPassword);
+
+/**
+ * @swagger
+ * /api/users/reset-password:
+ *   post:
+ *     summary: Réinitialiser le mot de passe avec OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *             required:
+ *               - email
+ *               - otp
+ *               - newPassword
+ *     responses:
+ *       200:
+ *         description: Mot de passe réinitialisé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: OTP invalide ou expiré
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/reset-password", resetPassword);
 
 /**
  * @swagger

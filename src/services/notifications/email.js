@@ -1,70 +1,145 @@
-require("dotenv").config();
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
+const Notification = require("../models/notification.model");
 
-async function sendEmail(to, title = "Notification", username, message, base_url = "") {
-    logoUrl = base_url + "/uploads/quebec.png"
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.USER_MAIL_LOGIN,
-            pass: process.env.USER_MAIL_PASSWORD
-        }
-    });
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
 
-    const emailTemplate = `
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${title}</title>
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #f0f2f5; color: #333; padding: 0; margin: 0; }
-            .container { max-width: 600px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-            h2 { color: #007bff; font-size: 24px; margin-bottom: 20px; }
-            p { font-size: 16px; color: #555; }
-            .button { display: inline-block; padding: 15px 25px; background-color: #25D366; color: #fff; text-decoration: none; font-size: 16px; border-radius: 5px; transition: 0.3s; font-weight: bold; }
-            .button:hover { background-color: #1ebe57; }
-            .footer { margin-top: 30px; font-size: 14px; color: #777; text-align: center; }
-            .logo { text-align: center; margin-bottom: 20px; }
-            .logo img { max-width: 150px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="logo">
-                <img src="${logoUrl}" alt="Logo">
-            </div>
-            <h2>${title}</h2>
-            <p>Bonjour <strong>${username}</strong>,</p>
-            <p>${message}</p>
-            <p>Pour recevoir vos notifications via WhatsApp, cliquez sur ce bouton :</p>
-            <p style="text-align:center;">
-                <a href="${whatsapp_link}" class="button" target="_blank">Activer via WhatsApp</a>
-            </p>
-            <p>Cordialement,<br>L'équipe</p>
-            <div class="footer">
-                &copy; ${new Date().getFullYear()} Notre Plateforme. Tous droits réservés.
-            </div>
+const templates = {
+    referentConfirmation: (candidatName, offreTitre, confirmationLink) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Confirmation de référence</h2>
+            <p style="color: #555;">Bonjour,</p>
+            <p style="color: #555;">${candidatName} a postulé à l'offre "${offreTitre}" et vous a désigné comme référent. Veuillez confirmer cette référence en cliquant sur le lien ci-dessous :</p>
+            <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Confirmer</a>
+            <p style="color: #555;">Merci de votre collaboration !</p>
         </div>
-    </body>
-    </html>`;
+    `,
+
+    postulationAcknowledgment: (candidatName, offreTitre) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Accusé de réception</h2>
+            <p style="color: #555;">Bonjour ${candidatName},</p>
+            <p style="color: #555;">Nous avons bien reçu votre postulation pour l'offre "${offreTitre}". Votre dossier est en cours d'analyse. Nous vous tiendrons informé(e) de l'évolution.</p>
+            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        </div>
+    `,
+
+    otpValidation: (otp) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Validation de votre inscription</h2>
+            <p style="color: #555;">Voici votre code OTP pour valider votre inscription :</p>
+            <p style="font-size: 24px; font-weight: bold; color: #007bff;">${otp}</p>
+            <p style="color: #555;">Ce code expire dans 10 minutes. Veuillez l'utiliser rapidement.</p>
+        </div>
+    `,
+
+    forgotPassword: (resetLink) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Réinitialisation de mot de passe</h2>
+            <p style="color: #555;">Vous avez demandé une réinitialisation de mot de passe. Cliquez sur le lien ci-dessous pour procéder :</p>
+            <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Réinitialiser</a>
+            <p style="color: #555;">Ce lien expire dans 10 minutes.</p>
+        </div>
+    `,
+
+    rejection: (candidatName, offreTitre) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Mise à jour sur votre candidature</h2>
+            <p style="color: #555;">Bonjour ${candidatName},</p>
+            <p style="color: #555;">Nous vous informons que votre candidature pour l'offre "${offreTitre}" n'a pas été retenue. Merci pour votre intérêt et bonne continuation.</p>
+            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        </div>
+    `,
+
+    hiring: (candidatName, offreTitre) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Félicitations !</h2>
+            <p style="color: #555;">Bonjour ${candidatName},</p>
+            <p style="color: #555;">Nous sommes ravis de vous annoncer que vous avez été retenu(e) pour l'offre "${offreTitre}". Nous vous contacterons bientôt pour les prochaines étapes.</p>
+            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        </div>
+    `,
+
+    meeting: (candidatName, offreTitre, date, heure, meetLink) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #333;">Rendez-vous pour entretien</h2>
+            <p style="color: #555;">Bonjour ${candidatName},</p>
+            <p style="color: #555;">Nous vous invitons à un entretien pour l'offre "${offreTitre}" le ${date} à ${heure}. Voici le lien Google Meet :</p>
+            <a href="${meetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Rejoindre</a>
+            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        </div>
+    `
+};
+
+const generateOtp = () => Math.floor(10000000 + Math.random() * 90000000).toString();
+
+async function sendEmail({ to, subject, type, data, saveToNotifications = false }) {
+    let htmlContent;
+    let notificationData;
+
+    switch (type) {
+        case "referentConfirmation":
+            htmlContent = templates.referentConfirmation(data.candidatName, data.offreTitre, data.confirmationLink);
+            notificationData = {
+                titre: `Confirmation de référence pour ${data.candidatName}`,
+                contenu: `Un email a été envoyé au référent pour confirmer la référence de ${data.candidatName} pour l'offre "${data.offreTitre}".`
+            };
+            break;
+        case "postulationAcknowledgment":
+            htmlContent = templates.postulationAcknowledgment(data.candidatName, data.offreTitre);
+            notificationData = {
+                titre: `Accusé de réception pour ${data.candidatName}`,
+                contenu: `Postulation de ${data.candidatName} pour l'offre "${data.offreTitre}" bien reçue et en cours d'analyse.`
+            };
+            break;
+        case "otpValidation":
+            htmlContent = templates.otpValidation(data.otp);
+            break;
+        case "forgotPassword":
+            htmlContent = templates.forgotPassword(data.resetLink);
+            break;
+        case "rejection":
+            htmlContent = templates.rejection(data.candidatName, data.offreTitre);
+            notificationData = {
+                titre: `Rejet de candidature pour ${data.candidatName}`,
+                contenu: `La candidature de ${data.candidatName} pour l'offre "${data.offreTitre}" a été rejetée.`
+            };
+            break;
+        case "hiring":
+            htmlContent = templates.hiring(data.candidatName, data.offreTitre);
+            notificationData = {
+                titre: `Embauche de ${data.candidatName}`,
+                contenu: `${data.candidatName} a été retenu(e) pour l'offre "${data.offreTitre}".`
+            };
+            break;
+        case "meeting":
+            htmlContent = templates.meeting(data.candidatName, data.offreTitre, data.date, data.heure, data.meetLink);
+            notificationData = {
+                titre: `Entretien pour ${data.candidatName}`,
+                contenu: `Rendez-vous fixé pour ${data.candidatName} le ${data.date} à ${data.heure} pour l'offre "${data.offreTitre}".`
+            };
+            break;
+        default:
+            throw new Error("Type d'email non reconnu");
+    }
 
     const mailOptions = {
-        from: '"Centre de service scolaire" <raphaeltokinandrasana@gmail.com>',
-        to: to,
-        subject: "Notification de votre compte " + username,
-        html: emailTemplate
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        html: htmlContent
     };
 
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log("Email envoyé avec succès à " + to);
-        return true;
-    } catch (error) {
-        console.error("Erreur lors de l'envoi de l'email :", error);
-        return false;
+    await transporter.sendMail(mailOptions);
+
+    if (saveToNotifications && notificationData) {
+        await Notification.create(notificationData);
     }
 }
 
-module.exports = { sendEmail }
+module.exports = { sendEmail };
