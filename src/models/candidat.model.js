@@ -1,18 +1,23 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+const getFullImageUrl = (relativePath, base_url) => {
+    if (!relativePath) return null;
+    return `${base_url}${relativePath}`;
+};
+
 class Candidat {
-    constructor(id, email, nom, telephone, image, created_at, updated_at) {
+    constructor(id, email, nom, telephone, image, created_at, updated_at, base_url = "") {
         this.id = id;
         this.email = email;
         this.nom = nom;
         this.telephone = telephone || null;
-        this.image = image;
+        this.image = getFullImageUrl(image, base_url);
         this.created_at = created_at;
         this.updated_at = updated_at;
     }
 
-    static fromPrisma(candidat) {
+    static fromPrisma(candidat, base_url = "") {
         return new Candidat(
             candidat.id,
             candidat.email,
@@ -20,44 +25,45 @@ class Candidat {
             candidat.telephone,
             candidat.image,
             candidat.created_at,
-            candidat.updated_at
+            candidat.updated_at,
+            base_url
         );
     }
 
-    static async create(data) {
+    static async create(data, base_url = "") {
         const newCandidat = await prisma.candidat.create({ data });
-        return Candidat.fromPrisma(newCandidat);
+        return Candidat.fromPrisma(newCandidat, base_url);
     }
 
-    static async getById(id) {
+    static async getById(id, base_url = "") {
         const candidat = await prisma.candidat.findUnique({
             where: { id },
             include: { referents: { include: { referent: true } }, postulations: true }
         });
-        return candidat ? Candidat.fromPrisma(candidat) : null;
+        return candidat ? Candidat.fromPrisma(candidat, base_url) : null;
     }
 
-    static async findByEmail(email) {
+    static async findByEmail(email, base_url = "") {
         const candidat = await prisma.candidat.findUnique({
             where: { email },
             include: { referents: { include: { referent: true } }, postulations: true }
         });
-        return candidat ? Candidat.fromPrisma(candidat) : null;
+        return candidat ? Candidat.fromPrisma(candidat, base_url) : null;
     }
 
-    static async getAll() {
+    static async getAll(base_url = "") {
         const candidats = await prisma.candidat.findMany({
             include: { referents: { include: { referent: true } }, postulations: true }
         });
-        return candidats.map(Candidat.fromPrisma);
+        return candidats.map(candidat => Candidat.fromPrisma(candidat, base_url));
     }
 
-    static async update(id, data) {
+    static async update(id, data, base_url = "") {
         const updatedCandidat = await prisma.candidat.update({
             where: { id },
             data
         });
-        return Candidat.fromPrisma(updatedCandidat);
+        return Candidat.fromPrisma(updatedCandidat, base_url);
     }
 
     static async delete(id) {
@@ -75,7 +81,7 @@ class Candidat {
     }
 
     static async getReferent(candidatId, referentId) {
-        const relation = await prisma.candidat_referent.findUnique({
+        const relation = await prisma.candidatReferent.findUnique({
             where: {
                 candidat_id_referent_id: {
                     candidat_id: candidatId,

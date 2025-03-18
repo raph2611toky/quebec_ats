@@ -5,7 +5,7 @@ const path = require("path");
 
 exports.getCandidat = async (req, res) => {
     try {
-        const candidat = await Candidat.getById(parseInt(req.params.id));
+        const candidat = await Candidat.getById(parseInt(req.params.id), req.base_url);
         if (!candidat) {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
@@ -18,7 +18,7 @@ exports.getCandidat = async (req, res) => {
 
 exports.getAllCandidats = async (req, res) => {
     try {
-        const candidats = await Candidat.getAll();
+        const candidats = await Candidat.getAll(req.base_url);
         res.status(200).json(candidats);
     } catch (error) {
         console.error("Erreur lors de la récupération des candidats:", error);
@@ -43,7 +43,7 @@ exports.deleteCandidat = async (req, res) => {
 
 exports.addReferent = async (req, res) => {
     try {
-        const candidat = await Candidat.getById(parseInt(req.params.id));
+        const candidat = await Candidat.getById(parseInt(req.params.id), req.base_url);
         if (!candidat) {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
@@ -59,7 +59,7 @@ exports.addReferent = async (req, res) => {
 
 exports.removeReferent = async (req, res) => {
     try {
-        const candidat = await Candidat.getById(parseInt(req.params.id));
+        const candidat = await Candidat.getById(parseInt(req.params.id), req.base_url);
         if (!candidat) {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
