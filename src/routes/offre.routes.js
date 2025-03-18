@@ -152,8 +152,6 @@ router.get("/", getAllOffres);
  *   get:
  *     summary: Récupérer une offre par ID
  *     tags: [Offres]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -189,7 +187,7 @@ router.get("/", getAllOffres);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.get("/:id", IsAuthenticated, getOffre);
+router.get("/:id", getOffre);
 
 /**
  * @swagger
