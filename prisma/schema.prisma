@@ -69,24 +69,25 @@ model User {
 }
 
 model Offre {
-  id            Int           @id @default(autoincrement())
-  titre         String        @default("")
-  user          User          @relation("UserOffres", fields: [user_id], references: [id])
-  user_id       Int
-  image_url     String
-  description   String
-  date_limite   DateTime
-  status        Status
-  nombre_requis Int           @default(1)
-  lieu          String
-  pays          String
-  type_emploi   String
-  salaire       BigInt
-  devise        Devise    
-  horaire       String
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
-  postulations  Postulation[] @relation("OffrePostulations")
+  id                Int           @id @default(autoincrement())
+  titre             String        @default("")
+  user              User          @relation("UserOffres", fields: [user_id], references: [id])
+  user_id           Int
+  image_url         String
+  description       String
+  date_limite       DateTime
+  status            Status
+  nombre_requis     Int           @default(1)
+  lieu              String
+  pays              String
+  type_emploi       String
+  salaire           BigInt
+  devise            Devise    
+  horaire_ouverture String
+  horaire_fermeture String
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  postulations      Postulation[] @relation("OffrePostulations")
 }
 
 model Candidat {

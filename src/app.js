@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 
 const userRoutes = require("./routes/user.routes")
+const offreRoutes = require("./routes/offre.routes");
 
 const app = express();
 
@@ -14,12 +15,12 @@ app.use(morgan('dev'));
 app.use(cors());
 
 app.use("/api/users", userRoutes)
+app.use("/api/offres", offreRoutes);
 
-// Swagger docs api
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
-    res.send("Welcome to Toto Election API! Visit /api/docs for the API documentation.");
+    res.send("Bienvenue dans l'api rest pour une application ATS de Quebec.");
 });
 
 module.exports = app;
