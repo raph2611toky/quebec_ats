@@ -11,67 +11,181 @@ const transporter = nodemailer.createTransport({
 
 const templates = {
     referentConfirmation: (candidatName, offreTitre, confirmationLink) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Confirmation de référence</h2>
-            <p style="color: #555;">Bonjour,</p>
-            <p style="color: #555;">${candidatName} a postulé à l'offre "${offreTitre}" et vous a désigné comme référent. Veuillez confirmer cette référence en cliquant sur le lien ci-dessous :</p>
-            <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Confirmer</a>
-            <p style="color: #555;">Merci de votre collaboration !</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #007bff, #00c4ff); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #e6f0ff; font-size: 16px; margin: 5px 0;">Votre partenaire pour l'excellence professionnelle</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Confirmation de Référence</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour,</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    ${candidatName} a postulé à l’offre "<strong>${offreTitre}</strong>" et vous a désigné comme référent. Nous vous prions de bien vouloir confirmer cette référence en cliquant sur le bouton ci-dessous :
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${confirmationLink}" style="display: inline-block; padding: 12px 30px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 25px; font-size: 16px; font-weight: bold; transition: background-color 0.3s;">Confirmer la Référence</a>
+                </div>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Merci de votre collaboration et de votre confiance en notre processus !</p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #007bff; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     postulationAcknowledgment: (candidatName, offreTitre) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Accusé de réception</h2>
-            <p style="color: #555;">Bonjour ${candidatName},</p>
-            <p style="color: #555;">Nous avons bien reçu votre postulation pour l'offre "${offreTitre}". Votre dossier est en cours d'analyse. Nous vous tiendrons informé(e) de l'évolution.</p>
-            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #28a745, #5cd85a); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #e6ffe6; font-size: 16px; margin: 5px 0;">Votre candidature compte pour nous</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Accusé de Réception</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour ${candidatName},</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Nous sommes heureux de confirmer la réception de votre postulation pour l’offre "<strong>${offreTitre}</strong>". Votre dossier est actuellement en cours d’analyse par notre équipe. Nous vous tiendrons informé(e) dès que possible des prochaines étapes.
+                </p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #28a745; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     otpValidation: (otp) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Validation de votre inscription</h2>
-            <p style="color: #555;">Voici votre code OTP pour valider votre inscription :</p>
-            <p style="font-size: 24px; font-weight: bold; color: #007bff;">${otp}</p>
-            <p style="color: #555;">Ce code expire dans 10 minutes. Veuillez l'utiliser rapidement.</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #ff6f61, #ff9f87); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #fff; font-size: 16px; margin: 5px 0;">Sécurisez votre compte</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Validation de Votre Inscription</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour,</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Voici votre code OTP pour valider votre inscription :</p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <span style="display: inline-block; padding: 15px 25px; background-color: #ff6f61; color: #fff; font-size: 24px; font-weight: bold; border-radius: 8px; letter-spacing: 2px;">${otp}</span>
+                </div>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Ce code est valide pendant 10 minutes. Veuillez l’utiliser rapidement pour sécuriser votre compte.</p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #ff6f61; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     forgotPassword: (resetLink) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Réinitialisation de mot de passe</h2>
-            <p style="color: #555;">Vous avez demandé une réinitialisation de mot de passe. Cliquez sur le lien ci-dessous pour procéder :</p>
-            <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Réinitialiser</a>
-            <p style="color: #555;">Ce lien expire dans 10 minutes.</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #6f42c1, #9f7aea); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #e6e6ff; font-size: 16px; margin: 5px 0;">Réinitialisation de mot de passe</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Réinitialisation de Votre Mot de Passe</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour,</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour procéder à cette opération :
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="display: inline-block; padding: 12px 30px; background-color: #6f42c1; color: #fff; text-decoration: none; border-radius: 25px; font-size: 16px; font-weight: bold; transition: background-color 0.3s;">Réinitialiser Maintenant</a>
+                </div>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Ce lien est valide pendant 10 minutes. Si vous n’avez pas initié cette demande, ignorez cet email.</p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #6f42c1; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     rejection: (candidatName, offreTitre) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Mise à jour sur votre candidature</h2>
-            <p style="color: #555;">Bonjour ${candidatName},</p>
-            <p style="color: #555;">Nous vous informons que votre candidature pour l'offre "${offreTitre}" n'a pas été retenue. Merci pour votre intérêt et bonne continuation.</p>
-            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #dc3545, #ff6b6b); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #ffe6e6; font-size: 16px; margin: 5px 0;">Mise à jour de votre candidature</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Mise à Jour sur Votre Candidature</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour ${candidatName},</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Nous vous remercions pour l’intérêt porté à l’offre "<strong>${offreTitre}</strong>". Après une analyse approfondie, nous sommes au regret de vous informer que votre candidature n’a pas été retenue cette fois-ci. Nous vous souhaitons beaucoup de succès dans vos recherches futures.
+                </p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #dc3545; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     hiring: (candidatName, offreTitre) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Félicitations !</h2>
-            <p style="color: #555;">Bonjour ${candidatName},</p>
-            <p style="color: #555;">Nous sommes ravis de vous annoncer que vous avez été retenu(e) pour l'offre "${offreTitre}". Nous vous contacterons bientôt pour les prochaines étapes.</p>
-            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #17a2b8, #48d1cc); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #e6ffff; font-size: 16px; margin: 5px 0;">Une excellente nouvelle vous attend !</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Félicitations, ${candidatName} !</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour ${candidatName},</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Nous sommes ravis de vous annoncer que vous avez été retenu(e) pour l’offre "<strong>${offreTitre}</strong>" ! Votre talent et votre engagement ont fait la différence. Nous vous contacterons sous peu pour les prochaines étapes de votre intégration.
+                </p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #17a2b8; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `,
 
     meeting: (candidatName, offreTitre, date, heure, meetLink) => `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #333;">Rendez-vous pour entretien</h2>
-            <p style="color: #555;">Bonjour ${candidatName},</p>
-            <p style="color: #555;">Nous vous invitons à un entretien pour l'offre "${offreTitre}" le ${date} à ${heure}. Voici le lien Google Meet :</p>
-            <a href="${meetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Rejoindre</a>
-            <p style="color: #555;">Cordialement,<br>L'équipe ATS Québec</p>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(90deg, #ffc107, #ffd761); padding: 20px; text-align: center;">
+                <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+                <p style="color: #fff8e6; font-size: 16px; margin: 5px 0;">Votre rendez-vous est confirmé</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 30px; background-color: #fff;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Rendez-Vous pour Votre Entretien</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour ${candidatName},</p>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                    Nous avons le plaisir de vous inviter à un entretien pour l’offre "<strong>${offreTitre}</strong>". Voici les détails de votre rendez-vous :
+                </p>
+                <ul style="color: #666; font-size: 16px; line-height: 1.6; margin: 20px 0;">
+                    <li><strong>Date :</strong> ${date}</li>
+                    <li><strong>Heure :</strong> ${heure}</li>
+                </ul>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${meetLink}" style="display: inline-block; padding: 12px 30px; background-color: #ffc107; color: #fff; text-decoration: none; border-radius: 25px; font-size: 16px; font-weight: bold; transition: background-color 0.3s;">Rejoindre via Google Meet</a>
+                </div>
+                <p style="color: #666; font-size: 16px; line-height: 1.6;">Nous avons hâte de discuter avec vous !</p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+                <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+                <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #ffc107; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
         </div>
     `
 };
