@@ -2,21 +2,26 @@ const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
+
 exports.createOffre = async (req, res) => {
     try {
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-
         if (!req.file) {
             return res.status(400).json({ error: "Un fichier image est requis pour créer une offre" });
         }
-        const originalName = req.file.originalname;
 
-        const imageUrl = `${baseUrl}/uploads/offres/${originalName}`;
+        const subDir = "offres";
+        const uploadDir = path.join(__dirname, "../uploads", subDir);
+        const originalName = req.file.originalname;
+        const tempPath = path.join(uploadDir, req.file.filename);
+        const finalPath = path.join(uploadDir, originalName);
+
+        await fs.rename(tempPath, finalPath);
+        const relativeImageUrl = `/uploads/offres/${originalName}`;
 
         const offreData = {
             ...req.body,
             user_id: parseInt(req.user.id),
-            image_url: imageUrl,
+            image_url: relativeImageUrl,
             salaire: BigInt(req.body.salaire),
             nombre_requis: parseInt(req.body.nombre_requis || 1),
             date_limite: new Date(req.body.date_limite),
@@ -25,7 +30,7 @@ exports.createOffre = async (req, res) => {
         };
 
         const newOffre = await Offre.create(offreData);
-        res.status(201).json(newOffre);
+        res.status(201).json(Offre.fromPrisma(newOffre, req.baseUrl));
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -34,8 +39,7 @@ exports.createOffre = async (req, res) => {
 
 exports.updateOffre = async (req, res) => {
     try {
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-        const existingOffre = await Offre.getById(parseInt(req.params.id));
+        const existingOffre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
         if (!existingOffre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -51,31 +55,30 @@ exports.updateOffre = async (req, res) => {
             const finalPath = path.join(uploadDir, originalName);
 
             if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
-                const oldImagePath = path.join(__dirname, "../..", existingOffre.image_url.replace(baseUrl, ""));
+                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.baseUrl, ""));
                 await fs.unlink(oldImagePath).catch(() => {});
             }
 
             if (await fs.stat(finalPath).catch(() => false)) {
                 const tempBuffer = await fs.readFile(tempPath);
                 const tempHash = crypto.createHash("md5").update(tempBuffer).digest("hex");
-
                 const existingBuffer = await fs.readFile(finalPath);
                 const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
 
                 if (tempHash === existingHash) {
                     await fs.unlink(tempPath);
-                    updateData.image_url = `${baseUrl}/uploads/offres/${originalName}`;
+                    updateData.image_url = `/uploads/offres/${originalName}`;
                 } else {
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
                     const randomSuffix = Math.round(Math.random() * 1e9);
                     const newName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
                     const newPath = path.join(uploadDir, newName);
                     await fs.rename(tempPath, newPath);
-                    updateData.image_url = `${baseUrl}/uploads/offres/${newName}`;
+                    updateData.image_url = `/uploads/offres/${newName}`;
                 }
             } else {
                 await fs.rename(tempPath, finalPath);
-                updateData.image_url = `${baseUrl}/uploads/offres/${originalName}`;
+                updateData.image_url = `/uploads/offres/${originalName}`;
             }
         }
 
@@ -84,7 +87,7 @@ exports.updateOffre = async (req, res) => {
         if (updateData.date_limite) updateData.date_limite = new Date(updateData.date_limite);
 
         const updatedOffre = await Offre.update(parseInt(req.params.id), updateData);
-        res.status(200).json(updatedOffre);
+        res.status(200).json(Offre.fromPrisma(updatedOffre, req.baseUrl));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -93,13 +96,12 @@ exports.updateOffre = async (req, res) => {
 
 exports.deleteOffre = async (req, res) => {
     try {
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-        const offre = await Offre.getById(parseInt(req.params.id));
+        const offre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
         if (offre.image_url && !offre.image_url.includes("default-offre.png")) {
-            const imagePath = path.join(__dirname, "../..", offre.image_url.replace(baseUrl, ""));
+            const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.baseUrl, ""));
             await fs.unlink(imagePath).catch(() => {});
         }
         await Offre.delete(parseInt(req.params.id));
@@ -112,7 +114,7 @@ exports.deleteOffre = async (req, res) => {
 
 exports.getOffre = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id));
+        const offre = await Offre.getById(parseInt(req.params.id), req.baseUrl);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -125,7 +127,7 @@ exports.getOffre = async (req, res) => {
 
 exports.getAllOffres = async (req, res) => {
     try {
-        const offres = await Offre.getAll();
+        const offres = await Offre.getAll(req.baseUrl);
         res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la récupération des offres:", error);

@@ -19,6 +19,10 @@ app.use(morgan('dev'));
 app.use(cors());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use((req, res, next) => {
+    req.baseUrl = `${req.protocol}://${req.get("host")}`;
+    next();
+});
 
 app.use("/api/users", userRoutes)
 app.use("/api/offres", offreRoutes);

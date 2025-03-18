@@ -54,6 +54,11 @@ enum SourceSite {
   QUEBEC_SITE
 }
 
+enum StatutReferent {
+  APPROUVE
+  NON_APPROUVE
+}
+
 model User {
   id          Int           @id @default(autoincrement())
   name        String
@@ -124,7 +129,7 @@ model Referent {
   nom           String
   telephone     String
   recommendation String?   
-  statut        String
+  statut        StatutReferent   @default(NON_APPROUVE)
   created_at    DateTime         @default(now())
   updated_at    DateTime         @updatedAt
   candidats     CandidatReferent[] @relation("ReferentToCandidat")

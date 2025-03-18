@@ -1,6 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+const getFullImageUrl = (relativePath, baseUrl) => {
+    if (!relativePath) return null;
+    return `${baseUrl}${relativePath}`;
+};
+
 class Offre {
     constructor(
         id,
@@ -19,12 +24,13 @@ class Offre {
         horaire_ouverture,
         horaire_fermeture,
         created_at = null,
-        updated_at = null
+        updated_at = null,
+        baseUrl = ""
     ) {
         this.id = id;
         this.titre = titre;
         this.user_id = user_id;
-        this.image_url = image_url;
+        this.image_url = getFullImageUrl(image_url, baseUrl);
         this.description = description;
         this.date_limite = date_limite;
         this.status = status;
@@ -40,7 +46,7 @@ class Offre {
         this.updated_at = updated_at;
     }
 
-    static fromPrisma(offre) {
+    static fromPrisma(offre, baseUrl = "") {
         return new Offre(
             offre.id,
             offre.titre,
@@ -58,28 +64,29 @@ class Offre {
             offre.horaire_ouverture,
             offre.horaire_fermeture,
             offre.created_at,
-            offre.updated_at
+            offre.updated_at,
+            baseUrl
         );
     }
 
-    static async getById(id) {
+    static async getById(id, baseUrl) {
         const offre = await prisma.offre.findUnique({
             where: { id },
             include: { user: true, postulations: true }
         });
-        return offre ? Offre.fromPrisma(offre) : null;
+        return offre ? Offre.fromPrisma(offre, baseUrl) : null;
     }
 
-    static async getAll() {
+    static async getAll(baseUrl) {
         const offres = await prisma.offre.findMany({
             include: { user: true, postulations: true }
         });
-        return offres.map(Offre.fromPrisma);
+        return offres.map(offre => Offre.fromPrisma(offre, baseUrl));
     }
 
     static async create(data) {
         const newOffre = await prisma.offre.create({ data });
-        return Offre.fromPrisma(newOffre);
+        return Offre.fromPrisma(newOffre, "");
     }
 
     static async update(id, data) {
@@ -87,7 +94,7 @@ class Offre {
             where: { id },
             data
         });
-        return Offre.fromPrisma(updatedOffre);
+        return Offre.fromPrisma(updatedOffre, "");
     }
 
     static async delete(id) {
