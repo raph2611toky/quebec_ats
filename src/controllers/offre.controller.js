@@ -6,7 +6,6 @@ exports.createOffre = async (req, res) => {
     try {
         const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-        // Vérifier si un fichier est fourni, sinon retourner une erreur
         if (!req.file) {
             return res.status(400).json({ error: "Un fichier image est requis pour créer une offre" });
         }

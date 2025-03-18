@@ -5,9 +5,9 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Pour le site web d'un ATS à Quebec",
+      title: "Quebec ATS API",
       version: "1.0.0",
-      description: 'API REST pour le site ATS de Quebec',
+      description: "API pour la gestion des offres, candidatures, et référents dans une application ATS au Québec."
     },
   },
   components: {

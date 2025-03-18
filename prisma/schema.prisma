@@ -91,38 +91,51 @@ model Offre {
 }
 
 model Candidat {
-  id            Int           @id @default(autoincrement())
-  email         String        @unique
+  id            Int              @id @default(autoincrement())
+  email         String           @unique
   nom           String
-  telephone     String
-  image         String        @default("candidat.png")
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
-  postulations  Postulation[] @relation("CandidatPostulations")
+  telephone     String?
+  image         String           @default("uploads/candidats/default.png")
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+  postulations  Postulation[]    @relation("CandidatPostulations")
+  referents     CandidatReferent[] @relation("CandidatToReferent")
 }
 
 model Postulation {
-  id              Int           @id @default(autoincrement())
-  candidat        Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id])
-  candidat_id     Int
-  offre           Offre         @relation("OffrePostulations", fields: [offre_id], references: [id])
-  offre_id        Int
-  date_soumission DateTime      @default(now())
-  etape_actuelle  EtapeActuelle @default(SOUMIS)
-  cv              String      
+  id                Int           @id @default(autoincrement())
+  candidat          Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id])
+  candidat_id       Int
+  offre             Offre         @relation("OffrePostulations", fields: [offre_id], references: [id])
+  offre_id          Int
+  date_soumission   DateTime      @default(now())
+  etape_actuelle    EtapeActuelle @default(SOUMIS)
+  cv                String   
   lettre_motivation String?   
-  source_site     SourceSite
-  created_at      DateTime      @default(now())
-  updated_at      DateTime      @updatedAt
+  telephone         String?  
+  source_site       SourceSite
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
 }
 
-model Referance {
-  id             Int      @id @default(autoincrement())
-  email          String   @unique
-  nom            String
-  telephone      String
-  recommendation String
-  statut         String
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+model Referent {
+  id            Int              @id @default(autoincrement())
+  email         String           @unique
+  nom           String
+  telephone     String
+  recommendation String?   
+  statut        String
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+  candidats     CandidatReferent[] @relation("ReferentToCandidat")
+}
+
+model CandidatReferent {
+  candidat      Candidat @relation("CandidatToReferent", fields: [candidat_id], references: [id])
+  candidat_id   Int
+  referent      Referent @relation("ReferentToCandidat", fields: [referent_id], references: [id])
+  referent_id   Int
+  assigned_at   DateTime @default(now())
+
+  @@id([candidat_id, referent_id])
 }
