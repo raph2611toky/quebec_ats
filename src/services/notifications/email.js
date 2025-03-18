@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const Notification = require("../models/notification.model");
+const Notification = require("../../models/notification.model");
 
 const transporter = nodemailer.createTransport({
     service: "gmail",

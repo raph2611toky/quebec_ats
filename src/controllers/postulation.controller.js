@@ -4,7 +4,7 @@ const Referent = require("../models/referent.model");
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
-const { sendEmail } = require("../services/email.service");
+const { sendEmail } = require("../services/notifications/email");
 
 exports.createPostulation = async (req, res) => {
     try {

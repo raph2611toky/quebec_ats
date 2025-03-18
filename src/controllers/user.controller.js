@@ -3,7 +3,7 @@ const { generateToken } = require("../utils/securite/jwt");
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
-const { sendEmail } = require("../services/email.service");
+const { sendEmail } = require("../services/notifications/email");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
