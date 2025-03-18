@@ -74,6 +74,18 @@ class Candidat {
         });
     }
 
+    static async getReferent(candidatId, referentId) {
+        const relation = await prisma.candidat_referent.findUnique({
+            where: {
+                candidat_id_referent_id: {
+                    candidat_id: candidatId,
+                    referent_id: referentId
+                }
+            }
+        });
+        return relation;
+    }
+
     static async removeReferent(candidatId, referentId) {
         await prisma.candidatReferent.delete({
             where: {

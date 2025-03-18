@@ -4,11 +4,10 @@ const Referent = require("../models/referent.model");
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
+const { sendEmail } = require("../services/notifications/email");
 
 exports.createPostulation = async (req, res) => {
     try {
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
-
         if (!req.files || !req.files.cv) {
             return res.status(400).json({ error: "Un fichier CV est requis pour postuler" });
         }
@@ -25,9 +24,9 @@ exports.createPostulation = async (req, res) => {
         } else {
             await fs.rename(cvTempPath, cvFinalPath);
         }
-        const cvUrl = `${baseUrl}/uploads/candidats/${cvOriginalName}`;
+        const cvRelativeUrl = `/uploads/candidats/${cvOriginalName}`;
 
-        let lettreUrl = null;
+        let lettreRelativeUrl = null;
         if (req.files && req.files.lettre_motivation) {
             const lettreFile = req.files.lettre_motivation[0];
             const lettreOriginalName = lettreFile.originalname;
@@ -38,10 +37,10 @@ exports.createPostulation = async (req, res) => {
             } else {
                 await fs.rename(lettreTempPath, lettreFinalPath);
             }
-            lettreUrl = `${baseUrl}/uploads/candidats/${lettreOriginalName}`;
+            lettreRelativeUrl = `/uploads/candidats/${lettreOriginalName}`;
         }
 
-        const offre = await Offre.getById(parseInt(req.body.offre_id));
+        const offre = await Offre.getById(parseInt(req.body.offre_id), req.baseUrl);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
@@ -52,7 +51,7 @@ exports.createPostulation = async (req, res) => {
                 email: req.body.email,
                 nom: req.body.nom,
                 telephone: req.body.telephone || null,
-                image: `${baseUrl}/uploads/candidats/default.png`
+                image: `/uploads/candidats/default.png`
             });
         }
 
@@ -65,25 +64,43 @@ exports.createPostulation = async (req, res) => {
                         email: refData.email,
                         nom: refData.nom,
                         telephone: refData.telephone,
-                        recommendation: refData.recommendation || null,
-                        statut: refData.statut
+                        recommendation: null,
+                        statut: "NON_APPROUVE"
                     });
                 }
                 await Candidat.addReferent(candidat.id, referent.id);
+
+                const confirmationLink = `${req.baseUrl}/api/referents/confirm?referent_id=${referent.id}&candidat_id=${candidat.id}`;
+                await sendEmail({
+                    to: referent.email,
+                    subject: "Confirmation de référence",
+                    type: "referentConfirmation",
+                    data: { candidatName: candidat.nom, offreTitre: offre.titre, confirmationLink },
+                    saveToNotifications: true
+                });
             }
         }
 
         const postulationData = {
             candidat_id: candidat.id,
             offre_id: parseInt(req.body.offre_id),
-            cv: cvUrl,
-            lettre_motivation: lettreUrl,
+            cv: cvRelativeUrl,
+            lettre_motivation: lettreRelativeUrl,
             telephone: req.body.telephone || null,
             source_site: req.body.source_site
         };
 
         const newPostulation = await Postulation.create(postulationData);
-        res.status(201).json(newPostulation);
+
+        await sendEmail({
+            to: candidat.email,
+            subject: "Accusé de réception de votre postulation",
+            type: "postulationAcknowledgment",
+            data: { candidatName: candidat.nom, offreTitre: offre.titre },
+            saveToNotifications: true
+        });
+
+        res.status(201).json(Postulation.fromPrisma(newPostulation, req.baseUrl));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -92,11 +109,11 @@ exports.createPostulation = async (req, res) => {
 
 exports.getPostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id));
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
-        res.status(200).json(postulation);
+        res.status(200).json(postulation); 
     } catch (error) {
         console.error("Erreur lors de la récupération de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -105,7 +122,7 @@ exports.getPostulation = async (req, res) => {
 
 exports.getAllPostulations = async (req, res) => {
     try {
-        const postulations = await Postulation.getAll();
+        const postulations = await Postulation.getAll(req.base_url);
         res.status(200).json(postulations);
     } catch (error) {
         console.error("Erreur lors de la récupération des postulations:", error);
@@ -115,16 +132,15 @@ exports.getAllPostulations = async (req, res) => {
 
 exports.updatePostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id));
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
 
-        const baseUrl = `${req.protocol}://${req.get("host")}`;
         const subDir = "candidats";
         const uploadDir = path.join(__dirname, "../uploads", subDir);
-
         let updateData = { ...req.body };
+
         if (req.files && req.files.cv) {
             const cvFile = req.files.cv[0];
             const cvOriginalName = cvFile.originalname;
@@ -135,7 +151,7 @@ exports.updatePostulation = async (req, res) => {
             } else {
                 await fs.rename(cvTempPath, cvFinalPath);
             }
-            updateData.cv = `${baseUrl}/uploads/candidats/${cvOriginalName}`;
+            updateData.cv = `/uploads/candidats/${cvOriginalName}`;
         }
 
         if (req.files && req.files.lettre_motivation) {
@@ -148,11 +164,11 @@ exports.updatePostulation = async (req, res) => {
             } else {
                 await fs.rename(lettreTempPath, lettreFinalPath);
             }
-            updateData.lettre_motivation = `${baseUrl}/uploads/candidats/${lettreOriginalName}`;
+            updateData.lettre_motivation = `/uploads/candidats/${lettreOriginalName}`;
         }
 
         const updatedPostulation = await Postulation.update(postulation.id, updateData);
-        res.status(200).json(updatedPostulation);
+        res.status(200).json(Postulation.fromPrisma(updatedPostulation, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de la postulation:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -161,15 +177,61 @@ exports.updatePostulation = async (req, res) => {
 
 exports.deletePostulation = async (req, res) => {
     try {
-        const postulation = await Postulation.getById(parseInt(req.params.id));
+        const postulation = await Postulation.getById(parseInt(req.params.id), req.base_url);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
+        }
+
+        if (postulation.cv) {
+            const cvPath = path.join(__dirname, "../", postulation.cv.replace(req.base_url, ""));
+            await fs.unlink(cvPath).catch(() => {});
+        }
+        if (postulation.lettre_motivation) {
+            const lettrePath = path.join(__dirname, "../", postulation.lettre_motivation.replace(req.base_url, ""));
+            await fs.unlink(lettrePath).catch(() => {});
         }
 
         await Postulation.delete(postulation.id);
         res.status(200).json({ message: "Postulation supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de la postulation:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.confirmReferenceWithRecommendation = async (req, res) => {
+    try {
+        const { recommendation, postulation_id, referent_id } = req.body;
+
+        if (!recommendation || !postulation_id || !referent_id) {
+            return res.status(400).json({ error: "Recommandation, postulation_id et referent_id sont requis" });
+        }
+
+        const postulation = await Postulation.getById(parseInt(postulation_id), req.baseUrl);
+        if (!postulation) {
+            return res.status(404).json({ error: "Postulation non trouvée" });
+        }
+
+        const referent = await Referent.getById(parseInt(referent_id), req.baseUrl);
+        if (!referent) {
+            return res.status(404).json({ error: "Référent non trouvé" });
+        }
+
+        const candidatReferent = await Candidat.getReferent(postulation.candidat_id, referent_id);
+        if (!candidatReferent) {
+            return res.status(403).json({ error: "Ce référent n'est pas associé à ce candidat" });
+        }
+
+        await Referent.update(referent_id, {
+            recommendation,
+            statut: "APPROUVE"
+        });
+        res.status(200).json({
+            message: "Référence confirmée avec succès",
+            referent: await Referent.getById(referent_id, req.baseUrl)
+        });
+    } catch (error) {
+        console.error("Erreur lors de la confirmation de la référence:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };

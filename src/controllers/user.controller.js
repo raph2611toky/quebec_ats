@@ -3,6 +3,11 @@ const { generateToken } = require("../utils/securite/jwt");
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
+const { sendEmail } = require("../services/notifications/email");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+const generateOtp = () => Math.floor(10000000 + Math.random() * 90000000).toString();
 
 exports.registerAdmin = async (req, res) => {
     try {
@@ -33,14 +38,117 @@ exports.registerAdmin = async (req, res) => {
 
         const adminData = {
             ...req.body,
-            profile: profileUrl
+            profile: profileUrl,
+            is_active: false
         };
         const newAdmin = await User.create(adminData);
-        const token = generateToken({ id: newAdmin.id });
 
-        res.status(201).json({ email: newAdmin.email, token });
+        const otp = generateOtp();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        await prisma.otpVerification.create({
+            data: {
+                user_id: newAdmin.id,
+                otp,
+                expires_at: expiresAt
+            }
+        });
+
+        await sendEmail({
+            to: newAdmin.email,
+            subject: "Validation de votre inscription",
+            type: "otpValidation",
+            data: { otp }
+        });
+
+        res.status(201).json({ email: newAdmin.email, message: "Vérifiez votre email pour l'OTP" });
     } catch (error) {
         console.error("Erreur lors de la création de l'administrateur:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.confirmRegistration = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        const otpRecord = await prisma.otpVerification.findFirst({
+            where: { user_id: user.id, otp }
+        });
+
+        if (!otpRecord || new Date() > otpRecord.expires_at) {
+            return res.status(400).json({ error: "OTP invalide ou expiré" });
+        }
+
+        await User.update(user.id, { is_active: true });
+        await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
+        const token = generateToken({ id: user.id });
+
+        res.status(200).json({ email: user.email, token });
+    } catch (error) {
+        console.error("Erreur lors de la confirmation:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        const otp = generateOtp();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        await prisma.otpVerification.create({
+            data: {
+                user_id: user.id,
+                otp,
+                expires_at: expiresAt
+            }
+        });
+
+        const resetLink = `${req.baseUrl}/api/users/reset-password?otp=${otp}&email=${email}`;
+        await sendEmail({
+            to: user.email,
+            subject: "Réinitialisation de mot de passe",
+            type: "forgotPassword",
+            data: { resetLink }
+        });
+
+        res.status(200).json({ message: "Un email de réinitialisation a été envoyé" });
+    } catch (error) {
+        console.error("Erreur lors de la demande de réinitialisation:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        const otpRecord = await prisma.otpVerification.findFirst({
+            where: { user_id: user.id, otp }
+        });
+
+        if (!otpRecord || new Date() > otpRecord.expires_at) {
+            return res.status(400).json({ error: "OTP invalide ou expiré" });
+        }
+
+        await User.update(user.id, { password: newPassword });
+        await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
+
+        res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
+    } catch (error) {
+        console.error("Erreur lors de la réinitialisation du mot de passe:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
@@ -50,13 +158,11 @@ exports.loginAdmin = async (req, res) => {
 
     try {
         const user = await User.findByEmail(email);
-        if (!user || !(await User.comparePassword(password, user.password))) {
-            return res.status(401).json({ error: "Identifiants invalides" });
+        if (!user || !(await User.comparePassword(password, user.password)) || !user.is_active) {
+            return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
         }
 
-        await User.update(user.id, { is_active: true });
         const token = generateToken({ id: user.id });
-
         res.status(200).json({ name: user.name, token });
     } catch (error) {
         console.error("Erreur lors de la connexion:", error);

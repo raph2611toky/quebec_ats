@@ -10,6 +10,7 @@ const offreRoutes = require("./routes/offre.routes");
 const candidats = require("./routes/candidat.routes")
 const postulations = require("./routes/postulation.routes")
 const referents = require("./routes/referent.routes")
+const notifications = require("./routes/notification.routes")
 const processusRoute = require("./routes/processus.routes")
 
 const app = express();
@@ -20,6 +21,10 @@ app.use(morgan('dev'));
 app.use(cors());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use((req, res, next) => {
+    req.base_url = `${req.protocol}://${req.get("host")}`;
+    next();
+});
 
 app.use("/api/processus", processusRoute)
 app.use("/api/users", userRoutes)
@@ -27,6 +32,7 @@ app.use("/api/offres", offreRoutes);
 app.use("/api/candidats", candidats)
 app.use("/api/postualtion", postulations)
 app.use("/api/referents", referents)
+app.use("/api/notifications", notifications)
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
