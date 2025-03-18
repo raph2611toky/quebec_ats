@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+// PRODUCTION
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
+
+enum Role {
+  MODERATEUR
+  ADMINISTRATEUR
+}
+
+enum Status {
+  OUVERT
+  FERME
+}
+
+enum Devise {
+  EURO
+  DOLLAR
+  DOLLAR_CANADIAN
+  LIVRE
+  YEN
+  ROUPIE
+  ARIARY
+}
+
+enum EtapeActuelle {
+  SOUMIS
+  EN_REVISION
+  ENTRETIEN
+  ACCEPTE
+  REJETE
+}
+
+enum SourceSite {
+  LINKEDIN
+  INDEED
+  JOOBLE
+  FRANCETRAVAIL
+  MESSAGER
+  WHATSAPP
+  INSTAGRAM
+  TELEGRAM
+  TWITTER
+  QUEBEC_SITE
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  name        String
+  email       String        @unique
+  password    String
+  phone       String
+  profile     String        @default("profile.png")
+  role        Role          @default(MODERATEUR)
+  is_active   Boolean       @default(false)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  offres      Offre[]       @relation("UserOffres")
+}
+
+model Offre {
+  id            Int           @id @default(autoincrement())
+  titre         String        @default("")
+  user          User          @relation("UserOffres", fields: [user_id], references: [id])
+  user_id       Int
+  image_url     String
+  description   String
+  date_limite   DateTime
+  status        Status
+  nombre_requis Int           @default(1)
+  lieu          String
+  pays          String
+  type_emploi   String
+  salaire       BigInt
+  devise        Devise    
+  horaire       String
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  postulations  Postulation[] @relation("OffrePostulations")
+}
+
+model Candidat {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  nom           String
+  telephone     String
+  image         String        @default("candidat.png")
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  postulations  Postulation[] @relation("CandidatPostulations")
+}
+
+model Postulation {
+  id              Int           @id @default(autoincrement())
+  candidat        Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id])
+  candidat_id     Int
+  offre           Offre         @relation("OffrePostulations", fields: [offre_id], references: [id])
+  offre_id        Int
+  date_soumission DateTime      @default(now())
+  etape_actuelle  EtapeActuelle @default(SOUMIS)
+  cv              String      
+  lettre_motivation String?   
+  source_site     SourceSite
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+}
+
+model Referance {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  nom            String
+  telephone      String
+  recommendation String
+  statut         String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
