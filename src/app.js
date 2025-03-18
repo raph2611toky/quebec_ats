@@ -10,6 +10,7 @@ const offreRoutes = require("./routes/offre.routes");
 const candidats = require("./routes/candidat.routes")
 const postulations = require("./routes/postulation.routes")
 const referents = require("./routes/referent.routes")
+const processusRoute = require("./routes/processus.routes")
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(cors());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.use("/api/processus", processusRoute)
 app.use("/api/users", userRoutes)
 app.use("/api/offres", offreRoutes);
 app.use("/api/candidats", candidats)

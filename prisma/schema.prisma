@@ -6,6 +6,7 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 // PRODUCTION
 // datasource db {
 //   provider = "postgresql"
@@ -54,18 +55,30 @@ enum SourceSite {
   QUEBEC_SITE
 }
 
+enum TypeProcessus {
+  TACHE
+  VISIO_CONFERENCE
+  QUESTIONNAIRE
+}
+
+enum StatutProcessus {
+  A_VENIR
+  EN_COURS
+  TERMINER
+}
+
 model User {
-  id          Int           @id @default(autoincrement())
-  name        String
-  email       String        @unique
-  password    String
-  phone       String
-  profile     String        @default("profile.png")
-  role        Role          @default(MODERATEUR)
-  is_active   Boolean       @default(false)
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  offres      Offre[]       @relation("UserOffres")
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  phone      String
+  profile    String   @default("profile.png")
+  role       Role     @default(MODERATEUR)
+  is_active  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  offres     Offre[]  @relation("UserOffres")
 }
 
 model Offre {
@@ -82,7 +95,7 @@ model Offre {
   pays              String
   type_emploi       String
   salaire           BigInt
-  devise            Devise    
+  devise            Devise
   horaire_ouverture String
   horaire_fermeture String
   created_at        DateTime      @default(now())
@@ -91,15 +104,15 @@ model Offre {
 }
 
 model Candidat {
-  id            Int              @id @default(autoincrement())
-  email         String           @unique
-  nom           String
-  telephone     String?
-  image         String           @default("uploads/candidats/default.png")
-  created_at    DateTime         @default(now())
-  updated_at    DateTime         @updatedAt
-  postulations  Postulation[]    @relation("CandidatPostulations")
-  referents     CandidatReferent[] @relation("CandidatToReferent")
+  id           Int                @id @default(autoincrement())
+  email        String             @unique
+  nom          String
+  telephone    String?
+  image        String             @default("uploads/candidats/default.png")
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+  postulations Postulation[]      @relation("CandidatPostulations")
+  referents    CandidatReferent[] @relation("CandidatToReferent")
 }
 
 model Postulation {
@@ -110,32 +123,45 @@ model Postulation {
   offre_id          Int
   date_soumission   DateTime      @default(now())
   etape_actuelle    EtapeActuelle @default(SOUMIS)
-  cv                String   
-  lettre_motivation String?   
-  telephone         String?  
+  cv                String
+  lettre_motivation String?
+  telephone         String?
   source_site       SourceSite
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 }
 
 model Referent {
-  id            Int              @id @default(autoincrement())
-  email         String           @unique
-  nom           String
-  telephone     String
-  recommendation String?   
-  statut        String
-  created_at    DateTime         @default(now())
-  updated_at    DateTime         @updatedAt
-  candidats     CandidatReferent[] @relation("ReferentToCandidat")
+  id             Int                @id @default(autoincrement())
+  email          String             @unique
+  nom            String
+  telephone      String
+  recommendation String?
+  statut         String
+  created_at     DateTime           @default(now())
+  updated_at     DateTime           @updatedAt
+  candidats      CandidatReferent[] @relation("ReferentToCandidat")
 }
 
 model CandidatReferent {
-  candidat      Candidat @relation("CandidatToReferent", fields: [candidat_id], references: [id])
-  candidat_id   Int
-  referent      Referent @relation("ReferentToCandidat", fields: [referent_id], references: [id])
-  referent_id   Int
-  assigned_at   DateTime @default(now())
+  candidat    Candidat @relation("CandidatToReferent", fields: [candidat_id], references: [id])
+  candidat_id Int
+  referent    Referent @relation("ReferentToCandidat", fields: [referent_id], references: [id])
+  referent_id Int
+  assigned_at DateTime @default(now())
 
   @@id([candidat_id, referent_id])
+}
+
+model Processus {
+  id          Int             @id @default(autoincrement())
+  titre       String
+  type        TypeProcessus   @default(VISIO_CONFERENCE)
+  description String
+  statut      StatutProcessus @default(A_VENIR)
+  //duree en minutes
+  duree       Int
+  lien_visio  String?
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
 }
