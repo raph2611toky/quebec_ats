@@ -356,7 +356,7 @@ router.post("/forgot-password", forgotPassword);
  * @swagger
  * /api/users/reset-password:
  *   post:
- *     summary: Réinitialiser le mot de passe avec OTP
+ *     summary: Réinitialiser le mot de passe
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -365,19 +365,25 @@ router.post("/forgot-password", forgotPassword);
  *           schema:
  *             type: object
  *             properties:
- *               email:
+ *               encryptedToken:
  *                 type: string
- *               otp:
- *                 type: string
+ *                 description: Token chiffré reçu dans l'email
+ *                 example: "encryptedStringHere"
  *               newPassword:
  *                 type: string
+ *                 description: Nouveau mot de passe
+ *                 example: "NewPass123!"
+ *               otp:
+ *                 type: string
+ *                 description: OTP envoyé dans l'email
+ *                 example: "12345678"
  *             required:
- *               - email
- *               - otp
+ *               - encryptedToken
  *               - newPassword
+ *               - otp
  *     responses:
  *       200:
- *         description: Mot de passe réinitialisé
+ *         description: Mot de passe réinitialisé avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -385,12 +391,37 @@ router.post("/forgot-password", forgotPassword);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Mot de passe réinitialisé avec succès"
  *       400:
- *         description: OTP invalide ou expiré
+ *         description: Erreur de validation (token ou OTP invalide/expiré)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "OTP invalide ou expiré"
  *       404:
  *         description: Utilisateur non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
  *       500:
  *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 router.post("/reset-password", resetPassword);
 
