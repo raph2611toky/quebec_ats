@@ -42,6 +42,14 @@ const fileFilter = (req, file, cb) => {
         "application/pdf"
     ];
 
+    const profileFiletypes = /jpeg|jpg|png|gif|webp/;
+    const profileMimetypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp"
+    ];
+
     const lettreFiletypes = /pdf|docx|txt|md/;
     const lettreMimetypes = [
         "application/pdf",
@@ -66,6 +74,15 @@ const fileFilter = (req, file, cb) => {
             return cb(null, true);
         }
         return cb(new Error("La lettre de motivation doit être un fichier PDF, DOCX, TXT ou MD"));
+    }
+    else if (file.fieldname === "profile") {
+        const mimetype = profileMimetypes.includes(file.mimetype);
+        const extname = profileFiletypes.test(path.extname(file.originalname).toLowerCase());
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        return cb(new Error("Le profile doit être une image (JPEG, JPG, PNG, GIF, WebP)"));
     } else {
         return cb(new Error("Champ de fichier non reconnu"));
     }

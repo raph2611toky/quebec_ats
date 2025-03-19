@@ -5,7 +5,9 @@ const {
     getAllCandidats, 
     deleteCandidat, 
     addReferent, 
-    removeReferent 
+    removeReferent,
+    getCandidatFullInfo,
+    getCandidatFullInfoByEmail
 } = require("../controllers/candidat.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 
@@ -248,5 +250,64 @@ router.post("/:id/referents", IsAuthenticated, addReferent);
  *         description: Erreur interne du serveur
  */
 router.delete("/:id/referents", IsAuthenticated, removeReferent);
+
+/**
+ * @swagger
+ * /api/candidats/full-info/by-id/{id}:
+ *   get:
+ *     summary: Récupérer toutes les informations d'un candidat par ID
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID du candidat
+ *     responses:
+ *       200:
+ *         description: Informations complètes du candidat récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CandidatFullInfo'
+ *       404:
+ *         description: Candidat non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/full-info/by-id/:id", IsAuthenticated, getCandidatFullInfo);
+
+/**
+ * @swagger
+ * /api/candidats/full-info/by-email/{email}:
+ *   get:
+ *     summary: Récupérer toutes les informations d'un candidat par email
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         required: true
+ *         description: Email du candidat
+ *     responses:
+ *       200:
+ *         description: Informations complètes du candidat récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CandidatFullInfo'
+ *       404:
+ *         description: Candidat non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/full-info/by-email/:email", IsAuthenticated, getCandidatFullInfoByEmail);
 
 module.exports = router;
