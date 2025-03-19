@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma.config");
 
 class Referent {
     constructor(id, email, nom, telephone, recommendation, statut, created_at, updated_at) {

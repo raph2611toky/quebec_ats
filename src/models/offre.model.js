@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma.config");
 
 const getFullImageUrl = (relativePath, base_url) => {
     if (!relativePath) return null;
@@ -70,35 +69,62 @@ class Offre {
     }
 
     static async getById(id, base_url) {
-        const offre = await prisma.offre.findUnique({
-            where: { id },
-            include: { user: true, postulations: true }
-        });
-        return offre ? Offre.fromPrisma(offre, base_url) : null;
+        try {
+            const offre = await prisma.offre.findUnique({
+                where: { id },
+                include: { user: true, postulations: true }
+            });
+            return offre ? Offre.fromPrisma(offre, base_url) : null;
+        } catch (error) {
+            console.error(`Erreur dans Offre.getById(${id}):`, error);
+            throw error;
+        }
     }
 
-    static async getAll(base_url) {
-        const offres = await prisma.offre.findMany({
-            include: { user: true, postulations: true }
-        });
-        return offres.map(offre => Offre.fromPrisma(offre, base_url));
+    static async getAll(base_url, skip = 0, take = 10) {
+        try {
+            const offres = await prisma.offre.findMany({
+                skip,
+                take,
+                include: { user: true, postulations: true }
+            });
+            return offres.map(offre => Offre.fromPrisma(offre, base_url));
+        } catch (error) {
+            console.error("Erreur dans Offre.getAll:", error);
+            throw error;
+        }
     }
 
     static async create(data) {
-        const newOffre = await prisma.offre.create({ data });
-        return Offre.fromPrisma(newOffre, "");
+        try {
+            const newOffre = await prisma.offre.create({ data });
+            return Offre.fromPrisma(newOffre, "");
+        } catch (error) {
+            console.error("Erreur dans Offre.create:", error);
+            throw error;
+        }
     }
 
     static async update(id, data) {
-        const updatedOffre = await prisma.offre.update({
-            where: { id },
-            data
-        });
-        return Offre.fromPrisma(updatedOffre, "");
+        try {
+            const updatedOffre = await prisma.offre.update({
+                where: { id },
+                data
+            });
+            return Offre.fromPrisma(updatedOffre, "");
+        } catch (error) {
+            console.error(`Erreur dans Offre.update(${id}):`, error);
+            throw error;
+        }
     }
 
     static async delete(id) {
-        return await prisma.offre.delete({ where: { id } });
+        try {
+            return await prisma.offre.delete({ where: { id } });
+        } catch (error) {
+            console.error(`Erreur dans Offre.delete(${id}):`, error);
+            throw error;
+        }
     }
 }
 

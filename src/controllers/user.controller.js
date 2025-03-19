@@ -96,6 +96,48 @@ exports.confirmRegistration = async (req, res) => {
     }
 };
 
+exports.resendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        if (user.is_active) {
+            return res.status(400).json({ error: "Cet utilisateur est déjà activé" });
+        }
+
+        await prisma.otpVerification.deleteMany({
+            where: { user_id: user.id }
+        });
+
+        const otp = generateOtp();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        await prisma.otpVerification.create({
+            data: {
+                user_id: user.id,
+                otp,
+                expires_at: expiresAt
+            }
+        });
+
+        await sendEmail({
+            to: user.email,
+            subject: "Renvoi de votre code OTP",
+            type: "otpValidation",
+            data: { otp }
+        });
+
+        res.status(200).json({ email: user.email, message: "Un nouvel OTP a été envoyé à votre email" });
+    } catch (error) {
+        console.error("Erreur lors du renvoi de l'OTP:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;

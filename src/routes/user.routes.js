@@ -6,7 +6,8 @@ const {
     getAdminProfile, 
     updateAdminProfile,
     logout,
-    getAllUsers, confirmRegistration, forgotPassword, resetPassword
+    getAllUsers, confirmRegistration, forgotPassword, resetPassword,
+    resendOtp
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -251,6 +252,71 @@ router.post("/register", upload.single("profile"), registerAdmin);
  *         description: Erreur interne du serveur
  */
 router.post("/confirm", confirmRegistration);
+
+/**
+ * @swagger
+ * /api/users/resend-otp:
+ *   post:
+ *     summary: Demander le renvoi d'un OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Email de l'utilisateur demandant un nouvel OTP
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Nouvel OTP envoyé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                   example: "user@example.com"
+ *                 message:
+ *                   type: string
+ *                   example: "Un nouvel OTP a été envoyé à votre email"
+ *       400:
+ *         description: Utilisateur déjà activé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Cet utilisateur est déjà activé"
+ *       404:
+ *         description: Utilisateur non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/resend-otp", resendOtp);
 
 /**
  * @swagger
