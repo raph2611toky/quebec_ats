@@ -167,7 +167,7 @@ exports.forgotPassword = async (req, res) => {
             to: user.email,
             subject: "Réinitialisation de mot de passe",
             type: "forgotPassword",
-            data: { resetLink, otp }
+            data: { resetLink }
         });
 
         res.status(200).json({ message: "Un email de réinitialisation a été envoyé" });

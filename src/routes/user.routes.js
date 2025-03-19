@@ -373,14 +373,9 @@ router.post("/forgot-password", forgotPassword);
  *                 type: string
  *                 description: Nouveau mot de passe
  *                 example: "NewPass123!"
- *               otp:
- *                 type: string
- *                 description: OTP envoyé dans l'email
- *                 example: "12345678"
  *             required:
  *               - encryptedToken
  *               - newPassword
- *               - otp
  *     responses:
  *       200:
  *         description: Mot de passe réinitialisé avec succès
