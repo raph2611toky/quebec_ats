@@ -9,6 +9,14 @@ const options = {
       version: "1.0.0",
       description: "API pour la gestion des offres, candidatures, et référents dans une application ATS au Québec."
     },
+    servers: [
+      {
+        "url": "http://localhost:5000",
+      },
+      {
+        "url": "https://quebec-ats-f66o.onrender.com",
+      }
+    ],
   },
   components: {
     securitySchemes: {
