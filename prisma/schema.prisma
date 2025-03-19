@@ -2,17 +2,17 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "mysql"
-//   url      = env("DATABASE_URL")
-// }
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
 
 //PRODUCTION
-datasource db {
-   provider = "postgresql"
-   url      = env("DATABASE_URL")
-   directUrl = env("DIRECT_URL")
- }
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 enum Role {
   MODERATEUR
@@ -64,6 +64,7 @@ enum TypeProcessus {
   TACHE
   VISIO_CONFERENCE
   QUESTIONNAIRE
+  ANNULER
 }
 
 enum StatutProcessus {
@@ -188,4 +189,21 @@ model Processus {
   lien_visio  String?
   created_at  DateTime        @default(now())
   updated_at  DateTime        @updatedAt
+  questions   Question[]      @relation("ProcessusQuestion")
+}
+
+model Question {
+  id           Int       @id @default(autoincrement())
+  label        String
+  reponses     Reponse[] @relation("QuestionReponse")
+  processus    Processus @relation("ProcessusQuestion", fields: [processus_id], references: [id])
+  processus_id Int
+}
+
+model Reponse {
+  id          Int      @id @default(autoincrement())
+  label       String
+  is_true     Boolean
+  question    Question @relation("QuestionReponse", fields: [question_id], references: [id])
+  question_id Int
 }

@@ -1,5 +1,7 @@
-const { StatutProcessus } = require("@prisma/client");
+const { StatutProcessus, TypeProcessus } = require("@prisma/client");
 const Processus = require("../models/processus.model");
+const Question = require("../models/question.model");
+
 
 exports.createProcessus = async (req, res) => {
     try {
@@ -76,3 +78,64 @@ exports.getAllProcessus = async (req, res) => {
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+
+exports.addQuizzJson = async (req, res) => {
+    try {
+        const processusId = parseInt(req.params.id);
+        const processus = await Processus.getById(processusId);
+
+        if (!processus) {
+            return res.status(404).json({ error: "Processus non trouvé" });
+        }
+
+        if (processus.type !== TypeProcessus.QUESTIONNAIRE) {
+            return res.status(400).json({ 
+                error: "Impossible d'ajouter un quiz : le processus doit être de type QUESTIONNAIRE" 
+            });
+        }
+
+        if (processus.statut !== StatutProcessus.A_VENIR) {
+            return res.status(400).json({ 
+                error: "Impossible d'ajouter un quiz : le processus a déjà commencé ou est terminé" 
+            });
+        }
+
+        const quizzData = req.body;
+        if (!Array.isArray(quizzData) || quizzData.length === 0) {
+            return res.status(400).json({ 
+                error: "Le fichier JSON doit contenir un tableau non vide de questions" 
+            });
+        }
+
+        const createdQuestions = [];
+        for (const questionData of quizzData) {
+            if (!questionData.label || !Array.isArray(questionData.reponses) || questionData.reponses.length === 0) {
+                return res.status(400).json({ 
+                    error: "Chaque question doit avoir un label et au moins une réponse" 
+                });
+            }
+
+            const newQuestion = await Question.create({
+                label: questionData.label,
+                processus_id: processusId,
+                reponses: {
+                    create: questionData.reponses.map(reponse => ({
+                        label: reponse.label,
+                        is_true: !!reponse.is_true // Convertit en booléen
+                    }))
+                }
+            });
+            createdQuestions.push(newQuestion);
+        }
+
+        res.status(201).json({
+            message: "Quiz ajouté avec succès",
+            questions: createdQuestions
+        });
+    } catch (error) {
+        console.error("Erreur lors de l'ajout du quiz JSON:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+

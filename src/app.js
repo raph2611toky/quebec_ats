@@ -12,6 +12,8 @@ const postulations = require("./routes/postulation.routes")
 const referents = require("./routes/referent.routes")
 const notifications = require("./routes/notification.routes")
 const processusRoute = require("./routes/processus.routes")
+const questionRoute = require("./routes/question.route")
+const reponseRoute = require("./routes/reponse.routes")
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/api/reponses", reponseRoute)
+app.use("/api/questions", questionRoute)
 app.use("/api/processus", processusRoute)
 app.use("/api/users", userRoutes)
 app.use("/api/offres", offreRoutes);

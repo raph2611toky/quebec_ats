@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { TypeProcessus, StatutProcessus } = require("@prisma/client");
 
 const createProcessusValidator = [
     body("titre")
@@ -21,12 +22,12 @@ const createProcessusValidator = [
     
     body("type")
         .optional()
-        .isIn(["VISIO_CONFERENCE", "PRESENTIEL", "HYBRIDE"])
+        .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
         .withMessage("Le type doit être VISIO_CONFERENCE, PRESENTIEL ou HYBRIDE"),
     
     body("statut")
         .optional()
-        .isIn(["A_VENIR", "EN_COURS", "TERMINE", "ANNULE"])
+        .isIn([StatutProcessus.A_VENIR, StatutProcessus.EN_COURS, StatutProcessus.TERMINER, StatutProcessus.ANNULER])
         .withMessage("Le statut doit être A_VENIR, EN_COURS, TERMINE ou ANNULE"),
     
     body("duree")
@@ -56,12 +57,12 @@ const updateProcessusValidator = [
     
     body("type")
         .optional()
-        .isIn(["VISIO_CONFERENCE", "PRESENTIEL", "HYBRIDE"])
-        .withMessage("Le type doit être VISIO_CONFERENCE, PRESENTIEL ou HYBRIDE"),
+        .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
+        .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
     body("statut")
         .optional()
-        .isIn(["A_VENIR", "EN_COURS", "TERMINE", "ANNULE"])
+        .isIn([StatutProcessus.A_VENIR, StatutProcessus.EN_COURS, StatutProcessus.TERMINER, StatutProcessus.ANNULER])
         .withMessage("Le statut doit être A_VENIR, EN_COURS, TERMINE ou ANNULE"),
     
     body("duree")

@@ -30,9 +30,9 @@ const errorHandler = require('../middlewares/error.handler');
  *           example: "Réunion hebdomadaire"
  *         type:
  *           type: string
- *           enum: [VISIO_CONFERENCE, PRESENTIEL, HYBRIDE]
+ *           enum: [VISIO_CONFERENCE, PRESENTIEL, HYBRIDE, QUESTIONNAIRE]
  *           description: Type de processus
- *           example: "VISIO_CONFERENCE"
+ *           example: "QUESTIONNAIRE"
  *         description:
  *           type: string
  *           description: Description du processus
@@ -46,6 +46,11 @@ const errorHandler = require('../middlewares/error.handler');
  *           type: integer
  *           description: Durée en minutes
  *           example: 60
+ *         lien_visio:
+ *           type: string
+ *           nullable: true
+ *           description: Lien de la visioconférence (optionnel)
+ *           example: "https://zoom.us/j/123456789"
  *         created_at:
  *           type: string
  *           format: date-time
@@ -56,6 +61,11 @@ const errorHandler = require('../middlewares/error.handler');
  *           format: date-time
  *           description: Date de dernière mise à jour
  *           example: "2025-03-18T10:00:00.000Z"
+ *       required:
+ *         - id
+ *         - titre
+ *         - description
+ *         - duree
  */
 
 /**
@@ -253,5 +263,126 @@ router.put('/:id', IsAuthenticatedAdmin, updateProcessusValidator,errorHandler,p
  *                   example: "Erreur interne du serveur"
  */
 router.delete('/:id', IsAuthenticatedAdmin, processusController.deleteProcessus);
+
+
+/**
+ * @swagger
+ * /api/processus/{id}/quizz:
+ *   post:
+ *     summary: Ajouter un quiz à un processus via un fichier JSON
+ *     tags: [Processus, Quizz]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Identifiant du processus auquel ajouter le quiz
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               required:
+ *                 - label
+ *                 - reponses
+ *               properties:
+ *                 label:
+ *                   type: string
+ *                   description: Libellé de la question
+ *                   example: "Quelle est la capitale de la France ?"
+ *                 reponses:
+ *                   type: array
+ *                   minItems: 1
+ *                   items:
+ *                     type: object
+ *                     required:
+ *                       - label
+ *                       - is_true
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                         description: Texte de la réponse
+ *                         example: "Paris"
+ *                       is_true:
+ *                         type: boolean
+ *                         description: Indique si c'est la bonne réponse
+ *                         example: true
+ *           example:
+ *             - label: "Quelle est la capitale de la France ?"
+ *               reponses:
+ *                 - label: "Paris"
+ *                   is_true: true
+ *                 - label: "Lyon"
+ *                   is_true: false
+ *             - label: "2 + 2 = ?"
+ *               reponses:
+ *                 - label: "4"
+ *                   is_true: true
+ *                 - label: "5"
+ *                   is_true: false
+ *     responses:
+ *       201:
+ *         description: Quiz ajouté avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Quiz ajouté avec succès"
+ *                 questions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Question'
+ *       400:
+ *         description: Requête invalide - Type incorrect, processus non modifiable ou JSON mal formé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Impossible d'ajouter un quiz : le processus doit être de type QUESTIONNAIRE"
+ *       401:
+ *         description: Non autorisé - Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token invalide ou manquant"
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur serveur lors de l'ajout du quiz
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson);
 
 module.exports = router;

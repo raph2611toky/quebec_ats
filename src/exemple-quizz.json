@@ -1,0 +1,16 @@
+[
+    {
+        "label": "Quelle est la capitale de la France ?",
+        "reponses": [
+            { "label": "Paris", "is_true": true },
+            { "label": "Lyon", "is_true": false }
+        ]
+    },
+    {
+        "label": "2 + 2 = ?",
+        "reponses": [
+            { "label": "4", "is_true": true },
+            { "label": "5", "is_true": false }
+        ]
+    }
+]
