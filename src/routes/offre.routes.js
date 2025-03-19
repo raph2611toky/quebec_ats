@@ -110,7 +110,7 @@ const upload = createUpload("offres");
  *         lieu: "Paris"
  *         pays: "France"
  *         type_emploi: "CDI"
- *         salaire: "50000"
+ *         salaire: "50000.75"
  *         devise: "EURO"
  *         horaire_ouverture: "09:00:00"
  *         horaire_fermeture: "17:00:00"
@@ -253,7 +253,7 @@ router.get("/:id", getOffre);
  *               salaire:
  *                 type: string
  *                 description: Salaire
- *                 example: "50000"
+ *                 example: "50000.75"
  *               devise:
  *                 type: string
  *                 enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]

@@ -96,7 +96,7 @@ model Offre {
   lieu              String
   pays              String
   type_emploi       String
-  salaire           BigInt
+  salaire           Decimal
   devise            Devise
   horaire_ouverture String
   horaire_fermeture String

@@ -22,7 +22,7 @@ exports.createOffre = async (req, res) => {
             ...req.body,
             user_id: parseInt(req.user.id),
             image_url: relativeImageUrl,
-            salaire: BigInt(req.body.salaire),
+            salaire: parseFloat(req.body.salaire),
             nombre_requis: parseInt(req.body.nombre_requis || 1),
             date_limite: new Date(req.body.date_limite),
             horaire_ouverture: req.body.horaire_ouverture,
@@ -30,8 +30,6 @@ exports.createOffre = async (req, res) => {
         };
 
         const newOffre = await Offre.create(offreData);
-        console.log(req.base_url);
-        
         res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
@@ -84,7 +82,7 @@ exports.updateOffre = async (req, res) => {
             }
         }
 
-        if (updateData.salaire) updateData.salaire = BigInt(updateData.salaire);
+        if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
         if (updateData.date_limite) updateData.date_limite = new Date(updateData.date_limite);
 
@@ -128,9 +126,7 @@ exports.getOffre = async (req, res) => {
 };
 
 exports.getAllOffres = async (req, res) => {
-    try {
-        console.log(req.base_url);
-        
+    try {        
         const offres = await Offre.getAll(req.base_url);
         res.status(200).json(offres);
     } catch (error) {

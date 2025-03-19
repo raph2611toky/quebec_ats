@@ -1,6 +1,5 @@
 const bcrypt = require("../utils/securite/bcrypt");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma.config");
 
 class User {
     constructor(
@@ -43,49 +42,81 @@ class User {
     }
 
     static async getById(id) {
-        const user = await prisma.user.findUnique({
-            where: { id },
-            include: { offres: true } // Inclut les offres associées
-        });
-        return user ? User.fromPrisma(user) : null;
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id },
+                include: { offres: true }
+            });
+            return user ? User.fromPrisma(user) : null;
+        } catch (error) {
+            console.error(`Erreur dans User.getById(${id}):`, error);
+            throw error;
+        }
     }
 
     static async findByEmail(email) {
-        const user = await prisma.user.findUnique({
-            where: { email },
-            include: { offres: true }
-        });
-        return user ? User.fromPrisma(user) : null;
+        try {
+            const user = await prisma.user.findUnique({
+                where: { email },
+                include: { offres: true }
+            });
+            return user ? User.fromPrisma(user) : null;
+        } catch (error) {
+            console.error(`Erreur dans User.findByEmail(${email}):`, error);
+            throw error;
+        }
     }
 
-    static async getAll() {
-        const users = await prisma.user.findMany({
-            include: { offres: true }
-        });
-        return users.map(User.fromPrisma);
+    static async getAll(skip = 0, take = 10) {
+        try {
+            const users = await prisma.user.findMany({
+                skip,
+                take,
+                include: { offres: true }
+            });
+            return users.map(User.fromPrisma);
+        } catch (error) {
+            console.error("Erreur dans User.getAll:", error);
+            throw error;
+        }
     }
 
     static async create(data) {
-        if (data.password) {
-            data.password = await bcrypt.hashPassword(data.password);
+        try {
+            if (data.password) {
+                data.password = await bcrypt.hashPassword(data.password);
+            }
+            const newUser = await prisma.user.create({ data });
+            return User.fromPrisma(newUser);
+        } catch (error) {
+            console.error("Erreur dans User.create:", error);
+            throw error;
         }
-        const newUser = await prisma.user.create({ data });
-        return User.fromPrisma(newUser);
     }
 
     static async update(id, data) {
-        if (data.password) {
-            data.password = await bcrypt.hashPassword(data.password);
+        try {
+            if (data.password) {
+                data.password = await bcrypt.hashPassword(data.password);
+            }
+            const updatedUser = await prisma.user.update({
+                where: { id },
+                data
+            });
+            return User.fromPrisma(updatedUser);
+        } catch (error) {
+            console.error(`Erreur dans User.update(${id}):`, error);
+            throw error;
         }
-        const updatedUser = await prisma.user.update({
-            where: { id },
-            data
-        });
-        return User.fromPrisma(updatedUser);
     }
 
     static async delete(id) {
-        return await prisma.user.delete({ where: { id } });
+        try {
+            return await prisma.user.delete({ where: { id } });
+        } catch (error) {
+            console.error(`Erreur dans User.delete(${id}):`, error);
+            throw error;
+        }
     }
 
     static async comparePassword(password, hashPassword) {

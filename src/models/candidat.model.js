@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma.config");
 
 const getFullImageUrl = (relativePath, base_url) => {
     if (!relativePath) return null;
