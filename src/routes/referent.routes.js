@@ -11,7 +11,17 @@ const { IsAuthenticated } = require("../middlewares/auth.middleware");
  * @swagger
  * tags:
  *   name: Referents
- *   description: Gestion des référents
+ *   description: | 
+ *       Gestion des référents
+ *       ### Fonctionnalités :
+ *       -  **Get One, All et delete référents**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Candidat pour demandé à ajouter un référents** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Candidat - Au moment de postuler à une offre ou après, peux indiquer une référent via formulaire**
+ *       -  **Referant - Après avoir reçu cette demande via mail, peux valider cette demande en envoyant son avis. Puis si information non existant, créé compte référent et le lié au candidat. Visible dans chaque postulation qu'il fait**
  */
 
 /**

@@ -10,7 +10,22 @@ const errorHandler = require('../middlewares/error.handler');
  * @swagger
  * tags:
  *   name: Processus
- *   description: Gestion des processus
+ *   description: | 
+ *       Gestion des processus
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de processus**
+ *       -  **Ajout, modification et suppression de question et réponse si l'offre n'est pas encore publié**
+ *       -  **Ajout ajout quizz (question, réponse) si processus de type QUESTIONNAIRE**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin et non admin pour effectuer actions** 
+ *       -  **Offre déjà créé** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Créé une offre, ensuite après créé les processus lié à l'offre.**
+ *       -  **Si le processus à créé est de type QUESTIONNAIRE, il faut ajouter un quizz (question, réponse) au processus**
+ *       -  **L'ajout de quizz se fait par json, ou un à un via les routes de création question et réponse lié aux questions**
+ *       -  **Une Offre ne peux pas être publié s'il n'a pas au moins un processus et au moins un question si quizz, et un réponse vrai pour une question** 
  */
 
 /**

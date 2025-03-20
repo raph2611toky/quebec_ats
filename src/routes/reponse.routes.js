@@ -6,6 +6,26 @@ const { createResponseController, getOneResponseController, getAllResponseContro
 const { idValidator } = require("../validators/question.validator");
 const { IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Reponses
+ *   description: | 
+ *       Gestion des réponses des quizz
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de réponse**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin et non admin pour effectuer actions** 
+ *       -  **Question déjà créé** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Créé une Question, ensuite après créé les réponses lié à la question.**
+ *       -  **Une Offre ne peux pas être publié s'il n'a pas au moins un processus et au moins un question si quizz, et un réponse vrai pour une question** 
+ */
+
+
 /**
  * @swagger
  * components:

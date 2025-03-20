@@ -14,8 +14,23 @@ const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.m
 /**
  * @swagger
  * tags:
- *   name: Candidats
- *   description: Gestion des candidats
+ *   - name: Candidats
+ *     description: |
+ *       **Gestion des candidats**  
+ *       Ce module permet de gérer les candidats inscrits.  
+ *       
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de candidats**
+ *       -  **Ajout, Suppression référent d'un candidat**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin et non admin pour effectuer actions** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Candidat - Au moment de postuler à une offre, on créé un compte pour le candidat si mail fournie pas compte existant**
+ *       -  **Candidat - Seule les admins voit que les candidats a un compte et voir tous ces postulations et processus dans le recrutement**
+ *       -  **Referant - Après avoir postuler à une offre, on propose au candidat de référé quelqu'un pour ajouté à sont postulation et utilisé dans autre futur postulation, visible pour admin**
+ *       -  **Referant - Une fois le demand envoyé, le référant reçoit mail pour confirmé le référencement en ajoutant son note personnelle**
  */
 
 /**

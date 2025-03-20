@@ -18,7 +18,18 @@ const upload = createUpload("offres");
  * @swagger
  * tags:
  *   name: Offres
- *   description: Gestion des offres d'emploi
+ *   description: | 
+ *       Gestion des offres d'emploi
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de Offres**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin pour effectué action** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Créé par admin**
+ *       -  **Aprés création, offre status non_publié, il faut ajouter processus pour pouvoir publier l'offre après**
+ *       -  **Candidat postuler - et création table postulation**
  */
 
 /**

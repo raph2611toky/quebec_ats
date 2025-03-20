@@ -20,7 +20,19 @@ const upload = createUpload("users");
  * @swagger
  * tags:
  *   name: Users
- *   description: Gestion des utilisateurs
+ *   description: | 
+ *       Gestion des utilisateurs
+ *       ### Fonctionnalités :
+ *       -  **Register, Login , otp, suppression et gestion des users et candidats**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin et non admin pour effectuer actions** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **User et admin simple fait register**
+ *       -  **Candidat - Au moment de postuler à une offre, on créé un compte pour le candidat si mail fournie pas compte existant**
+ *       -  **Referant - Après avoir postuler à une offre, on propose au candidat de référé quelqu'un pour ajouté à sont postulation et utilisé dans autre futur postulation, visible pour admin**
+ *       -  **Referant - Une fois le demand envoyé, le référant reçoit mail pour confirmé le référencement en ajoutant son note personnelle. ** 
  */
 
 /**

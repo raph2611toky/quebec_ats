@@ -16,7 +16,18 @@ const upload = createUpload("candidats");
  * @swagger
  * tags:
  *   name: Postulations
- *   description: Gestion des postulations
+ *   description: |
+ *       Gestion des postulations
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de Postulation**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte candidat, ou pas de compte pour postuler pour créé postulation** 
+ *       -  **Offre à postuler** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Un candidat postule à une offre - et de ce fait créé la table postulation**
+ *       -  **En suite, le via son postulation il passe le processus créé au moment de création de l'offre**
  */
 
 /**

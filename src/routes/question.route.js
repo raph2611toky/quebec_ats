@@ -5,6 +5,28 @@ const { createQuestionValidator, updateQuestionValidator, idValidator } = requir
 const { createQuestion, getOneQuestion, getAllQuestion, updateQuestion, deleteQuestion, getAllQuestionByProcessus } = require("../controllers/question.controller");
 const { IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Questions
+ *   description: | 
+ *       Gestion des questions de quizz 
+ *       ### Fonctionnalités :
+ *       -  **Ajout, modification et suppression de questions**
+ *       -  **Ajout réponse lié à une questions**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Compte Admin et non admin pour effectuer actions** 
+ *       -  **Offre déjà créé avec un processus de type QUESTIONNAIRE** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Créé une processus de type QUESTIONNAIRE, ensuite après créé les questions lié à la processus.**
+ *       -  **Une question est toujours lié à un processus de type QUESTIONNAIRE via processus_id**
+ *       -  **Une Offre de type QUESTIONNAIRE ne peux pas être publié s'il n'as pas au moins une question, avec une bonne réponse associé**
+ */
+
+
 /**
  * @swagger
  * components:

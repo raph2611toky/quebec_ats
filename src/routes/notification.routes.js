@@ -7,7 +7,17 @@ const { IsAuthenticated } = require("../middlewares/auth.middleware");
  * @swagger
  * tags:
  *   name: Notifications
- *   description: Gestion des notifications
+ *   description: | 
+ *       Gestion des notifications
+ *       ### Fonctionnalités :
+ *       -  **Get all notification**
+ *       -  **Suppression notification**
+ *       
+ *       ### Pré-requis : 
+ *       -  **Utilisateur avoir compte** 
+ *       
+ *       ### Fonctionnement : 
+ *       -  **Notification d'un utilisateur** 
  */
 
 /**
