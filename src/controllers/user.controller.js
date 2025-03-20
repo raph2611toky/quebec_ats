@@ -161,7 +161,7 @@ exports.forgotPassword = async (req, res) => {
         });
 
         const encryptedToken = encryptAES(token);
-        const resetLink = `${process.env.FRONTEND_URL}/security/password/reset/${encodeURIComponent(encryptedToken)}`;
+        const resetLink = `${process.env.FRONTEND_URL}/security/password/reset?verification=${encodeURIComponent(encryptedToken)}`;
 
         await sendEmail({
             to: user.email,
@@ -182,8 +182,8 @@ exports.resetPassword = async (req, res) => {
         const { encryptedToken, newPassword } = req.body;
         let token;
         try {
-            token = decryptAES(encryptedToken);
-        } catch (error) {
+            token = decryptAES(decodeURIComponent(encryptedToken));
+        } catch (error) {            
             return res.status(400).json({ error: "Lien de réinitialisation invalide" });
         }
         let decoded;
@@ -196,7 +196,7 @@ exports.resetPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-
+        
         const otpRecord = await prisma.otpVerification.findFirst({
             where: { user_id: user.id, otp: decoded.otp }
         });
@@ -204,7 +204,7 @@ exports.resetPassword = async (req, res) => {
         if (!otpRecord || new Date() > otpRecord.expires_at) {
             return res.status(400).json({ error: "OTP invalide ou expiré" });
         }
-        if (otp !== decoded.otp) {
+        if (otpRecord.otp !== decoded.otp) {
             return res.status(400).json({ error: "OTP incorrect" });
         }
 

@@ -1,3 +1,4 @@
+require("dotenv").config()
 const { createCipheriv, createDecipheriv } = require("crypto");
 
 const FIXED_AES_KEY = Buffer.from(process.env.AES_KEY, "utf8");
