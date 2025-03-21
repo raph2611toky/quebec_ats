@@ -200,11 +200,15 @@ router.get("/me", IsAuthenticated, getAdminProfile);
  *               profile:
  *                 type: string
  *                 format: binary
+ *               role:
+ *                 type: string
+ *                 enum: [MODERATEUR, ADMINISTRATEUR] 
  *             required:
  *               - name
  *               - email
  *               - password
  *               - phone
+ *               - role
  *     responses:
  *       201:
  *         description: Administrateur créé, OTP envoyé
