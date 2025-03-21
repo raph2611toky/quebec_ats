@@ -9,6 +9,13 @@ datasource db {
    directUrl = env("DIRECT_URL")
  }
 
+// Local
+// datasource db {
+//    provider = "mysql"
+//    url      = env("DATABASE_URL")
+//  }
+
+
 enum Role {
   MODERATEUR
   ADMINISTRATEUR
