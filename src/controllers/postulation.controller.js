@@ -17,7 +17,7 @@ exports.createPostulation = async (req, res) => {
 
         const subDir = "candidats";
         const uploadDir = path.join(__dirname, "../uploads", subDir);
-        const base_url = process.env.FRONTEND_URL;
+        const base_url = req.base_url;
 
         const cvFile = req.files.cv[0];
         const cvOriginalName = cvFile.originalname;
@@ -103,7 +103,7 @@ exports.createPostulation = async (req, res) => {
             source_site: req.body.source_site
         };
 
-        const newPostulation = await Postulation.create(postulationData);
+        const newPostulation = await Postulation.create(postulationData, req.base_url);
         await sendEmail({
             to: candidat.email,
             subject: "Accusé de réception de votre postulation",

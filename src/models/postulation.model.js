@@ -50,9 +50,9 @@ class Postulation {
         );
     }
 
-    static async create(data) {
+    static async create(data, base_url) {
         const newPostulation = await prisma.postulation.create({ data });
-        return Postulation.fromPrisma(newPostulation, "");
+        return Postulation.fromPrisma(newPostulation, base_url);
     }
 
     static async getById(id, base_url) {
