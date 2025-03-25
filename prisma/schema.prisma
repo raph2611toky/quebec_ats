@@ -21,6 +21,7 @@ enum Role {
 }
 
 enum Status {
+  CREE
   OUVERT
   FERME
 }

@@ -5,7 +5,10 @@ const {
     getOffre,
     getAllOffres,
     updateOffre,
-    deleteOffre
+    deleteOffre,
+    getAvalaibleOffres,
+    filterOffres,
+    searchOffres,
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -28,7 +31,7 @@ const upload = createUpload("offres");
  *       
  *       ### Fonctionnement : 
  *       -  **Créé par admin**
- *       -  **Aprés création, offre status non_publié, il faut ajouter processus pour pouvoir publier l'offre après**
+ *       -  **Aprés création, offre status CREE, il faut ajouter processus pour pouvoir publier l'offre après**
  *       -  **Candidat postuler - et création table postulation**
  */
 
@@ -44,7 +47,6 @@ const upload = createUpload("offres");
  *         - image_url
  *         - description
  *         - date_limite
- *         - status
  *         - lieu
  *         - pays
  *         - type_emploi
@@ -74,7 +76,7 @@ const upload = createUpload("offres");
  *           description: Date limite de l'offre
  *         status:
  *           type: string
- *           enum: [OUVERT, FERME]
+ *           enum: [CREE, OUVERT, FERME]
  *           description: Statut de l'offre
  *         nombre_requis:
  *           type: integer
@@ -159,6 +161,196 @@ router.get("/", getAllOffres);
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     Offre:
+ *       type: object
+ *       required:
+ *         - titre
+ *         - user_id
+ *         - image_url
+ *         - description
+ *         - date_limite
+ *         - lieu
+ *         - pays
+ *         - type_emploi
+ *         - salaire
+ *         - devise
+ *         - horaire_ouverture
+ *         - horaire_fermeture
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique de l'offre
+ *         titre:
+ *           type: string
+ *           description: Titre de l'offre
+ *         user_id:
+ *           type: integer
+ *           description: ID de l'utilisateur créateur
+ *         image_url:
+ *           type: string
+ *           description: URL de l'image de l'offre
+ *         description:
+ *           type: string
+ *           description: Description de l'offre
+ *         date_limite:
+ *           type: string
+ *           format: date-time
+ *           description: Date limite de l'offre
+ *         status:
+ *           type: string
+ *           enum: [CREE, OUVERT, FERME]
+ *           description: Statut de l'offre
+ *         nombre_requis:
+ *           type: integer
+ *           description: Nombre de candidats requis
+ *         lieu:
+ *           type: string
+ *           description: Lieu de l'emploi
+ *         pays:
+ *           type: string
+ *           description: Pays de l'emploi
+ *         type_emploi:
+ *           type: string
+ *           description: Type d'emploi (CDI, CDD, etc.)
+ *         salaire:
+ *           type: string
+ *           description: Salaire (stocké comme BigInt)
+ *         devise:
+ *           type: string
+ *           enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
+ *           description: Devise du salaire
+ *         horaire_ouverture:
+ *           type: string
+ *           description: Heure d'ouverture (format HH:mm:ss)
+ *         horaire_fermeture:
+ *           type: string
+ *           description: Heure de fermeture (format HH:mm:ss)
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date de création
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date de mise à jour
+ *       example:
+ *         id: 1
+ *         titre: "Développeur Full Stack"
+ *         user_id: 1
+ *         image_url: "https://res.cloudinary.com/example/offre_images/dev.jpg"
+ *         description: "Poste de développeur Full Stack..."
+ *         date_limite: "2025-04-30T23:59:59Z"
+ *         status: "OUVERT"
+ *         nombre_requis: 2
+ *         lieu: "Paris"
+ *         pays: "France"
+ *         type_emploi: "CDI"
+ *         salaire: "50000.75"
+ *         devise: "EURO"
+ *         horaire_ouverture: "09:00:00"
+ *         horaire_fermeture: "17:00:00"
+ *         created_at: "2025-03-18T10:00:00Z"
+ *         updated_at: "2025-03-18T10:00:00Z"
+ */
+
+/**
+ * @swagger
+ * /api/offres/available:
+ *   get:
+ *     summary: Récupérer toutes les offres publié
+ *     tags: [Offres]
+ *     responses:
+ *       200:
+ *         description: Liste des offres publié (ouvert et fermé)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Offre'
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/available", getAvalaibleOffres);
+
+
+/**
+ * @swagger
+ * /api/offres/filter:
+ *   get:
+ *     summary: Filtrer les offres
+ *     tags: [Offres] 
+ *     description: Filtrer les offres selon différents critères
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         enum: [CREE, OUVERT, FERME] 
+ *         description: Le statut de l'offre (par exemple, "actif")
+ *       - in: query
+ *         name: minNombreRequis
+ *         description: Nombre minimum requis
+ *       - in: query
+ *         name: lieu
+ *         description: Lieu de l'offre
+ *       - in: query
+ *         name: pays
+ *         description: Pays de l'offre
+ *       - in: query
+ *         name: type_emploi
+ *         description: Type d'emploi (par exemple, "temps plein")
+ *       - in: query
+ *         name: salaire
+ *         description: Salaire minimum de l'offre
+ *       - in: query
+ *         name: devise
+ *         description: Devise du salaire
+ *       - in: query
+ *         name: date_publication
+ *         description: Date de publication des offres (format YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Liste des offres filtrées
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get('/filter', filterOffres);
+
+
+/**
+ * @swagger
+ * /api/offres/search:
+ *   get:
+ *     summary: Searcher offres ouvert selon critères
+ *     tags: [Offres] 
+ *     description: Rechercher des offres ouvert selon un mot-clé
+ *     parameters:
+ *       - in: query
+ *         name: keyword
+ *         description: Le mot-clé pour rechercher des offres
+ *     responses:
+ *       200:
+ *         description: Liste des offres correspondant à la recherche
+ *       400:
+ *         description: Le paramètre 'keyword' est requis
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get('/search', searchOffres);
+
+
+
+/**
+ * @swagger
  * /api/offres/{id}:
  *   get:
  *     summary: Récupérer une offre par ID
@@ -218,7 +410,6 @@ router.get("/:id", getOffre);
  *               - titre
  *               - description
  *               - date_limite
- *               - status
  *               - lieu
  *               - pays
  *               - type_emploi
@@ -240,11 +431,6 @@ router.get("/:id", getOffre);
  *                 format: date-time
  *                 description: Date limite de l'offre
  *                 example: "2025-04-30T23:59:59Z"
- *               status:
- *                 type: string
- *                 enum: [OUVERT, FERME]
- *                 description: Statut de l'offre
- *                 example: "OUVERT"
  *               nombre_requis:
  *                 type: integer
  *                 description: Nombre de candidats requis (optionnel, 1 par défaut)
@@ -337,11 +523,6 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                 format: date-time
  *                 description: Nouvelle date limite
  *                 example: "2025-05-15T23:59:59Z"
- *               status:
- *                 type: string
- *                 enum: [OUVERT, FERME]
- *                 description: Nouveau statut
- *                 example: "FERME"
  *               nombre_requis:
  *                 type: integer
  *                 description: Nouveau nombre de candidats requis

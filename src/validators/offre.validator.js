@@ -16,11 +16,11 @@ const createOffreValidationRules = [
         .withMessage("La date limite est requise")
         .isISO8601()
         .withMessage("La date limite doit être au format ISO8601 (ex: 2025-04-30T23:59:59Z)"),
-    body("status")
-        .notEmpty()
-        .withMessage("Le statut est requis")
-        .isIn(["OUVERT", "FERME"])
-        .withMessage("Le statut doit être OUVERT ou FERME"),
+    // body("status")
+    //     .notEmpty()
+    //     .withMessage("Le statut est requis")
+    //     .isIn(["OUVERT", "FERME"])
+    //     .withMessage("Le statut doit être CREE, OUVERT ou FERME"),
     body("nombre_requis")
         .optional()
         .isInt({ min: 1 })
@@ -67,10 +67,10 @@ const updateOffreValidationRules = [
         .optional()
         .isISO8601()
         .withMessage("La date limite doit être au format ISO8601 (ex: 2025-04-30T23:59:59Z)"),
-    body("status")
-        .optional()
-        .isIn(["OUVERT", "FERME"])
-        .withMessage("Le statut doit être OUVERT ou FERME"),
+    // body("status")
+    //     .optional()
+    //     .isIn(["OUVERT", "FERME"])
+    //     .withMessage("Le statut doit être OUVERT ou FERME"),
     body("nombre_requis")
         .optional()
         .isInt({ min: 1 })

@@ -1,3 +1,4 @@
+const { Status } = require("@prisma/client");
 const prisma = require("../config/prisma.config");
 
 const getFullImageUrl = (relativePath, base_url) => {
@@ -13,7 +14,7 @@ class Offre {
         image_url,
         description,
         date_limite,
-        status,
+        status= Status.CREE,
         nombre_requis = 1,
         lieu,
         pays,
@@ -95,6 +96,22 @@ class Offre {
         }
     }
 
+    static async getAllAvailable(base_url, skip = 0, take = 10) {
+        try {
+            const offres = await prisma.offre.findMany({
+                skip,
+                take,
+                include: { user: true, postulations: true },
+                where: { status: {not: Status.CREE}}
+            });
+            return offres.map(offre => Offre.fromPrisma(offre, base_url));
+        } catch (error) {
+            console.error("Erreur dans Offre.getAll:", error);
+            throw error;
+        }
+    }
+
+
     static async create(data) {
         try {
             const newOffre = await prisma.offre.create({ data });
@@ -126,6 +143,25 @@ class Offre {
             throw error;
         }
     }
+
+    static async search(keyword, base_url) {
+        try {
+            const offres = await prisma.offre.findMany({
+                where: {
+                    status: Status.OUVERT,
+                    OR: [
+                        { titre: { contains: keyword, mode: "insensitive" } },
+                        { description: { contains: keyword, mode: "insensitive" } }
+                    ]
+                }
+            });
+            return offres.map(offre => Offre.fromPrisma(offre, base_url));
+        } catch (error) {
+            console.error("Erreur dans Offre.search:", error);
+            throw error;
+        }
+    }
+
 }
 
 module.exports = Offre;
