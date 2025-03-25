@@ -2,6 +2,11 @@ const { body } = require("express-validator");
 const { TypeProcessus, StatutProcessus } = require("@prisma/client");
 
 const createProcessusValidator = [
+    body("offre_id")
+    .isInt()
+    .withMessage("L'ID de l'offre doit être un entier"),
+
+
     body("titre")
         .trim()
         .notEmpty()
@@ -39,6 +44,11 @@ const createProcessusValidator = [
 ];
 
 const updateProcessusValidator = [
+    body("offre_id")
+    .optional()
+    .isInt()
+    .withMessage("L'ID de l'offre doit être un entier"),
+    
     body("titre")
         .optional()
         .trim()

@@ -1,14 +1,22 @@
-const { StatutProcessus, TypeProcessus } = require("@prisma/client");
+const { StatutProcessus, TypeProcessus, Status } = require("@prisma/client");
 const Processus = require("../models/processus.model");
 const Question = require("../models/question.model");
+const Offre = require("../models/offre.model");
 
 
 exports.createProcessus = async (req, res) => {
     try {
         const processusData = {
             ...req.body,
+            offre_id : parseInt(req.body.offre_id),
             duree: parseInt(req.body.duree)
         };
+  
+        const offre = await Offre.getById(processusData.offre_id)
+        if(offre.status != Status.CREE){
+            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+        }
+
         const newProcessus = await Processus.create(processusData);
         res.status(201).json(newProcessus);
     } catch (error) {
@@ -19,19 +27,41 @@ exports.createProcessus = async (req, res) => {
 
 exports.updateProcessus = async (req, res) => {
     try {
-        const existingProcessus = await Processus.getById(parseInt(req.params.id));
+        const processusId = parseInt(req.params.id);
+        const existingProcessus = await Processus.getById(processusId);
+
         if (!existingProcessus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
-        if(existingProcessus.statut != StatutProcessus.A_VENIR){
-            return res.status(400).json({ error: "Processus qui a déjà commencé, ne peux plus être modifier" });
-        }
-        
-        let updateData = { ...req.body };
-        if (updateData.duree) updateData.duree = parseInt(updateData.duree);
-        if (updateData.lien_visio === "") updateData.lien_visio = null;
 
-        const updatedProcessus = await Processus.update(parseInt(req.params.id), updateData);
+        const offre = await Offre.getById(existingProcessus.offre_id)
+        if(offre.status != Status.CREE){
+            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+        }
+
+
+        if (existingProcessus.statut !== StatutProcessus.A_VENIR) {
+            return res.status(400).json({ error: "Processus qui a déjà commencé, ne peut plus être modifié" });
+        }
+
+        // Récupérer uniquement les champs valides présents dans la requête
+        const { titre, type, description, duree } = req.body;
+        let updateData = {};
+
+        if (titre !== undefined) updateData.titre = titre;
+        if (type !== undefined) updateData.type = type;
+        if (description !== undefined) updateData.description = description;
+        if (duree !== undefined) {
+            const parsedDuree = parseInt(duree);
+            if (!isNaN(parsedDuree)) updateData.duree = parsedDuree;
+        }
+
+        // Si aucun champ valide n'est fourni
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: "Aucune donnée valide fournie pour la mise à jour" });
+        }
+
+        const updatedProcessus = await Processus.update(processusId, updateData);
         res.status(200).json(updatedProcessus);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du processus:", error);
@@ -39,12 +69,19 @@ exports.updateProcessus = async (req, res) => {
     }
 };
 
+
 exports.deleteProcessus = async (req, res) => {
     try {
         const processus = await Processus.getById(parseInt(req.params.id));
         if (!processus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
+
+        const offre = await Offre.getById(processus.offre_id)
+        if(offre.status != Status.CREE){
+            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+        }
+
         if(processus.statut == StatutProcessus.EN_COURS){
             return res.status(400).json({ error: "Processus en cours, ne peux pas être supprimer" });
         }

@@ -52,6 +52,10 @@ const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.m
  *         nom:
  *           type: string
  *           description: Nom complet du candidat
+ *         password:
+ *           type: string
+ *           description: mot de passe candidat (optionnel)
+ *           nullable: true
  *         telephone:
  *           type: string
  *           description: Numéro de téléphone (optionnel)

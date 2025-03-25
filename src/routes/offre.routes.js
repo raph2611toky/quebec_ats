@@ -9,6 +9,8 @@ const {
     getAvalaibleOffres,
     filterOffres,
     searchOffres,
+    getProcessusByOffre,
+    publishOffre
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -346,6 +348,123 @@ router.get('/filter', filterOffres);
  *         description: Erreur interne du serveur
  */
 router.get('/search', searchOffres);
+
+
+/**
+ * @swagger
+ * /api/offres/{offre_id}/processus:
+ *   get:
+ *     summary: Récupère tous les processus d'une offre spécifique
+ *     tags: [Offres] 
+ *     description: Retourne la liste des processus associés à une offre donnée via son ID.
+ *     parameters:
+ *       - in: path
+ *         name: offre_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre pour laquelle récupérer les processus
+ *     responses:
+ *       200:
+ *         description: Liste des processus récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   offre_id:
+ *                     type: integer
+ *                     example: 5
+ *                   titre:
+ *                     type: string
+ *                     example: "Entretien téléphonique"
+ *                   type:
+ *                     type: string
+ *                     example: "VISIO_CONFERENCE"
+ *                   description:
+ *                     type: string
+ *                     example: "Premier entretien avec le recruteur"
+ *                   statut:
+ *                     type: string
+ *                     example: "A_VENIR"
+ *                   duree:
+ *                     type: integer
+ *                     example: 30
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *                   updated_at:
+ *                     type: string
+ *                     format: date-time
+ *       400:
+ *         description: Mauvaise requête (ID invalide)
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/:offreId/processus", getProcessusByOffre);
+
+
+/**
+ * @swagger
+ * /api/offres/{id}/publish:
+ *   put:
+ *     tags: [Offres]
+ *     summary: Publier une offre après vérification des processus et questions
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de l'offre à publier
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Offre publiée avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Offre publiée avec succès."
+ *       400:
+ *         description: L'offre ne peut pas être publiée en raison de processus manquants ou de questions incomplètes.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: Offre introuvable.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre introuvable."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.put("/:id/publish",IsAuthenticatedAdmin, publishOffre);
 
 
 

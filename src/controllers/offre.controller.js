@@ -2,8 +2,10 @@ const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
-const { Status } = require("@prisma/client");
-const { offre } = require("../config/prisma.config");
+const { Status, TypeProcessus } = require("@prisma/client");
+const { offre,} = require("../config/prisma.config");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 exports.createOffre = async (req, res) => {
     try {
@@ -213,4 +215,74 @@ exports.searchOffres = async (req, res) => {
     }
 };
 
+exports.getProcessusByOffre = async (req, res) => {
+    try {
+        const offreId = parseInt(req.params.offreId);
+        const processus = await Offre.getAllProcessus(offreId);
+        res.status(200).json(processus);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des processus:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+
+exports.publishOffre = async (req, res) => {
+    try {
+        const offreId = parseInt(req.params.id);
+
+        const offre = await prisma.offre.findUnique({
+            where: { id: offreId },
+            include: {
+                processus: {
+                    include: {
+                        questions: {
+                            include: {
+                                reponses: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!offre) {
+            return res.status(404).json({ error: "Offre introuvable." });
+        }
+        
+        if(offre.status == Status.FERME){
+            return res.status(400).json({ error: "Interdit. Offre déjà fermé." });
+        }
+
+        if (offre.processus.length === 0) {
+            return res.status(400).json({ error: "Il faut au moins ajouter un processus de recrutement avant de publier une offre." });
+        }
+
+        for (const processus of offre.processus) {
+            if (processus.type === "QUESTIONNAIRE") {
+                if (processus.questions.length === 0) {
+                    return res.status(400).json({ error: "Il faut au moins ajouter une question avant de publier une offre avec un processus de questionnaire." });
+                }
+
+                for (const question of processus.questions) {
+                    const hasCorrectAnswer = question.reponses.some(reponse => reponse.is_true === true);
+                    if (!hasCorrectAnswer) {
+                        return res.status(400).json({ error: `La question ID ${question.id} doit avoir au moins une réponse correcte.` });
+                    }
+                }
+            }
+        }
+
+        await prisma.offre.update({
+            where: { id: offreId },
+            data: { status: Status.OUVERT }
+        });
+
+        return res.status(200).json({ message: "Offre publiée avec succès." });
+
+    } catch (error) {
+        console.error("Erreur lors de la publication de l'offre:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
 

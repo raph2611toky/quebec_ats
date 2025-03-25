@@ -39,6 +39,10 @@ const errorHandler = require('../middlewares/error.handler');
  *           type: integer
  *           description: Identifiant unique du processus
  *           example: 1
+ *         offre_id:
+ *           type: integer
+ *           description: ID offres associé à la processus 
+ *           example: 1 
  *         titre:
  *           type: string
  *           description: Titre du processus
@@ -61,11 +65,6 @@ const errorHandler = require('../middlewares/error.handler');
  *           type: integer
  *           description: Durée en minutes
  *           example: 60
- *         lien_visio:
- *           type: string
- *           nullable: true
- *           description: Lien de la visioconférence (optionnel)
- *           example: "https://zoom.us/j/123456789"
  *         created_at:
  *           type: string
  *           format: date-time
@@ -101,7 +100,12 @@ const errorHandler = require('../middlewares/error.handler');
  *               - titre
  *               - description
  *               - duree
+ *               - offre_id
  *             properties:
+ *               offre_id:
+ *                 type: string
+ *                 description: ID Offre du processus à créé 
+ *                 example: "1"
  *               titre:
  *                 type: string
  *                 description: Titre du processus

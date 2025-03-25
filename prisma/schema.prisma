@@ -110,6 +110,7 @@ model Offre {
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
   postulations      Postulation[] @relation("OffrePostulations")
+  processus         Processus[]   @relation("OffreProcessus")
 }
 
 model Candidat {
@@ -117,6 +118,7 @@ model Candidat {
   email        String             @unique
   nom          String
   telephone    String?
+  password     String?
   image        String             @default("uploads/candidats/default.png")
   created_at   DateTime           @default(now())
   updated_at   DateTime           @updatedAt
@@ -186,9 +188,11 @@ model Processus {
   type        TypeProcessus   @default(VISIO_CONFERENCE)
   description String
   statut      StatutProcessus @default(A_VENIR)
+  offre       Offre           @relation("OffreProcessus", fields: [offre_id], references: [id])
+  offre_id    Int
   //duree en minutes
   duree       Int
-  lien_visio  String?
+  // lien_visio  String?
   created_at  DateTime        @default(now())
   updated_at  DateTime        @updatedAt
   questions   Question[]      @relation("ProcessusQuestion")

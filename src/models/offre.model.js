@@ -1,5 +1,6 @@
 const { Status } = require("@prisma/client");
 const prisma = require("../config/prisma.config");
+const Processus = require("./processus.model");
 
 const getFullImageUrl = (relativePath, base_url) => {
     if (!relativePath) return null;
@@ -161,6 +162,20 @@ class Offre {
             throw error;
         }
     }
+    
+    static async getAllProcessus(offre_id) {
+        try {
+            const processus = await prisma.processus.findMany({
+                where: { offre_id }
+            });
+            return processus.map(process => Processus.fromPrisma(process));
+            
+        } catch (error) {
+            console.error("Erreur dans getAllProcessus:", error);
+            throw error;
+        }        
+    }
+    
 
 }
 
