@@ -69,6 +69,12 @@ enum TypeProcessus {
   ANNULER
 }
 
+enum TypeEmploi {
+  CDD
+  CDI
+  STAGE
+}
+
 enum StatutProcessus {
   A_VENIR
   EN_COURS
@@ -102,7 +108,7 @@ model Offre {
   nombre_requis     Int           @default(1)
   lieu              String
   pays              String
-  type_emploi       String
+  type_emploi       TypeEmploi    @default(CDD)
   salaire           Decimal
   devise            Devise
   horaire_ouverture String
