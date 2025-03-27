@@ -99,6 +99,7 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *           description: Pays de l'emploi
  *         type_emploi:
  *           type: string
+ *           enum: [CDD, CDI, STAGE]
  *           description: Type d'emploi (CDI, CDD, etc.)
  *         salaire:
  *           type: string
