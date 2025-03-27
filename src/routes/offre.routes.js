@@ -574,7 +574,7 @@ router.get("/:id", getOffre);
  *               type_emploi:
  *                 type: string
  *                 description: Type d'emploi
- *                 example: "CDI"
+ *                 enum: [CDD, CDI, STAGE]
  *               salaire:
  *                 type: string
  *                 description: Salaire
