@@ -1,4 +1,4 @@
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 
 const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
 
@@ -99,4 +99,43 @@ const updateOffreValidationRules = [
         .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)")
 ];
 
-module.exports = { createOffreValidationRules, updateOffreValidationRules };
+const postulerOffreValidationRules = [
+    param("id").isInt().withMessage("L'ID de l'offre doit être un entier valide."),
+    
+    body("cv")
+      .custom((value, { req }) => {
+        if (!req.files || !req.files.cv) {
+          throw new Error("Le CV est requis.");
+        }
+        return true;
+      }),
+  
+    body("lettre_motivation")
+      .custom((value, { req }) => {
+        if (!req.files || !req.files.lettre_motivation) {
+          throw new Error("La lettre de motivation est requise.");
+        }
+        return true;
+      }),
+  
+    body("nom")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Le nom est requis."),
+  
+    body("email")
+      .isEmail()
+      .withMessage("L'email doit être valide."),
+  
+    body("telephone")
+      .matches(/^\+?\d{7,15}$/)
+      .withMessage("Le numéro de téléphone doit être valide."),
+  
+    body("source_site")
+      .optional()
+      .isString()
+      .withMessage("Le site source doit être une chaîne de caractères."),
+  ];
+
+module.exports = { createOffreValidationRules, updateOffreValidationRules , postulerOffreValidationRules};

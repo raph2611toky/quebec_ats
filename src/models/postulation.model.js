@@ -14,8 +14,8 @@ class Postulation {
         etape_actuelle,
         cv,
         lettre_motivation,
-        telephone,
         source_site,
+        note,
         created_at,
         updated_at,
         base_url = ""
@@ -27,8 +27,8 @@ class Postulation {
         this.etape_actuelle = etape_actuelle;
         this.cv = getFullUrl(cv, base_url);
         this.lettre_motivation = getFullUrl(lettre_motivation, base_url);
-        this.telephone = telephone || null;
         this.source_site = source_site;
+        this.note = note || 0;
         this.created_at = created_at;
         this.updated_at = updated_at;
     }
@@ -42,8 +42,8 @@ class Postulation {
             postulation.etape_actuelle,
             postulation.cv, 
             postulation.lettre_motivation,
-            postulation.telephone,
             postulation.source_site,
+            postulation.note,
             postulation.created_at,
             postulation.updated_at,
             base_url 

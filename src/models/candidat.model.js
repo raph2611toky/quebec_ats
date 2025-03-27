@@ -6,11 +6,11 @@ const getFullImageUrl = (relativePath, base_url) => {
 };
 
 class Candidat {
-    constructor(id, email, nom, password, telephone, image, created_at, updated_at, base_url = "") {
+    constructor(id, email, nom, is_email_active, telephone, image, created_at, updated_at, base_url = "") {
         this.id = id;
         this.email = email;
         this.nom = nom;
-        this.password = password || null;
+        this.is_email_active = is_email_active;
         this.telephone = telephone || null;
         this.image = getFullImageUrl(image, base_url);
         this.created_at = created_at;
@@ -22,7 +22,7 @@ class Candidat {
             candidat.id,
             candidat.email,
             candidat.nom,
-            candidat.password,
+            candidat.is_email_active,
             candidat.telephone,
             candidat.image,
             candidat.created_at,

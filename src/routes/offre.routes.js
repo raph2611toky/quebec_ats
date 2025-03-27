@@ -10,14 +10,22 @@ const {
     filterOffres,
     searchOffres,
     getProcessusByOffre,
-    publishOffre
+    publishOffre,
+    postulerOffre
 } = require("../controllers/offre.controller");
-const { createOffreValidationRules, updateOffreValidationRules } = require("../validators/offre.validator");
+const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const errorHandler = require("../middlewares/error.handler");
 const createUpload = require("../config/multer.config");
-
 const upload = createUpload("offres");
+
+// Middleware pour gérer l'upload de CV et lettre_motivation
+const uploadDocuments = (folder) => createUpload(folder).fields([
+    { name: "cv", maxCount: 1 },
+    { name: "lettre_motivation", maxCount: 1 }
+]);
+    
 
 /**
  * @swagger
@@ -757,5 +765,82 @@ router.put("/:id", IsAuthenticated, upload.single("image_url"), updateOffreValid
  *                   example: "Erreur interne du serveur"
  */
 router.delete("/:id", IsAuthenticated, deleteOffre);
+
+/**
+ * @swagger
+ * /api/offres/{id}/postuler:
+ *   post:
+ *     summary: Postuler à une nouvelle offre. Pour candidat non connecté.
+ *     tags: [Offres]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cv
+ *               - lettre_motivation
+ *               - nom
+ *               - email
+ *               - telephone
+ *               - source_site
+ *             properties:
+ *               cv:
+ *                 type: string
+ *                 format: binary
+ *                 description: CV candidat 
+ *               lettre_motivation:
+ *                 type: string
+ *                 format: binary
+ *                 description: Lettre de Motivation du candidat 
+ *               nom:
+ *                 type: string
+ *                 description: nom du candidat
+ *                 example: "Jack"
+ *               email:
+ *                 type: string
+ *                 description: email du candidat
+ *                 example: "a.angelo.mada@gmail.com" 
+ *               telephone:
+ *                 type: string
+ *                 description: numéro du candidat
+ *                 example: "+263567890948"
+ *               source_site:
+ *                 type: string
+ *                 enum: [LINKEDIN, INDEED, JOOBLE,MESSAGER,WHATSAPP,INSTAGRAM,TELEGRAM,QUEBEC_SITE] 
+ *                 description: "site de redirection (optionnel : défaut LINKEDIN)"
+ *                 example: "LINKEDIN"
+ *     responses:
+ *       200:
+ *         description: Postulation effectuée avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Postulation Offre effectuée avec succès."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/postuler",
+uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
 
 module.exports = router;

@@ -1,11 +1,14 @@
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
+const cloudinary = require("../config/cloudinary.config");
 const path = require("path");
 const crypto = require("crypto");
 const { Status, TypeProcessus } = require("@prisma/client");
-const { offre,} = require("../config/prisma.config");
+const { offre, candidat,} = require("../config/prisma.config");
 const { PrismaClient } = require('@prisma/client');
+const Candidat = require("../models/candidat.model");
 const prisma = new PrismaClient();
+
 
 exports.createOffre = async (req, res) => {
     try {
@@ -279,10 +282,104 @@ exports.publishOffre = async (req, res) => {
         });
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
-
+        
     } catch (error) {
         console.error("Erreur lors de la publication de l'offre:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
+exports.postulerOffre = async (req, res)=>{
+    try {
+        // console.log("fichier reçu: ", req.files);
+        
+        const offre = await Offre.getById(parseInt(req.params.id));
+        let data = {... req.body} 
+
+        if(!offre) 
+        {
+            return res.status(404).json({message: "Offre introuvable"})
+        }
+        
+        if(offre.status != Status.OUVERT){
+            return res.status(400).json({message: "Postulation à cette offre n'est plus ouvert"})
+        }
+
+        let candidat = await Candidat.findByEmail(data.email)
+        
+        if(!candidat){
+            const dataCandidat = {
+                "nom":data.nom,
+                "email":data.email,
+                "telephone":data.telephone
+            }
+            candidat = await Candidat.create(dataCandidat)
+        }
+
+        // Vérifier si le candidat a déjà postulé à cette offre
+        const existingPostulation = await prisma.postulation.findFirst({
+            where: {
+                candidat_id: candidat.id,
+                offre_id: offre.id
+            }
+        });
+
+        if (existingPostulation) {
+            return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
+        }
+
+
+        // file upload (cv, lettre_motivation)
+        let cvUrl;
+        let lettre_motivationUrl;
+
+        // Vérifie si les fichiers existent
+        if (req.files?.cv?.[0]?.path && req.files?.lettre_motivation?.[0]?.path) {            try {
+                await fs.access(req.files.cv[0].path);
+                await fs.access(req.files.lettre_motivation[0].path);
+            } catch (error) {
+                console.error("Les fichiers n'ont pas été correctement transférés :", error);
+                return res.status(400).json({ error: "Erreur lors du transfert des fichiers" });
+            }
+
+            const resultCV = await cloudinary.uploader.upload(req.files.cv[0].path, {
+                folder: "cv",
+                use_filename: true,
+                unique_filename: false
+            });
+            const resultlettre_motivation = await cloudinary.uploader.upload(req.files.lettre_motivation[0].path, {
+                folder: "lettre_motivation",
+                use_filename: true,
+                unique_filename: false
+            });
+            cvUrl = resultCV.secure_url;
+            lettre_motivationUrl = resultlettre_motivation.secure_url;
+            await fs.unlink(req.files.cv[0].path);
+            await fs.unlink(req.files.lettre_motivation[0].path);
+        } else {
+            return res.status(400).json({ error: "Les cv et lettre de motivation sont requis pour postuler." })
+        }
+        
+
+        
+        const postulation = await prisma.postulation.create({
+            data: {
+                candidat: { connect: { id: candidat.id } }, // Connexion relationnelle
+                offre: { connect: { id: offre.id } },       // Connexion relationnelle
+                cv: cvUrl,
+                lettre_motivation: lettre_motivationUrl,
+                source_site: data.source_site,
+            }
+        });
+        
+        // console.log("id postulation: ", postulation.id);
+                
+        
+        return res.status(200).json({ message: "Postulation Offre  effectué avec succès." });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" })
+    }
+
+};

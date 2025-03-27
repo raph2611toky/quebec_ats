@@ -36,10 +36,10 @@ enum Devise {
   ARIARY
 }
 
+// représente état de son postulation actuelle 
 enum EtapeActuelle {
   SOUMIS
   EN_REVISION
-  ENTRETIEN
   ACCEPTE
   REJETE
 }
@@ -88,6 +88,7 @@ model User {
   updated_at      DateTime          @updatedAt
   offres          Offre[]           @relation("UserOffres")
   otp_verfication OtpVerification[]
+  remarques       Remarque[]        @relation("RemarqueAdmin")
 }
 
 model Offre {
@@ -114,16 +115,18 @@ model Offre {
 }
 
 model Candidat {
-  id           Int                @id @default(autoincrement())
-  email        String             @unique
-  nom          String
-  telephone    String?
-  password     String?
-  image        String             @default("uploads/candidats/default.png")
-  created_at   DateTime           @default(now())
-  updated_at   DateTime           @updatedAt
-  postulations Postulation[]      @relation("CandidatPostulations")
-  referents    CandidatReferent[] @relation("CandidatToReferent")
+  id              Int                @id @default(autoincrement())
+  email           String             @unique
+  nom             String
+  // is_email_active, envoye email pour activé après première postulation
+  // suivie progression candidat via auth mail, utilisant son mail 
+  is_email_active Boolean            @default(false)
+  telephone       String?
+  image           String             @default("uploads/candidats/default.png")
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+  postulations    Postulation[]      @relation("CandidatPostulations")
+  referents       CandidatReferent[] @relation("CandidatToReferent")
 }
 
 model Postulation {
@@ -136,10 +139,15 @@ model Postulation {
   etape_actuelle    EtapeActuelle @default(SOUMIS)
   cv                String
   lettre_motivation String?
-  telephone         String?
-  source_site       SourceSite
+  source_site       SourceSite    @default(LINKEDIN)
+  //représente la note globale du candidat durant tous les processus de recrutement
+  note              Int           @default(0)
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
+  remarques         Remarque[]    @relation("RemarquePostulation")
+
+  // Contrainte d'unicité
+  @@unique([candidat_id, offre_id])
 }
 
 model Referent {
@@ -212,4 +220,14 @@ model Reponse {
   is_true     Boolean
   question    Question @relation("QuestionReponse", fields: [question_id], references: [id])
   question_id Int
+}
+
+model Remarque {
+  id             Int         @id @default(autoincrement())
+  admin          User        @relation("RemarqueAdmin", fields: [admin_id], references: [id])
+  admin_id       Int
+  postulation    Postulation @relation("RemarquePostulation", fields: [postulation_id], references: [id])
+  postulation_id Int
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
 }
