@@ -153,7 +153,7 @@ model Postulation {
   remarques         Remarque[]    @relation("RemarquePostulation")
 
   // Contrainte d'unicité
-  //@@unique([candidat_id, offre_id])
+  @@unique([candidat_id, offre_id])
 }
 
 model Referent {
