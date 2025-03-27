@@ -1,4 +1,4 @@
-const { Status } = require("@prisma/client");
+const { Status, TypeEmploi } = require("@prisma/client");
 const prisma = require("../config/prisma.config");
 const Processus = require("./processus.model");
 
@@ -19,7 +19,7 @@ class Offre {
         nombre_requis = 1,
         lieu,
         pays,
-        type_emploi,
+        type_emploi=TypeEmploi.CDD,
         salaire,
         devise,
         horaire_ouverture,
