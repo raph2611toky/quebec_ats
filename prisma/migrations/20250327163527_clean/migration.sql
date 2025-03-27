@@ -2,13 +2,13 @@
 CREATE TYPE "Role" AS ENUM ('MODERATEUR', 'ADMINISTRATEUR');
 
 -- CreateEnum
-CREATE TYPE "Status" AS ENUM ('OUVERT', 'FERME');
+CREATE TYPE "Status" AS ENUM ('CREE', 'OUVERT', 'FERME');
 
 -- CreateEnum
 CREATE TYPE "Devise" AS ENUM ('EURO', 'DOLLAR', 'DOLLAR_CANADIAN', 'LIVRE', 'YEN', 'ROUPIE', 'ARIARY');
 
 -- CreateEnum
-CREATE TYPE "EtapeActuelle" AS ENUM ('SOUMIS', 'EN_REVISION', 'ENTRETIEN', 'ACCEPTE', 'REJETE');
+CREATE TYPE "EtapeActuelle" AS ENUM ('SOUMIS', 'EN_REVISION', 'ACCEPTE', 'REJETE');
 
 -- CreateEnum
 CREATE TYPE "SourceSite" AS ENUM ('LINKEDIN', 'INDEED', 'JOOBLE', 'FRANCETRAVAIL', 'MESSAGER', 'WHATSAPP', 'INSTAGRAM', 'TELEGRAM', 'TWITTER', 'QUEBEC_SITE');
@@ -66,6 +66,7 @@ CREATE TABLE "Candidat" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "nom" TEXT NOT NULL,
+    "is_email_active" BOOLEAN NOT NULL DEFAULT false,
     "telephone" TEXT,
     "image" TEXT NOT NULL DEFAULT 'uploads/candidats/default.png',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,8 +84,8 @@ CREATE TABLE "Postulation" (
     "etape_actuelle" "EtapeActuelle" NOT NULL DEFAULT 'SOUMIS',
     "cv" TEXT NOT NULL,
     "lettre_motivation" TEXT,
-    "telephone" TEXT,
-    "source_site" "SourceSite" NOT NULL,
+    "source_site" "SourceSite" NOT NULL DEFAULT 'LINKEDIN',
+    "note" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -144,8 +145,8 @@ CREATE TABLE "Processus" (
     "type" "TypeProcessus" NOT NULL DEFAULT 'VISIO_CONFERENCE',
     "description" TEXT NOT NULL,
     "statut" "StatutProcessus" NOT NULL DEFAULT 'A_VENIR',
+    "offre_id" INTEGER NOT NULL,
     "duree" INTEGER NOT NULL,
-    "lien_visio" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -171,11 +172,25 @@ CREATE TABLE "Reponse" (
     CONSTRAINT "Reponse_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Remarque" (
+    "id" SERIAL NOT NULL,
+    "admin_id" INTEGER NOT NULL,
+    "postulation_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Remarque_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Candidat_email_key" ON "Candidat"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Postulation_candidat_id_offre_id_key" ON "Postulation"("candidat_id", "offre_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Referent_email_key" ON "Referent"("email");
@@ -199,7 +214,16 @@ ALTER TABLE "CandidatReferent" ADD CONSTRAINT "CandidatReferent_referent_id_fkey
 ALTER TABLE "OtpVerification" ADD CONSTRAINT "OtpVerification_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Processus" ADD CONSTRAINT "Processus_offre_id_fkey" FOREIGN KEY ("offre_id") REFERENCES "Offre"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Question" ADD CONSTRAINT "Question_processus_id_fkey" FOREIGN KEY ("processus_id") REFERENCES "Processus"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Reponse" ADD CONSTRAINT "Reponse_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "Question"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Remarque" ADD CONSTRAINT "Remarque_admin_id_fkey" FOREIGN KEY ("admin_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Remarque" ADD CONSTRAINT "Remarque_postulation_id_fkey" FOREIGN KEY ("postulation_id") REFERENCES "Postulation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
