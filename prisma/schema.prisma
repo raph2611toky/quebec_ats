@@ -145,6 +145,7 @@ model Postulation {
   etape_actuelle    EtapeActuelle @default(SOUMIS)
   cv                String
   lettre_motivation String?
+  telephone         String?
   source_site       SourceSite    @default(LINKEDIN)
   //représente la note globale du candidat durant tous les processus de recrutement
   note              Int           @default(0)
