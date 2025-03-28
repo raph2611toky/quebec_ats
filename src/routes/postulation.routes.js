@@ -5,7 +5,9 @@ const {
     getPostulation, 
     getAllPostulations, 
     deletePostulation,
-    confirmReferenceWithRecommendation
+    confirmReferenceWithRecommendation,
+    acceptPostulation,
+    rejectPostulation
 } = require("../controllers/postulation.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
@@ -295,5 +297,98 @@ router.delete("/:id", IsAuthenticatedAdmin, deletePostulation);
  *         description: Erreur interne du serveur
  */
 router.post("/confirm-reference", confirmReferenceWithRecommendation);
+
+/**
+ * @swagger
+ * /api/postulations/{id}/accept:
+ *   put:
+ *     summary: Accepter une postulation par ID
+ *     tags: [Postulations]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation à accepter
+ *     responses:
+ *       200:
+ *         description: Postulation acceptée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Erreur de validation 
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/accept", acceptPostulation);
+
+
+/**
+ * @swagger
+ * /api/postulations/{id}/accept:
+ *   put:
+ *     summary: Accepter une postulation par ID
+ *     tags: [Postulations]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation à accepter
+ *     responses:
+ *       200:
+ *         description: Postulation acceptée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Erreur de validation 
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/accept", acceptPostulation);
+
+
+/**
+ * @swagger
+ * /api/postulations/{id}/reject:
+ *   put:
+ *     summary: Rejeter une postulation par ID
+ *     tags: [Postulations]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation à rejeter
+ *     responses:
+ *       200:
+ *         description: Postulation rejeté avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Erreur de validation 
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/accept", rejectPostulation);
+
 
 module.exports = router;

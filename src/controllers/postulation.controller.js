@@ -8,6 +8,8 @@ const path = require("path");
 const { generateToken, verifyToken } = require("../utils/securite/jwt")
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
 const { sendEmail } = require("../services/notifications/email");
+const prisma = require("../config/prisma.config");
+const { EtapeActuelle, Status } = require("@prisma/client");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -215,37 +217,37 @@ exports.deletePostulation = async (req, res) => {
 exports.confirmReferenceWithRecommendation = async (req, res) => {
     try {
         const { recommendation, encryptedToken } = req.body;
-
+        
         if (!recommendation || !encryptedToken) {
             return res.status(400).json({ error: "Recommandation et encryptedToken sont requis" });
         }
-
+        
         let token;
         try {
             token = decryptAES(encryptedToken);
         } catch (error) {
             return res.status(400).json({ error: "Lien de confirmation invalide" });
         }
-
+        
         let decoded;
         try {
             decoded = verifyToken(token);
         } catch (error) {
             return res.status(400).json({ error: "Lien de confirmation expiré ou invalide" });
         }
-
+        
         const { referent_id, candidat_id } = decoded;
-
+        
         const postulation = await Postulation.findByCandidatId(candidat_id, process.env.FRONTEND_URL);
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée pour ce candidat" });
         }
-
+        
         const referent = await Referent.getById(parseInt(referent_id), process.env.FRONTEND_URL);
         if (!referent) {
             return res.status(404).json({ error: "Référent non trouvé" });
         }
-
+        
         const candidatReferent = await Candidat.getReferent(candidat_id, referent_id);
         if (!candidatReferent) {
             return res.status(403).json({ error: "Ce référent n'est pas associé à ce candidat" });
@@ -255,7 +257,7 @@ exports.confirmReferenceWithRecommendation = async (req, res) => {
             recommendation,
             statut: "APPROUVE"
         });
-
+        
         res.status(200).json({
             message: "Référence confirmée avec succès",
             referent: await Referent.getById(referent_id, process.env.FRONTEND_URL)
@@ -265,3 +267,83 @@ exports.confirmReferenceWithRecommendation = async (req, res) => {
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.acceptPostulation = async (req, res) => {
+    try {
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id),    
+            },
+            include: {
+                offre: true, 
+            },            
+        });
+
+        if (!postulation) {
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+
+        if (postulation.offre.status === Status.FERME) { // Vérifie si l'offre est fermée
+            return res.status(400).json({ error: "Peut pas engager. Offre déjà fermée." });
+        }
+        
+        if (postulation.etape_actuelle === EtapeActuelle.ACCEPTE) { // Vérifie si déjà accepté
+            return res.status(400).json({ error: "Postulation déjà acceptée." });
+        }
+        
+        // Mise à jour de la postulation
+        const updatedPostulation = await prisma.postulation.update({
+            where: { id: postulation.id },
+            data: { etape_actuelle: EtapeActuelle.ACCEPTE },
+        });
+
+        // TODO: Envoyer un email au candidat pour lui notifier l'acceptation
+
+        return res.status(200).json({ message: `Candidat accepté pour le post : ${postulation.offre.titre}` });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+
+exports.rejectPostulation = async (req, res) => {
+    try {
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id),    
+            },
+            include: {
+                offre: true, 
+            },            
+        });
+
+        if (!postulation) {
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+
+        if (postulation.offre.status === Status.FERME) { // Vérifie si l'offre est fermée
+            return res.status(400).json({ error: "Peut pas engager. Offre déjà fermée." });
+        }
+        
+        if (postulation.etape_actuelle === EtapeActuelle.ACCEPTE) { // Vérifie si déjà accepté
+            return res.status(400).json({ error: "Postulation déjà acceptée." });
+        }
+        
+        // Mise à jour de la postulation
+        const updatedPostulation = await prisma.postulation.update({
+            where: { id: postulation.id },
+            data: { etape_actuelle: EtapeActuelle.ACCEPTE },
+        });
+
+        // TODO: Envoyer un email au candidat pour lui notifier du rejet si la première fois
+
+        return res.status(200).json({ message: `Candidat rejeté pour le post : ${postulation.offre.titre}` });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
