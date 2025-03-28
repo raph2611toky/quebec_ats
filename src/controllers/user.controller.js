@@ -33,7 +33,7 @@ exports.registerAdmin = async (req, res) => {
                 unique_filename: false
             });
             profileUrl = result.secure_url;
-            await fs.unlink(req.file.path);
+            // await fs.unlink(req.file.path);
         } else {
             profileUrl = await uploadDefaultProfileImage();
         }
@@ -280,7 +280,7 @@ exports.updateAdminProfile = async (req, res) => {
             }
 
             updateData.profile = result.secure_url;
-            await fs.unlink(req.file.path);
+            // await fs.unlink(req.file.path);
         } else if (!existingUser.profile) {
             updateData.profile = await uploadDefaultProfileImage();
         }

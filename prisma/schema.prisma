@@ -2,7 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-//PRODUCTION
+// PRODUCTION
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -36,7 +36,6 @@ enum Devise {
   ARIARY
 }
 
-// représente état de son postulation actuelle 
 enum EtapeActuelle {
   SOUMIS
   EN_REVISION
@@ -100,7 +99,7 @@ model User {
 model Offre {
   id                Int           @id @default(autoincrement())
   titre             String        @default("")
-  user              User          @relation("UserOffres", fields: [user_id], references: [id])
+  user              User          @relation("UserOffres", fields: [user_id], references: [id], onDelete: Cascade)
   user_id           Int
   image_url         String
   description       String
@@ -124,8 +123,6 @@ model Candidat {
   id              Int                @id @default(autoincrement())
   email           String             @unique
   nom             String
-  // is_email_active, envoye email pour activé après première postulation
-  // suivie progression candidat via auth mail, utilisant son mail 
   is_email_active Boolean            @default(false)
   telephone       String?
   image           String             @default("uploads/candidats/default.png")
@@ -137,9 +134,9 @@ model Candidat {
 
 model Postulation {
   id                Int           @id @default(autoincrement())
-  candidat          Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id])
+  candidat          Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id], onDelete: Cascade)
   candidat_id       Int
-  offre             Offre         @relation("OffrePostulations", fields: [offre_id], references: [id])
+  offre             Offre         @relation("OffrePostulations", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id          Int
   date_soumission   DateTime      @default(now())
   etape_actuelle    EtapeActuelle @default(SOUMIS)
@@ -147,13 +144,11 @@ model Postulation {
   lettre_motivation String?
   telephone         String?
   source_site       SourceSite    @default(LINKEDIN)
-  //représente la note globale du candidat durant tous les processus de recrutement
   note              Int           @default(0)
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
   remarques         Remarque[]    @relation("RemarquePostulation")
 
-  // Contrainte d'unicité
   @@unique([candidat_id, offre_id])
 }
 
@@ -170,9 +165,9 @@ model Referent {
 }
 
 model CandidatReferent {
-  candidat    Candidat @relation("CandidatToReferent", fields: [candidat_id], references: [id])
+  candidat    Candidat @relation("CandidatToReferent", fields: [candidat_id], references: [id], onDelete: Cascade)
   candidat_id Int
-  referent    Referent @relation("ReferentToCandidat", fields: [referent_id], references: [id])
+  referent    Referent @relation("ReferentToCandidat", fields: [referent_id], references: [id], onDelete: Cascade)
   referent_id Int
   assigned_at DateTime @default(now())
 
@@ -203,11 +198,9 @@ model Processus {
   type        TypeProcessus   @default(VISIO_CONFERENCE)
   description String
   statut      StatutProcessus @default(A_VENIR)
-  offre       Offre           @relation("OffreProcessus", fields: [offre_id], references: [id])
+  offre       Offre           @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id    Int
-  //duree en minutes
   duree       Int
-  // lien_visio  String?
   created_at  DateTime        @default(now())
   updated_at  DateTime        @updatedAt
   questions   Question[]      @relation("ProcessusQuestion")
@@ -217,7 +210,7 @@ model Question {
   id           Int       @id @default(autoincrement())
   label        String
   reponses     Reponse[] @relation("QuestionReponse")
-  processus    Processus @relation("ProcessusQuestion", fields: [processus_id], references: [id])
+  processus    Processus @relation("ProcessusQuestion", fields: [processus_id], references: [id], onDelete: Cascade)
   processus_id Int
 }
 
@@ -225,15 +218,15 @@ model Reponse {
   id          Int      @id @default(autoincrement())
   label       String
   is_true     Boolean
-  question    Question @relation("QuestionReponse", fields: [question_id], references: [id])
+  question    Question @relation("QuestionReponse", fields: [question_id], references: [id], onDelete: Cascade)
   question_id Int
 }
 
 model Remarque {
   id             Int         @id @default(autoincrement())
-  admin          User        @relation("RemarqueAdmin", fields: [admin_id], references: [id])
+  admin          User        @relation("RemarqueAdmin", fields: [admin_id], references: [id], onDelete: Cascade)
   admin_id       Int
-  postulation    Postulation @relation("RemarquePostulation", fields: [postulation_id], references: [id])
+  postulation    Postulation @relation("RemarquePostulation", fields: [postulation_id], references: [id], onDelete: Cascade)
   postulation_id Int
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt

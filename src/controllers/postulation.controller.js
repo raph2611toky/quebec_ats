@@ -24,7 +24,7 @@ exports.createPostulation = async (req, res) => {
         const cvTempPath = path.join(uploadDir, cvFile.filename);
         const cvFinalPath = path.join(uploadDir, cvOriginalName);
         if (await fs.stat(cvFinalPath).catch(() => false)) {
-            await fs.unlink(cvTempPath);
+            // await fs.unlink(cvTempPath);
         } else {
             await fs.rename(cvTempPath, cvFinalPath);
         }
@@ -38,7 +38,7 @@ exports.createPostulation = async (req, res) => {
             const lettreFinalPath = path.join(uploadDir, lettreOriginalName);
             if (await fs.stat(lettreFinalPath).catch(() => false)) {
                 console.log("Fichier existant, suppression du temporaire...");
-                await fs.unlink(lettreTempPath);
+                // await fs.unlink(lettreTempPath);
             } else {
                 await fs.rename(lettreTempPath, lettreFinalPath);
             }
@@ -173,7 +173,7 @@ exports.updatePostulation = async (req, res) => {
             const lettreTempPath = path.join(uploadDir, lettreFile.filename);
             const lettreFinalPath = path.join(uploadDir, lettreOriginalName);
             if (await fs.stat(lettreFinalPath).catch(() => false)) {
-                await fs.unlink(lettreTempPath);
+                // await fs.unlink(lettreTempPath);
             } else {
                 await fs.rename(lettreTempPath, lettreFinalPath);
             }
@@ -195,14 +195,14 @@ exports.deletePostulation = async (req, res) => {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
 
-        if (postulation.cv) {
-            const cvPath = path.join(__dirname, "../", postulation.cv.replace(req.base_url, ""));
-            await fs.unlink(cvPath).catch(() => {});
-        }
-        if (postulation.lettre_motivation) {
-            const lettrePath = path.join(__dirname, "../", postulation.lettre_motivation.replace(req.base_url, ""));
-            await fs.unlink(lettrePath).catch(() => {});
-        }
+        // if (postulation.cv) {
+        //     const cvPath = path.join(__dirname, "../", postulation.cv.replace(req.base_url, ""));
+        //     // await fs.unlink(cvPath).catch(() => {});
+        // }
+        // if (postulation.lettre_motivation) {
+        //     const lettrePath = path.join(__dirname, "../", postulation.lettre_motivation.replace(req.base_url, ""));
+        //     await fs.unlink(lettrePath).catch(() => {});
+        // }
 
         await Postulation.delete(postulation.id);
         res.status(200).json({ message: "Postulation supprimée avec succès" });

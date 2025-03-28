@@ -72,10 +72,10 @@ exports.updateOffre = async (req, res) => {
             const tempPath = path.join(uploadDir, req.file.filename);
             const finalPath = path.join(uploadDir, originalName);
 
-            if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
-                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
-                await fs.unlink(oldImagePath).catch((error) => {console.log(error)});
-            }
+            // if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
+            //     const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
+            //     // await fs.unlink(oldImagePath).catch((error) => {console.log(error)});
+            // }
 
             if (await fs.stat(finalPath).catch(() => false)) {
                 const tempBuffer = await fs.readFile(tempPath);
@@ -84,7 +84,7 @@ exports.updateOffre = async (req, res) => {
                 const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
 
                 if (tempHash === existingHash) {
-                    await fs.unlink(tempPath);
+                    // await fs.unlink(tempPath);
                     updateData.image_url = `/uploads/offres/${originalName}`;
                 } else {
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
@@ -354,8 +354,8 @@ exports.postulerOffre = async (req, res)=>{
             });
             cvUrl = resultCV.secure_url;
             lettre_motivationUrl = resultlettre_motivation.secure_url;
-            await fs.unlink(req.files.cv[0].path);
-            await fs.unlink(req.files.lettre_motivation[0].path);
+            // await fs.unlink(req.files.cv[0].path);
+            // await fs.unlink(req.files.lettre_motivation[0].path);
         } else {
             return res.status(400).json({ error: "Les cv et lettre de motivation sont requis pour postuler." })
         }
