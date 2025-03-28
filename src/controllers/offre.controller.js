@@ -177,7 +177,8 @@ exports.filterOffres = async (req, res) => {
             type_emploi,
             salaire,
             devise,
-            date_publication
+            date_publication,
+            text
         } = req.query;
 
         const filterConditions = {};
@@ -190,6 +191,13 @@ exports.filterOffres = async (req, res) => {
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
         if (devise) filterConditions.devise = devise;
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
+        if (text) {
+            filterConditions.OR = [
+                { titre: { contains: text, mode: "insensitive" } },
+                { description: { contains: text, mode: "insensitive" } }
+            ];
+        }
+        
 
         const offres = await offre.findMany({
             where: filterConditions 

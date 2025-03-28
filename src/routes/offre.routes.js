@@ -99,7 +99,6 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *           description: Pays de l'emploi
  *         type_emploi:
  *           type: string
- *           enum: [CDD, CDI, STAGE]
  *           description: Type d'emploi (CDI, CDD, etc.)
  *         salaire:
  *           type: string
@@ -328,6 +327,9 @@ router.get("/available", getAvalaibleOffres);
  *       - in: query
  *         name: date_publication
  *         description: Date de publication des offres (format YYYY-MM-DD)
+ *       - in: query
+ *         name: text
+ *         description: texte à chercher dans titre et description offre 
  *     responses:
  *       200:
  *         description: Liste des offres filtrées
