@@ -11,7 +11,8 @@ const {
     searchOffres,
     getProcessusByOffre,
     publishOffre,
-    postulerOffre
+    postulerOffre,
+    deleteOffreForce
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -768,6 +769,55 @@ router.put("/:id", IsAuthenticated, upload.single("image_url"), updateOffreValid
  *                   example: "Erreur interne du serveur"
  */
 router.delete("/:id", IsAuthenticated, deleteOffre);
+
+/**
+ * @swagger
+ * /api/offres/force/{id}:
+ *   delete:
+ *     summary: Supprimer une offre de force
+ *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre
+ *     responses:
+ *       200:
+ *         description: Offre supprimée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Offre supprimée avec succès"
+ *       404:
+ *         description: Offre non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
 
 /**
  * @swagger

@@ -47,7 +47,7 @@ exports.createOffre = async (req, res) => {
         res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -108,7 +108,7 @@ exports.updateOffre = async (req, res) => {
         res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -129,7 +129,25 @@ exports.deleteOffre = async (req, res) => {
         res.status(200).json({ message: "Offre supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'offre:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.deleteOffreForce = async (req, res) => {
+    try {
+        const offre = await Offre.getById(parseInt(req.params.id), req.base_url);
+        if (!offre) {
+            return res.status(404).json({ error: "Offre non trouvée" });
+        }
+        if (offre.image_url && !offre.image_url.includes("default-offre.png")) {
+            const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.base_url, ""));
+            await fs.unlink(imagePath).catch(() => {});
+        }
+        await Offre.delete(parseInt(req.params.id));
+        res.status(200).json({ message: "Offre supprimée avec succès" });
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'offre:", error);
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -142,7 +160,7 @@ exports.getOffre = async (req, res) => {
         res.status(200).json(offre);
     } catch (error) {
         console.error("Erreur lors de la récupération de l'offre:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -152,7 +170,7 @@ exports.getAllOffres = async (req, res) => {
         res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la récupération des offres:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -162,7 +180,7 @@ exports.getAvalaibleOffres= async (req,res) =>{
         res.status(200).json(offres); 
     } catch (error) {
         console.log("Erreur get offre disponible "+ error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }    
 };
 
@@ -206,7 +224,7 @@ exports.filterOffres = async (req, res) => {
         res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors du filtrage des offres:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -222,7 +240,7 @@ exports.searchOffres = async (req, res) => {
         res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la recherche des offres:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -233,7 +251,7 @@ exports.getProcessusByOffre = async (req, res) => {
         res.status(200).json(processus);
     } catch (error) {
         console.error("Erreur lors de la récupération des processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -293,7 +311,7 @@ exports.publishOffre = async (req, res) => {
         
     } catch (error) {
         console.error("Erreur lors de la publication de l'offre:", error);
-        return res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -387,7 +405,7 @@ exports.postulerOffre = async (req, res)=>{
         
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: "Erreur interne du serveur" })
+        return res.status(400).json({ error: "Erreur interne du serveur" })
     }
 
 };
