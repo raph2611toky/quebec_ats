@@ -294,7 +294,6 @@ router.get("/", getAllOffres);
  */
 router.get("/available", getAvalaibleOffres);
 
-
 /**
  * @swagger
  * /api/offres/filter:
@@ -339,7 +338,6 @@ router.get("/available", getAvalaibleOffres);
  */
 router.get('/filter', filterOffres);
 
-
 /**
  * @swagger
  * /api/offres/search:
@@ -360,7 +358,6 @@ router.get('/filter', filterOffres);
  *         description: Erreur interne du serveur
  */
 router.get('/search', searchOffres);
-
 
 /**
  * @swagger
@@ -420,7 +417,6 @@ router.get('/search', searchOffres);
  */
 router.get("/:offreId/processus", getProcessusByOffre);
 
-
 /**
  * @swagger
  * /api/offres/{id}/publish:
@@ -477,7 +473,6 @@ router.get("/:offreId/processus", getProcessusByOffre);
  *                   type: string
  */
 router.put("/:id/publish",IsAuthenticatedAdmin, publishOffre);
-
 
 
 /**
