@@ -203,9 +203,9 @@ exports.filterOffres = async (req, res) => {
 
         if (status) filterConditions.status = status;
         if (minNombreRequis) filterConditions.nombre_requis = { gte: parseInt(minNombreRequis) };
-        if (lieu) filterConditions.lieu = lieu;
-        if (pays) filterConditions.pays = pays;
-        if (type_emploi) filterConditions.type_emploi = type_emploi;
+        if (lieu) filterConditions.lieu = { contains: lieu, mode: "insensitive" };
+        if (pays) filterConditions.pays = { contains: pays, mode: "insensitive" };
+        if (type_emploi) filterConditions.type_emploi = { contains: type_emploi, mode: "insensitive" };        
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
         if (devise) filterConditions.devise = devise;
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
