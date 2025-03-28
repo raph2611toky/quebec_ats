@@ -888,7 +888,6 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/postuler",
-uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
+router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
 
 module.exports = router;
