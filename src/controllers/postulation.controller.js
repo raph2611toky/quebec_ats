@@ -10,6 +10,7 @@ const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
 const { sendEmail } = require("../services/notifications/email");
 const prisma = require("../config/prisma.config");
 const { EtapeActuelle, Status } = require("@prisma/client");
+const { count } = require("console");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -285,6 +286,18 @@ exports.acceptPostulation = async (req, res) => {
 
         if (postulation.offre.status === Status.FERME) { // Vérifie si l'offre est fermée
             return res.status(400).json({ error: "Peut pas engager. Offre déjà fermée." });
+        }
+        
+        const nombrePostulationAccepterOffre = await prisma.postulation.count({
+            where:{
+                offre_id: postulation.offre_id,
+                etape_actuelle: EtapeActuelle.ACCEPTE
+            },
+            
+        })
+
+        if(nombrePostulationAccepterOffre == postulation.offre.nombre_requis){
+            return res.status(400).json({ error: "Le nombre requis pour le post est déjà atteint." })
         }
         
         if (postulation.etape_actuelle === EtapeActuelle.ACCEPTE) { // Vérifie si déjà accepté
