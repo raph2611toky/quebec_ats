@@ -1,7 +1,7 @@
-require("dotenv").config()
+require("dotenv").config();
 const User = require("../models/user.model");
 const { generateToken, verifyToken } = require("../utils/securite/jwt");
-const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
+const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
@@ -33,7 +33,6 @@ exports.registerAdmin = async (req, res) => {
                 unique_filename: false
             });
             profileUrl = result.secure_url;
-            // await fs.unlink(req.file.path);
         } else {
             profileUrl = await uploadDefaultProfileImage();
         }
@@ -41,7 +40,8 @@ exports.registerAdmin = async (req, res) => {
         const adminData = {
             ...req.body,
             profile: profileUrl,
-            is_active: false
+            is_active: false,
+            organisations: req.body.organisations
         };
         const newAdmin = await User.create(adminData);
 
@@ -85,7 +85,7 @@ exports.confirmRegistration = async (req, res) => {
             return res.status(400).json({ error: "OTP invalide ou expiré" });
         }
 
-        await User.update(user.id, { is_active: true });
+        await User.update(user.id, { is_verified: true });
         await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
         const token = generateToken({ id: user.id });
 
@@ -183,7 +183,7 @@ exports.resetPassword = async (req, res) => {
         let token;
         try {
             token = decryptAES(decodeURIComponent(encryptedToken));
-        } catch (error) {            
+        } catch (error) {
             return res.status(400).json({ error: "Lien de réinitialisation invalide" });
         }
         let decoded;
@@ -196,7 +196,7 @@ exports.resetPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-        
+
         const otpRecord = await prisma.otpVerification.findFirst({
             where: { user_id: user.id, otp: decoded.otp }
         });
@@ -224,12 +224,12 @@ exports.loginAdmin = async (req, res) => {
 
     try {
         const user = await User.findByEmail(email);
-        if (!user || !(await User.comparePassword(password, user.password)) || !user.is_active) {
+        if (!user || !(await User.comparePassword(password, user.password)) || !user.is_verified) {
             return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
         }
-
         const token = generateToken({ id: user.id });
-        res.status(200).json({ name: user.name, token });
+        await User.update(user.id, { is_active: true });
+        res.status(200).json({ name: user.name, token, organisations: user.organisations });
     } catch (error) {
         console.error("Erreur lors de la connexion:", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
@@ -280,9 +280,14 @@ exports.updateAdminProfile = async (req, res) => {
             }
 
             updateData.profile = result.secure_url;
-            // await fs.unlink(req.file.path);
         } else if (!existingUser.profile) {
             updateData.profile = await uploadDefaultProfileImage();
+        }
+
+        if (updateData.organisations) {
+            updateData.organisations = Array.isArray(updateData.organisations)
+                ? updateData.organisations.map(id => parseInt(id))
+                : [parseInt(updateData.organisations)];
         }
 
         const updatedUser = await User.update(req.user.id, updateData);
@@ -312,3 +317,5 @@ exports.getAllUsers = async (req, res) => {
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+module.exports = exports;

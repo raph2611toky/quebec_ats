@@ -11,10 +11,10 @@ const options = {
     },
     servers: [
       {
-        "url": "http://localhost:5000",
+        "url": "https://quebec-ats-f66o.onrender.com",
       },
       {
-        "url": "https://quebec-ats-f66o.onrender.com",
+        "url": "http://localhost:5000",
       }
     ],
   },

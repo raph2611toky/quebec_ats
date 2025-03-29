@@ -14,6 +14,8 @@ const notifications = require("./routes/notification.routes")
 const processusRoute = require("./routes/processus.routes")
 const questionRoute = require("./routes/question.route")
 const reponseRoute = require("./routes/reponse.routes")
+const organisation = require("./routes/organisation.routes")
+const postcarriere = require("./routes/postcarriere.route")
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/api/candidats", candidats)
 app.use("/api/postulations", postulations)
 app.use("/api/referents", referents)
 app.use("/api/notifications", notifications)
+app.use("/api/organisations", organisation)
+app.use("/api/postcarriere", postcarriere)
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

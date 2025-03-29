@@ -55,6 +55,7 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *       required:
  *         - titre
  *         - user_id
+ *         - organisation_id
  *         - image_url
  *         - description
  *         - date_limite
@@ -75,6 +76,9 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *         user_id:
  *           type: integer
  *           description: ID de l'utilisateur créateur
+ *         organisation_id:
+ *           type: integer
+ *           description: ID de l'organisation lié
  *         image_url:
  *           type: string
  *           description: URL de l'image de l'offre
@@ -474,7 +478,6 @@ router.get("/:offreId/processus", getProcessusByOffre);
  */
 router.put("/:id/publish",IsAuthenticatedAdmin, publishOffre);
 
-
 /**
  * @swagger
  * /api/offres/{id}:
@@ -533,6 +536,7 @@ router.get("/:id", getOffre);
  *           schema:
  *             type: object
  *             required:
+ *               - organisation_id
  *               - titre
  *               - description
  *               - date_limite
@@ -544,6 +548,10 @@ router.get("/:id", getOffre);
  *               - horaire_ouverture
  *               - horaire_fermeture
  *             properties:
+ *               organisation_id:
+ *                 type: integer
+ *                 description: ID de l'organisation
+ *                 example: "1"
  *               titre:
  *                 type: string
  *                 description: Titre de l'offre
@@ -636,6 +644,10 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *           schema:
  *             type: object
  *             properties:
+ *               organisation_id:
+ *                 type: integer
+ *                 description: ID de l'organisation
+ *                 example: "2"
  *               titre:
  *                 type: string
  *                 description: Nouveau titre
@@ -888,7 +900,6 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/postuler",
-uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
+router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
 
 module.exports = router;
