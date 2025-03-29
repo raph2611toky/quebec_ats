@@ -46,6 +46,7 @@ async function seedUsers() {
                 role: Role.MODERATEUR, 
                 password: "password123", 
                 is_active: true, 
+                is_verified: true,
                 phone: "+261345992057",
                 is_verified: true 
             }

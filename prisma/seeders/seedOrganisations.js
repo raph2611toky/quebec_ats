@@ -1,3 +1,4 @@
+const { Role } = require("@prisma/client");
 const prisma = require("../../src/config/prisma.config");
 
 async function seedOrganisations() {
@@ -30,8 +31,8 @@ async function seedOrganisations() {
         }
 
         // Séparation des rôles
-        const admins = users.filter(user => user.role === "admin");
-        const moderators = users.filter(user => user.role === "moderator");
+        const admins = users.filter(user => user.role === Role.ADMINISTRATEUR);
+        const moderators = users.filter(user => user.role === Role.MODERATEUR);
 
         // Association des admins à toutes les organisations
         for (const admin of admins) {
