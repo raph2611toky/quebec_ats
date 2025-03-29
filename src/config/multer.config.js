@@ -75,7 +75,7 @@ const fileFilter = (req, file, cb) => {
         }
         return cb(new Error("La lettre de motivation doit être un fichier PDF, DOCX, TXT ou MD"));
     }
-    else if (file.fieldname === "profile" || file.fieldname === "image_url") {
+    else if (file.fieldname === "profile" || file.fieldname === "image_url" || file.fieldname === "postcarriere") {
         const mimetype = profileMimetypes.includes(file.mimetype);
         const extname = profileFiletypes.test(path.extname(file.originalname).toLowerCase());
 
