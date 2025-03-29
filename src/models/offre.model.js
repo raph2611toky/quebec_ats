@@ -12,14 +12,15 @@ class Offre {
         id,
         titre = "",
         user_id,
+        organisation_id,
         image_url,
         description,
         date_limite,
-        status= Status.CREE,
+        status = Status.CREE,
         nombre_requis = 1,
         lieu,
         pays,
-        type_emploi=TypeEmploi.CDD,
+        type_emploi = TypeEmploi.CDD,
         salaire,
         devise,
         horaire_ouverture,
@@ -31,6 +32,7 @@ class Offre {
         this.id = id;
         this.titre = titre;
         this.user_id = user_id;
+        this.organisation_id = organisation_id;
         this.image_url = getFullImageUrl(image_url, base_url);
         this.description = description;
         this.date_limite = date_limite;
@@ -52,6 +54,7 @@ class Offre {
             offre.id,
             offre.titre,
             offre.user_id,
+            offre.organisation_id,
             offre.image_url,
             offre.description,
             offre.date_limite,
@@ -74,7 +77,11 @@ class Offre {
         try {
             const offre = await prisma.offre.findUnique({
                 where: { id },
-                include: { user: true, postulations: true }
+                include: { 
+                    user: true, 
+                    organisation: true,
+                    postulations: true 
+                }
             });
             return offre ? Offre.fromPrisma(offre, base_url) : null;
         } catch (error) {
@@ -88,7 +95,11 @@ class Offre {
             const offres = await prisma.offre.findMany({
                 skip,
                 take,
-                include: { user: true, postulations: true }
+                include: { 
+                    user: true, 
+                    organisation: true,
+                    postulations: true 
+                }
             });
             return offres.map(offre => Offre.fromPrisma(offre, base_url));
         } catch (error) {
@@ -102,16 +113,19 @@ class Offre {
             const offres = await prisma.offre.findMany({
                 skip,
                 take,
-                include: { user: true, postulations: true },
-                where: { status: {not: Status.CREE}}
+                include: { 
+                    user: true, 
+                    organisation: true,
+                    postulations: true 
+                },
+                where: { status: { not: Status.CREE } }
             });
             return offres.map(offre => Offre.fromPrisma(offre, base_url));
         } catch (error) {
-            console.error("Erreur dans Offre.getAll:", error);
+            console.error("Erreur dans Offre.getAllAvailable:", error);
             throw error;
         }
     }
-
 
     static async create(data) {
         try {
@@ -154,7 +168,8 @@ class Offre {
                         { titre: { contains: keyword, mode: "insensitive" } },
                         { description: { contains: keyword, mode: "insensitive" } }
                     ]
-                }
+                },
+                include: { organisation: true }
             });
             return offres.map(offre => Offre.fromPrisma(offre, base_url));
         } catch (error) {
@@ -162,21 +177,18 @@ class Offre {
             throw error;
         }
     }
-    
+
     static async getAllProcessus(offre_id) {
         try {
             const processus = await prisma.processus.findMany({
                 where: { offre_id }
             });
             return processus.map(process => Processus.fromPrisma(process));
-            
         } catch (error) {
             console.error("Erreur dans getAllProcessus:", error);
             throw error;
-        }        
+        }
     }
-    
-
 }
 
 module.exports = Offre;

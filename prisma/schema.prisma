@@ -89,11 +89,36 @@ model User {
   profile         String            @default("profile.png")
   role            Role              @default(MODERATEUR)
   is_active       Boolean           @default(false)
+  is_verified       Boolean         @default(false)
   created_at      DateTime          @default(now())
   updated_at      DateTime          @updatedAt
   offres          Offre[]           @relation("UserOffres")
   otp_verfication OtpVerification[]
   remarques       Remarque[]        @relation("RemarqueAdmin")
+  organisations   Organisation[]    @relation("UserOrganisations")
+}
+
+model Organisation {
+  id            Int           @id @default(autoincrement())
+  nom           String        @unique
+  adresse       String        @default("")
+  ville         String        @default("")
+  users         User[]        @relation("UserOrganisations")
+  offres        Offre[]       @relation("OrganisationOffres")
+  postcarieres  PostCarriere[] @relation("OrganisationPostCarieres")
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+}
+
+model PostCarriere {
+  id             Int          @id @default(autoincrement())
+  titre          String
+  contenu        String
+  images         String[]
+  organisation   Organisation @relation("OrganisationPostCarieres", fields: [organisation_id], references: [id], onDelete: Cascade)
+  organisation_id Int
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
 }
 
 model Offre {
@@ -101,6 +126,8 @@ model Offre {
   titre             String        @default("")
   user              User          @relation("UserOffres", fields: [user_id], references: [id], onDelete: Cascade)
   user_id           Int
+  organisation      Organisation  @relation("OrganisationOffres", fields: [organisation_id], references: [id], onDelete: Cascade)
+  organisation_id   Int           
   image_url         String
   description       String
   date_limite       DateTime

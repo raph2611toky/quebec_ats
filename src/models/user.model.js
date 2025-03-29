@@ -11,8 +11,10 @@ class User {
         profile = "profile.png",
         role = "MODERATEUR",
         is_active = false,
+        is_verified = false,
         created_at = null,
-        updated_at = null
+        updated_at = null,
+        organisations = []
     ) {
         this.id = id;
         this.name = name;
@@ -22,8 +24,10 @@ class User {
         this.profile = profile;
         this.role = role;
         this.is_active = is_active;
+        this.is_verified = is_verified;
         this.created_at = created_at;
         this.updated_at = updated_at;
+        this.organisations = organisations;
     }
 
     static fromPrisma(user) {
@@ -36,8 +40,10 @@ class User {
             user.profile,
             user.role,
             user.is_active,
+            user.is_verified,
             user.created_at,
-            user.updated_at
+            user.updated_at,
+            user.organisations || []
         );
     }
 
@@ -45,7 +51,10 @@ class User {
         try {
             const user = await prisma.user.findUnique({
                 where: { id },
-                include: { offres: true }
+                include: { 
+                    offres: true,
+                    organisations: true
+                }
             });
             return user ? User.fromPrisma(user) : null;
         } catch (error) {
@@ -58,7 +67,10 @@ class User {
         try {
             const user = await prisma.user.findUnique({
                 where: { email },
-                include: { offres: true }
+                include: { 
+                    offres: true,
+                    organisations: true
+                }
             });
             return user ? User.fromPrisma(user) : null;
         } catch (error) {
@@ -72,7 +84,10 @@ class User {
             const users = await prisma.user.findMany({
                 skip,
                 take,
-                include: { offres: true }
+                include: { 
+                    offres: true,
+                    organisations: true
+                }
             });
             return users.map(User.fromPrisma);
         } catch (error) {
@@ -86,7 +101,12 @@ class User {
             if (data.password) {
                 data.password = await bcrypt.hashPassword(data.password);
             }
-            const newUser = await prisma.user.create({ data });
+            const newUser = await prisma.user.create({ 
+                data: {
+                    ...data,
+                    organisations: data.organisations ? { connect: data.organisations.map(id => ({ id })) } : undefined
+                }
+            });
             return User.fromPrisma(newUser);
         } catch (error) {
             console.error("Erreur dans User.create:", error);
@@ -101,7 +121,10 @@ class User {
             }
             const updatedUser = await prisma.user.update({
                 where: { id },
-                data
+                data: {
+                    ...data,
+                    organisations: data.organisations ? { set: data.organisations.map(id => ({ id })) } : undefined
+                }
             });
             return User.fromPrisma(updatedUser);
         } catch (error) {

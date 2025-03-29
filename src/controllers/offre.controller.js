@@ -1,39 +1,48 @@
 const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
-const cloudinary = require("../config/cloudinary.config");
 const path = require("path");
 const crypto = require("crypto");
 const { Status, TypeProcessus } = require("@prisma/client");
-const { offre, candidat,} = require("../config/prisma.config");
-const { PrismaClient } = require('@prisma/client');
 const Candidat = require("../models/candidat.model");
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-
 
 exports.createOffre = async (req, res) => {
     try {
-        // ne pas exiger forcement image pour création image 
-        // if (!req.file) {
-        //     return res.status(400).json({ error: "Un fichier image est requis pour créer une offre" });
-        // }
+        const userId = parseInt(req.user.id);
+        const organisationId = parseInt(req.body.organisation_id);
 
-        let relativeImageUrl=""
+        const userOrganisation = await prisma.organisation.findFirst({
+            where: {
+                id: organisationId,
+                users: {
+                    some: {
+                        id: userId
+                    }
+                }
+            }
+        });
 
-        if(req.file){
+        if (!userOrganisation) {
+            return res.status(403).json({ error: "Vous n'êtes pas autorisé à créer une offre pour cette organisation." });
+        }
 
+        let relativeImageUrl = "";
+        if (req.file) {
             const subDir = "offres";
             const uploadDir = path.join(__dirname, "../uploads", subDir);
             const originalName = req.file.originalname;
             const tempPath = path.join(uploadDir, req.file.filename);
             const finalPath = path.join(uploadDir, originalName);
-    
+
             await fs.rename(tempPath, finalPath);
             relativeImageUrl = `/uploads/offres/${originalName}`;
         }
 
         const offreData = {
             ...req.body,
-            user_id: parseInt(req.user.id),
+            user_id: userId,
+            organisation_id: organisationId,
             image_url: relativeImageUrl,
             salaire: parseFloat(req.body.salaire),
             status: Status.CREE,
@@ -53,13 +62,35 @@ exports.createOffre = async (req, res) => {
 
 exports.updateOffre = async (req, res) => {
     try {
-        const existingOffre = await Offre.getById(parseInt(req.params.id), req.base_url);
+        const userId = parseInt(req.user.id);
+        const offreId = parseInt(req.params.id);
+
+        const existingOffre = await prisma.offre.findUnique({
+            where: { id: offreId },
+            include: { organisation: true }
+        });
+
         if (!existingOffre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
-        
-        if(existingOffre.status !== Status.CREE){
-            return res.status(401).json({ error: "Offre ne peut plus être modifé." });
+
+        const userOrganisation = await prisma.organisation.findFirst({
+            where: {
+                id: existingOffre.organisation_id,
+                users: {
+                    some: {
+                        id: userId
+                    }
+                }
+            }
+        });
+
+        if (!userOrganisation) {
+            return res.status(403).json({ error: "Vous n'êtes pas autorisé à modifier cette offre." });
+        }
+
+        if (existingOffre.status !== Status.CREE) {
+            return res.status(401).json({ error: "Offre ne peut plus être modifiée." });
         }
 
         let updateData = { ...req.body };
@@ -72,10 +103,10 @@ exports.updateOffre = async (req, res) => {
             const tempPath = path.join(uploadDir, req.file.filename);
             const finalPath = path.join(uploadDir, originalName);
 
-            // if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
-            //     const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
-            //     // await fs.unlink(oldImagePath).catch((error) => {console.log(error)});
-            // }
+            if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
+                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
+                await fs.unlink(oldImagePath).catch(() => {});
+            }
 
             if (await fs.stat(finalPath).catch(() => false)) {
                 const tempBuffer = await fs.readFile(tempPath);
@@ -84,7 +115,7 @@ exports.updateOffre = async (req, res) => {
                 const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
 
                 if (tempHash === existingHash) {
-                    // await fs.unlink(tempPath);
+                    await fs.unlink(tempPath);
                     updateData.image_url = `/uploads/offres/${originalName}`;
                 } else {
                     const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
@@ -103,8 +134,9 @@ exports.updateOffre = async (req, res) => {
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
         if (updateData.date_limite) updateData.date_limite = new Date(updateData.date_limite);
+        if (updateData.organisation_id) updateData.organisation_id = parseInt(updateData.organisation_id);
 
-        const updatedOffre = await Offre.update(parseInt(req.params.id), updateData);
+        const updatedOffre = await Offre.update(offreId, updateData);
         res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
@@ -122,8 +154,8 @@ exports.deleteOffre = async (req, res) => {
             const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.base_url, ""));
             await fs.unlink(imagePath).catch(() => {});
         }
-        if(offre.status !== Status.CREE){
-            return res.status(401).json({ error: "Offre ne peut pas être supprimer, déjà été publier." });
+        if (offre.status !== Status.CREE) {
+            return res.status(401).json({ error: "Offre ne peut pas être supprimée, déjà publiée." });
         }
         await Offre.delete(parseInt(req.params.id));
         res.status(200).json({ message: "Offre supprimée avec succès" });
@@ -165,7 +197,7 @@ exports.getOffre = async (req, res) => {
 };
 
 exports.getAllOffres = async (req, res) => {
-    try {        
+    try {
         const offres = await Offre.getAll(req.base_url);
         res.status(200).json(offres);
     } catch (error) {
@@ -174,16 +206,15 @@ exports.getAllOffres = async (req, res) => {
     }
 };
 
-exports.getAvalaibleOffres= async (req,res) =>{
+exports.getAvalaibleOffres = async (req, res) => {
     try {
         const offres = await Offre.getAllAvailable(req.base_url);
-        res.status(200).json(offres); 
+        res.status(200).json(offres);
     } catch (error) {
-        console.log("Erreur get offre disponible "+ error);
+        console.error("Erreur get offre disponible:", error);
         res.status(400).json({ error: "Erreur interne du serveur" });
-    }    
+    }
 };
-
 
 exports.filterOffres = async (req, res) => {
     try {
@@ -196,7 +227,8 @@ exports.filterOffres = async (req, res) => {
             salaire,
             devise,
             date_publication,
-            text
+            text,
+            organisation_id
         } = req.query;
 
         const filterConditions = {};
@@ -209,16 +241,16 @@ exports.filterOffres = async (req, res) => {
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
         if (devise) filterConditions.devise = devise;
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
+        if (organisation_id) filterConditions.organisation_id = parseInt(organisation_id);
         if (text) {
             filterConditions.OR = [
                 { titre: { contains: text, mode: "insensitive" } },
                 { description: { contains: text, mode: "insensitive" } }
             ];
         }
-        
 
-        const offres = await offre.findMany({
-            where: filterConditions 
+        const offres = await prisma.offre.findMany({
+            where: filterConditions
         });
 
         res.status(200).json(offres);
@@ -227,7 +259,6 @@ exports.filterOffres = async (req, res) => {
         res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
-
 
 exports.searchOffres = async (req, res) => {
     try {
@@ -255,7 +286,6 @@ exports.getProcessusByOffre = async (req, res) => {
     }
 };
 
-
 exports.publishOffre = async (req, res) => {
     try {
         const offreId = parseInt(req.params.id);
@@ -278,9 +308,9 @@ exports.publishOffre = async (req, res) => {
         if (!offre) {
             return res.status(404).json({ error: "Offre introuvable." });
         }
-        
-        if(offre.status == Status.FERME){
-            return res.status(400).json({ error: "Interdit. Offre déjà fermé." });
+
+        if (offre.status === Status.FERME) {
+            return res.status(400).json({ error: "Interdit. Offre déjà fermée." });
         }
 
         if (offre.processus.length === 0) {
@@ -308,41 +338,36 @@ exports.publishOffre = async (req, res) => {
         });
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
-        
     } catch (error) {
         console.error("Erreur lors de la publication de l'offre:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
-exports.postulerOffre = async (req, res)=>{
+exports.postulerOffre = async (req, res) => {
     try {
-        // console.log("fichier reçu: ", req.files);
-        
         const offre = await Offre.getById(parseInt(req.params.id));
-        let data = {... req.body} 
+        let data = { ...req.body };
 
-        if(!offre) 
-        {
-            return res.status(404).json({message: "Offre introuvable"})
-        }
-        
-        if(offre.status != Status.OUVERT){
-            return res.status(400).json({message: "Postulation à cette offre n'est plus ouvert"})
+        if (!offre) {
+            return res.status(404).json({ message: "Offre introuvable" });
         }
 
-        let candidat = await Candidat.findByEmail(data.email)
-        
-        if(!candidat){
+        if (offre.status !== Status.OUVERT) {
+            return res.status(400).json({ message: "Postulation à cette offre n'est plus ouverte" });
+        }
+
+        let candidat = await Candidat.findByEmail(data.email);
+
+        if (!candidat) {
             const dataCandidat = {
-                "nom":data.nom,
-                "email":data.email,
-                "telephone":data.telephone
-            }
-            candidat = await Candidat.create(dataCandidat)
+                nom: data.nom,
+                email: data.email,
+                telephone: data.telephone
+            };
+            candidat = await Candidat.create(dataCandidat);
         }
 
-        // Vérifier si le candidat a déjà postulé à cette offre
         const existingPostulation = await prisma.postulation.findFirst({
             where: {
                 candidat_id: candidat.id,
@@ -354,58 +379,42 @@ exports.postulerOffre = async (req, res)=>{
             return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
         }
 
-
-        // file upload (cv, lettre_motivation)
         let cvUrl;
-        let lettre_motivationUrl;
+        let lettreMotivationUrl;
 
-        // Vérifie si les fichiers existent
-        if (req.files?.cv?.[0]?.path && req.files?.lettre_motivation?.[0]?.path) {            try {
+        if (req.files?.cv?.[0]?.path && req.files?.lettre_motivation?.[0]?.path) {
+            try {
                 await fs.access(req.files.cv[0].path);
                 await fs.access(req.files.lettre_motivation[0].path);
             } catch (error) {
-                console.error("Les fichiers n'ont pas été correctement transférés :", error);
+                console.error("Les fichiers n'ont pas été correctement transférés:", error);
                 return res.status(400).json({ error: "Erreur lors du transfert des fichiers" });
             }
 
-            const resultCV = await cloudinary.uploader.upload(req.files.cv[0].path, {
-                folder: "cv",
-                use_filename: true,
-                unique_filename: false
-            });
-            const resultlettre_motivation = await cloudinary.uploader.upload(req.files.lettre_motivation[0].path, {
-                folder: "lettre_motivation",
-                use_filename: true,
-                unique_filename: false
-            });
-            cvUrl = resultCV.secure_url;
-            lettre_motivationUrl = resultlettre_motivation.secure_url;
-            // await fs.unlink(req.files.cv[0].path);
-            // await fs.unlink(req.files.lettre_motivation[0].path);
-        } else {
-            return res.status(400).json({ error: "Les cv et lettre de motivation sont requis pour postuler." })
-        }
-        
+            const cvPath = req.files.cv[0].path;
+            const lettreMotivationPath = req.files.lettre_motivation[0].path;
 
-        
+            cvUrl = `/uploads/cv/${req.files.cv[0].filename}`;
+            lettreMotivationUrl = `/uploads/lettre_motivation/${req.files.lettre_motivation[0].filename}`;
+        } else {
+            return res.status(400).json({ error: "Les CV et lettre de motivation sont requis pour postuler." });
+        }
+
         const postulation = await prisma.postulation.create({
             data: {
-                candidat: { connect: { id: candidat.id } }, // Connexion relationnelle
-                offre: { connect: { id: offre.id } },       // Connexion relationnelle
+                candidat: { connect: { id: candidat.id } },
+                offre: { connect: { id: offre.id } },
                 cv: cvUrl,
-                lettre_motivation: lettre_motivationUrl,
-                source_site: data.source_site,
+                lettre_motivation: lettreMotivationUrl,
+                source_site: data.source_site
             }
         });
-        
-        // console.log("id postulation: ", postulation.id);
-                
-        
-        return res.status(200).json({ message: "Postulation Offre  effectué avec succès." });
-        
-    } catch (error) {
-        console.log(error);
-        return res.status(400).json({ error: "Erreur interne du serveur" })
-    }
 
+        return res.status(200).json({ message: "Postulation effectuée avec succès." });
+    } catch (error) {
+        console.error(error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
 };
+
+module.exports = exports;
