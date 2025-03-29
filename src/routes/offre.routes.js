@@ -12,7 +12,8 @@ const {
     getProcessusByOffre,
     publishOffre,
     postulerOffre,
-    deleteOffreForce
+    deleteOffreForce,
+    getDetailsOffres
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -901,5 +902,82 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *                   example: "Erreur interne du serveur"
  */
 router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
+
+/**
+ * @swagger
+ * /api/processus/{id}/details:
+ *   get:
+ *     summary: Récupère les détails d'un processus spécifique
+ *     tags: [Processus]
+ *     description: Retourne les détails d'un processus, y compris l'offre associée et les candidatures des candidats ayant postulé.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à récupérer
+ *     responses:
+ *       200:
+ *         description: Détails du processus récupérés avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 10
+ *                 titre:
+ *                   type: string
+ *                   example: "Entretien Technique"
+ *                 statut:
+ *                   type: string
+ *                   example: "A_VENIR"
+ *                 offre:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     titre:
+ *                       type: string
+ *                       example: "Développeur Backend"
+ *                     description:
+ *                       type: string
+ *                       example: "Description de l'offre..."
+ *                 postulations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 100
+ *                       date_soumission:
+ *                         type: string
+ *                         format: date-time
+ *                       candidat:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 50
+ *                           nom:
+ *                             type: string
+ *                             example: "Jean Dupont"
+ *                           email:
+ *                             type: string
+ *                             example: "jean.dupont@example.com"
+ *       400:
+ *         description: Mauvaise requête (ID invalide)
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
+
+
 
 module.exports = router;

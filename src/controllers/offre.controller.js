@@ -417,4 +417,31 @@ exports.postulerOffre = async (req, res) => {
     }
 };
 
+exports.getDetailsOffres = async (req, res)=>{
+    try {
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                processus: true, 
+                postulations: {
+                    include: {
+                        candidat: true 
+                    }
+                }
+            }
+        });
+
+        if (!offre) {
+            return res.status(404).json({ error: "Offre non trouvée" });
+        }
+        
+        return res.status(200).json(offre);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
 module.exports = exports;

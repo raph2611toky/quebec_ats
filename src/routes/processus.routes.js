@@ -404,4 +404,39 @@ router.delete('/:id', IsAuthenticatedAdmin, processusController.deleteProcessus)
  */
 router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson);
 
+/**
+ * @swagger
+ * /api/processus/{id}/start:
+ *   post:
+ *     summary: Démarrer un processus de recrutement
+ *     tags: [Processus]
+ *     description: Démarre un processus de recrutement en fonction de son type (questionnaire, tâche, visio conférence) et envoie les notifications aux candidats.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à démarrer
+ *     responses:
+ *       200:
+ *         description: Processus démarré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus de recrutement : Entretien Technique pour l'offre Développeur Backend a commencé."
+ *       400:
+ *         description: Erreur de validation (ex: offre encore ouverte, processus déjà en cours, etc.)
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/:id/start", processusController.startProcessus);
+
+
 module.exports = router;

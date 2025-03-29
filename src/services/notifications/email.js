@@ -191,6 +191,16 @@ const templates = {
     `
 };
 
+const existingType = {
+    referentConfirmation: "referentConfirmation",
+    postulationAcknowledgment: "postulationAcknowledgment",
+    otpValidation: "otpValidation",
+    forgotPassword: "forgotPassword",
+    rejection: "rejection",
+    hiring: "hiring",
+    meeting: "meeting"
+}
+
 const generateOtp = () => Math.floor(10000000 + Math.random() * 90000000).toString();
 
 async function sendEmail({ to, subject, type, data, saveToNotifications = false }) {
@@ -258,4 +268,4 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
 }
 
 
-module.exports = { sendEmail };
+module.exports = { sendEmail , existingType};
