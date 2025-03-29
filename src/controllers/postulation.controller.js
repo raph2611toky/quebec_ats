@@ -11,6 +11,7 @@ const { sendEmail } = require("../services/notifications/email");
 const prisma = require("../config/prisma.config");
 const { EtapeActuelle, Status } = require("@prisma/client");
 const { count } = require("console");
+const Remarque = require("../models/remarque.model");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -335,7 +336,7 @@ exports.rejectPostulation = async (req, res) => {
         if (!postulation) {
             return res.status(400).json({ error: "Aucune postulation trouvée." });
         }
-
+        
         if (postulation.offre.status === Status.FERME) { // Vérifie si l'offre est fermée
             return res.status(400).json({ error: "Peut pas engager. Offre déjà fermée." });
         }
@@ -353,10 +354,32 @@ exports.rejectPostulation = async (req, res) => {
         // TODO: Envoyer un email au candidat pour lui notifier du rejet si la première fois
 
         return res.status(200).json({ message: `Candidat rejeté pour le post : ${postulation.offre.titre}` });
-
+        
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
+exports.addRemarquePostulation = async (req,res ) => {
+    try {
+        const admin_id = req.user.id;
+
+        const postulation = await Postulation.getById(parseInt(req.params.id))
+        if (!postulation) {
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+        const offre = await Offre.getById(postulation.offre_id)
+        
+        const remarque = await Remarque.create({
+          admin_id,
+          postulation_id: postulation.id,
+          text: req.body.text
+        })
+
+        return res.status(200).json({ message: `Remarque ajouté sur le postulation du candidat à l'offre : ${offre.titre}` });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}

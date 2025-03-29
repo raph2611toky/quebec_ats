@@ -7,7 +7,8 @@ const {
     deletePostulation,
     confirmReferenceWithRecommendation,
     acceptPostulation,
-    rejectPostulation
+    rejectPostulation,
+    addRemarquePostulation
 } = require("../controllers/postulation.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
@@ -389,6 +390,49 @@ router.put("/:id/accept", acceptPostulation);
  *         description: Erreur interne du serveur
  */
 router.put("/:id/accept", rejectPostulation);
+
+
+/**
+ * @swagger
+ * /api/postulations/{id}/add-remarque:
+ *   post:
+ *     summary: Ajouter une remarque à une postulation par ID
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation cible
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: remarque textuelle
+ *             required:
+ *               - text
+ *     responses:
+ *       200:
+ *         description: Remarque ajouté 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/:id/add-remarque", IsAuthenticatedAdmin ,addRemarquePostulation);
 
 
 module.exports = router;
