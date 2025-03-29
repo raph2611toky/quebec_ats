@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const { Status, TypeProcessus } = require("@prisma/client");
 const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
+const { count } = require("console");
 const prisma = new PrismaClient();
 
 exports.createOffre = async (req, res) => {
@@ -441,6 +442,48 @@ exports.getDetailsOffres = async (req, res)=>{
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.fermerOffre = async (req, res)=>{
+    try {
+        const offreId = parseInt(req.params.id);
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: offreId
+            },
+            include: {
+                postulations: true
+            }
+        });
+        
+        if (!offre) {
+            return res.status(404).json({ message: "Offre introuvable" });
+        }
+        
+        if(offre.status != Status.OUVERT){
+            return res.status(404).json({ message: "Seule Offre Ouvert peut être fermer" });
+        }
+        
+        if(count(offre.postulations)==0){
+            return res.status(400).json({ message: "Aucun postulation n'a été encore reçu sur cette offre." });
+        }
+
+        await prisma.offre.update({
+            where: {
+                id: offreId
+            },
+            data: {
+                status: Status.FERME
+            }
+        })
+        
+        return res.status(200).json({message: "Offre fermé. Aucun candidature ne peuvent plus être reçu !"});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+        
     }
 }
 

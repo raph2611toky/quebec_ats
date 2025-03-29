@@ -28,7 +28,7 @@ const createProcessusValidator = [
     body("type")
         .optional()
         .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
-        .withMessage("Le type doit être VISIO_CONFERENCE, PRESENTIEL ou HYBRIDE"),
+        .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
     body("statut")
         .optional()

@@ -13,7 +13,8 @@ const {
     publishOffre,
     postulerOffre,
     deleteOffreForce,
-    getDetailsOffres
+    getDetailsOffres,
+    fermerOffre
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -978,6 +979,44 @@ router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidatio
  */
 router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
 
+/**
+ * @swagger
+ * /api/offres/{id}/fermer:
+ *   post:
+ *     summary: Fermer candidature à une offre.
+ *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: [] 
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre
+ *     responses:
+ *       200:
+ *         description: Offre fermé avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Offre fermé"
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
 
 
 module.exports = router;

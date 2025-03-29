@@ -218,14 +218,17 @@ exports.startProcessus = async (req, res) => {
 
         const envoiNotifications = async (message, subject) => {
             for (const candidat of candidats) {
-                await sendEmail({
-                    to: candidat.email,
-                    subject,
-                    type: existingType.postulationAcknowledgment,
-                    data: message,
-                    saveToNotifications: false
-                });
+                // await sendEmail({
+                //     to: candidat.email,
+                //     subject,
+                //     type: existingType.postulationAcknowledgment,
+                //     data: message,
+                //     saveToNotifications: false
+                // });
+                
             }
+            console.log("email send to all candidat");
+            
         };
 
         if (processus.type === TypeProcessus.QUESTIONNAIRE) {
