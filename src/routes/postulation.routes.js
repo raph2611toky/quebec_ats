@@ -429,6 +429,7 @@ router.put("/:id/accept", rejectPostulation);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Je trouve que c'est le meilleur candidat pour ce poste !"
  *       500:
  *         description: Erreur interne du serveur
  */
