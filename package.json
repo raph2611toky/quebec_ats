@@ -11,7 +11,8 @@
     "vercel-build": "prisma migrate deploy && prisma generate",
     "postinstall": "prisma generate",
     "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "seed":"node prisma/seeders/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +26,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
+    "faker": "^5.5.3",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.10.0",
