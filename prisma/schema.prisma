@@ -99,6 +99,7 @@ model User {
 }
 
 model Organisation {
+<<<<<<< HEAD
   id           Int            @id @default(autoincrement())
   nom          String         @unique
   adresse      String         @default("")
@@ -108,6 +109,19 @@ model Organisation {
   postcarieres PostCarriere[] @relation("OrganisationPostCarieres")
   created_at   DateTime       @default(now())
   updated_at   DateTime       @updatedAt
+=======
+  id            Int           @id @default(autoincrement())
+  nom           String
+  adresse       String        @default("")
+  ville         String        @default("")
+  users         User[]        @relation("UserOrganisations")
+  offres        Offre[]       @relation("OrganisationOffres")
+  postcarieres  PostCarriere[] @relation("OrganisationPostCarieres")
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+
+  @@unique([nom, adresse, ville])
+>>>>>>> toky
 }
 
 model PostCarriere {

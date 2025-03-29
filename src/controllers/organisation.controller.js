@@ -1,19 +1,33 @@
 const Organisation = require("../models/organisation.model");
 const PostCarriere = require("../models/postcarriere.model")
+const User = require("../models/user.model");
 const fs = require("fs").promises;
 
 exports.createOrganisation = async (req, res) => {
     try {
-        const organisationData = {
-            ...req.body,
-            users: req.body.users ? req.body.users.map(id => parseInt(id)) : undefined
-        };
+        const existingOrganisation = await Organisation.getUniqueOrganisation(req.body.nom, req.body.ville, req.body.adresse);
+        if (existingOrganisation) {
+            return res.status(400).json({
+                error: "Une organisation avec le même nom, ville et adresse existe déjà."
+            });
+        }
 
-        const newOrganisation = await Organisation.create(organisationData);
+        const admins = await User.getAlladmin();
+        if (!admins || admins.length === 0) {
+            return res.status(400).json({ error: "Aucun administrateur trouvé" });
+        }
+
+        const adminIds = admins.map(admin => parseInt(admin.id));
+
+        const newOrganisation = await Organisation.create({
+            ...req.body,
+            users: adminIds
+        });
+
         return res.status(201).json(newOrganisation);
     } catch (error) {
         console.error("Erreur lors de la création de l'organisation:", error);
-        return res.status(400).json({ error: "Erreur interne du serveur" });
+        res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -25,11 +39,11 @@ exports.updateOrganisation = async (req, res) => {
         }
 
         let updateData = { ...req.body };
-        if (updateData.users) {
-            updateData.users = Array.isArray(updateData.users)
-                ? updateData.users.map(id => parseInt(id))
-                : [parseInt(updateData.users)];
-        }
+        // if (updateData.users) {
+        //     updateData.users = Array.isArray(updateData.users)
+        //         ? updateData.users.map(id => parseInt(id))
+        //         : [parseInt(updateData.users)];
+        // }
 
         const updatedOrganisation = await Organisation.update(parseInt(req.params.id), updateData);
         return res.status(200).json(updatedOrganisation);
@@ -38,6 +52,7 @@ exports.updateOrganisation = async (req, res) => {
         return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
+
 
 exports.deleteOrganisation = async (req, res) => {
     try {
@@ -94,6 +109,16 @@ exports.getPostCarieresByOrganisation = async (req, res) => {
     } catch (error) {
         console.error("Erreur lors de la récupération des posts carrière de l'organisation:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.getUsersByOrganisation = async (req, res) => {
+    try {
+        const users = await Organisation.getUsersByOrganisation(parseInt(req.params.id));
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des utilisqteurs dans l'organisation:", error);
+        res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 

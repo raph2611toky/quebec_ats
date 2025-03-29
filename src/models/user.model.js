@@ -96,6 +96,19 @@ class User {
         }
     }
 
+    static async getAlladmin(skip = 0, take = 10) {
+        try {
+            const admins = await prisma.user.findMany({
+                where: { role: "ADMINISTRATEUR" },
+                select: { id: true },
+            });
+            return admins.map(User.fromPrisma);
+        } catch (error) {
+            console.error("Erreur dans User.getAll:", error);
+            throw error;
+        }
+    }
+
     static async create(data) {
         try {
             if (data.password) {
