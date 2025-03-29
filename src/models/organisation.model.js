@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma.config");
+const User = require("./user.model");
+const Offre = require("./offre.model");
 
 class Organisation {
     constructor(
@@ -29,8 +31,8 @@ class Organisation {
             organisation.nom,
             organisation.adresse,
             organisation.ville,
-            organisation.users || [],
-            organisation.offres || [],
+            organisation.users ? organisation.users.map(User.fromPrisma) : [],
+            organisation.offres ? organisation.offres.map(Offre.fromPrisma) : [],
             organisation.postcarieres || [],
             organisation.created_at,
             organisation.updated_at
@@ -76,11 +78,19 @@ class Organisation {
         try {
             const newOrganisation = await prisma.organisation.create({
                 data: {
-                    ...data,
-                    users: data.users ? { connect: data.users.map(id => ({ id })) } : undefined
+                    nom: data.nom, 
+                    adresse: data.adresse, 
+                    ville: data.ville,
+                    users: {
+                        connect: data.users.map(id => ({ id }))
+                    },
                 }
             });
-            return Organisation.fromPrisma(newOrganisation);
+            const organisation = await prisma.organisation.findUnique({
+                where: { id: newOrganisation.id },
+                include: { users: true }
+            });
+            return Organisation.fromPrisma(organisation);
         } catch (error) {
             console.error("Erreur dans Organisation.create:", error);
             throw error;
@@ -118,13 +128,41 @@ class Organisation {
                 where: { id },
                 include: { offres: true }
             });
-            return organisation ? organisation.offres : [];
+            return organisation ? organisation.offres.map(Offre.fromPrisma) : [];
         } catch (error) {
             console.error(`Erreur dans Organisation.getOffresByOrganisation(${id}):`, error);
             throw error;
         }
     }
-    
+
+    static async getUsersByOrganisation(id) {
+        try {
+            const organisation = await prisma.organisation.findUnique({
+                where: { id },
+                include: { users: true }
+            });
+            return organisation ? organisation.users.map(User.fromPrisma) : [];
+        } catch (error) {
+            console.error(`Erreur dans Organisation.getUsersByOrganisation(${id}):`, error);
+            throw error;
+        }
+    }
+
+    static async getUniqueOrganisation(nom, ville, adresse) {
+        try {
+            const organisation = await prisma.organisation.findFirst({
+                where: {
+                    nom,
+                    ville,
+                    adresse
+                }
+            });
+            return organisation ? Organisation.fromPrisma(organisation) : null;
+        } catch (error) {
+            console.error("Erreur dans Organisation.getUniqueOrganisation:", error);
+            throw error;
+        }
+    }
 }
 
 module.exports = Organisation;

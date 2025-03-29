@@ -40,7 +40,7 @@ app.use("/api/postulations", postulations)
 app.use("/api/referents", referents)
 app.use("/api/notifications", notifications)
 app.use("/api/organisations", organisation)
-app.use("/api/postcarriere", postcarriere)
+app.use("/api/postcarrieres", postcarriere)
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

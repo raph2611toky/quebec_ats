@@ -9,7 +9,22 @@ const upload = createUpload("postcarriere");
  * @swagger
  * tags:
  *   name: PostCarriere
- *   description: Gestion des posts de carrière
+ *   description: |
+ *       Gestion des posts de carrière
+ *       
+ *       ### Fonctionnalités :
+ *       - **Création, modification et suppression de posts de carrière**
+ *       - **Ajout et gestion des images associées aux posts**
+ *       - **Consultation de tous les posts ou d’un post spécifique**
+ *       
+ *       ### Pré-requis :
+ *       - **Compte utilisateur avec les permissions requises pour créer ou modifier un post**
+ *       
+ *       ### Fonctionnement :
+ *       - **Un post de carrière appartient à une organisation spécifique.**
+ *       - **Lors de la création ou modification d’un post, on peut joindre plusieurs images.**
+ *       - **Les utilisateurs peuvent consulter la liste des posts disponibles.**
+ *       - **Un post peut être supprimé définitivement par un administrateur.**
  */
 
 /**
@@ -60,7 +75,7 @@ const upload = createUpload("postcarriere");
 
 /**
  * @swagger
- * /api/postcarieres:
+ * /api/postcarrieres:
  *   post:
  *     summary: Créer un post carrière avec upload d'images
  *     tags: [PostCarriere]
@@ -100,7 +115,7 @@ router.post("/", upload.array("images", 5), postCarriereController.createPostCar
 
 /**
  * @swagger
- * /api/postcarieres/{id}:
+ * /api/postcarrieres/{id}:
  *   put:
  *     summary: Modifier un post carrière existant avec upload d'images
  *     tags: [PostCarriere]
@@ -139,7 +154,7 @@ router.put("/:id", upload.array("images", 5), postCarriereController.updatePostC
 
 /**
  * @swagger
- * /api/postcarieres/{id}:
+ * /api/postcarrieres/{id}:
  *   delete:
  *     summary: Supprimer un post carrière
  *     tags: [PostCarriere]
@@ -160,7 +175,7 @@ router.delete("/:id", postCarriereController.deletePostCarriere);
 
 /**
  * @swagger
- * /api/postcarieres/{id}:
+ * /api/postcarrieres/{id}:
  *   get:
  *     summary: Récupérer un post carrière par ID
  *     tags: [PostCarriere]
@@ -181,11 +196,11 @@ router.delete("/:id", postCarriereController.deletePostCarriere);
  *       404:
  *         description: Post carrière non trouvé
  */
-router.get("/:id", postCarriereController.getPostCarriereById);
+router.get("/:id", postCarriereController.getPostCarriere);
 
 /**
  * @swagger
- * /api/postcarieres:
+ * /api/postcarrieres:
  *   get:
  *     summary: Récupérer tous les posts carrière
  *     tags: [PostCarriere]
@@ -200,30 +215,5 @@ router.get("/:id", postCarriereController.getPostCarriereById);
  *                 $ref: '#/components/schemas/PostCarriere'
  */
 router.get("/", postCarriereController.getAllPostCarieres);
-
-/**
- * @swagger
- * /api/postcarieres/organisation/{organisationId}:
- *   get:
- *     summary: Récupérer les posts carrière d'une organisation
- *     tags: [PostCarriere]
- *     parameters:
- *       - in: path
- *         name: organisationId
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID de l'organisation
- *     responses:
- *       200:
- *         description: Liste des posts carrière de l'organisation
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/PostCarriere'
- */
-router.get("/organisation/:organisationId", postCarriereController.getPostCarieresByOrganisation);
 
 module.exports = router;

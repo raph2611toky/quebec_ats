@@ -1,13 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const organisationController = require("../controllers/organisation.controller");
+const { IsAuthenticatedAdmin, IsAuthenticated } = require("../middlewares/auth.middleware")
 
 /**
  * @swagger
  * tags:
  *   name: Organisations
- *   description: Gestion des organisations
+ *   description: | 
+ *       Gestion des organisations
+ *       
+ *       ### Fonctionnalités :
+ *       - **Création, modification, suppression et gestion des organisations**
+ *       - **Association d'utilisateurs à une organisation**
+ *       - **Consultation des offres et des posts carrière d'une organisation**
+ *       
+ *       ### Pré-requis : 
+ *       - **Compte administrateur ou utilisateur avec permissions spécifiques**
+ *       
+ *       ### Fonctionnement : 
+ *       - **Les organisations sont créées par un administrateur ou un utilisateur autorisé.**
+ *       - **Chaque organisation possède un ensemble d'utilisateurs associés.**
+ *       - **Les organisations peuvent publier des offres et des posts carrière.**
+ *       - **Les utilisateurs peuvent consulter les offres et posts carrière d’une organisation.**
+ *       - **Suppression d'une organisation entraîne la suppression de ses offres et posts carrière associés.**
  */
+
 
 /**
  * @swagger
@@ -59,12 +77,31 @@ const organisationController = require("../controllers/organisation.controller")
  *   post:
  *     summary: Créer une organisation
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Organisation'
+ *             Organisation:
+ *             type: object
+ *             required:
+ *               - nom
+ *             properties:
+ *               nom:
+ *                 type: string
+ *                 description: Nom de l'organisation
+ *               adresse:
+ *                 type: string
+ *                 description: Adresse de l'organisation
+ *               ville:
+ *                 type: string
+ *                 description: Ville de l'organisation
+ *             example:
+ *               nom: "Tech Corp"
+ *               adresse: "123 Avenue des Startups"
+ *               ville: "Antananarivo"
  *     responses:
  *       201:
  *         description: Organisation créée avec succès
@@ -75,7 +112,7 @@ const organisationController = require("../controllers/organisation.controller")
  *       400:
  *         description: Erreur lors de la création de l'organisation
  */
-router.post("/", organisationController.createOrganisation);
+router.post("/", IsAuthenticatedAdmin, organisationController.createOrganisation);
 
 /**
  * @swagger
@@ -83,6 +120,8 @@ router.post("/", organisationController.createOrganisation);
  *   put:
  *     summary: Modifier une organisation existante
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -102,7 +141,7 @@ router.post("/", organisationController.createOrganisation);
  *       404:
  *         description: Organisation non trouvée
  */
-router.put("/:id", organisationController.updateOrganisation);
+router.put("/:id", IsAuthenticatedAdmin, organisationController.updateOrganisation);
 
 /**
  * @swagger
@@ -110,6 +149,8 @@ router.put("/:id", organisationController.updateOrganisation);
  *   delete:
  *     summary: Supprimer une organisation
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -123,7 +164,7 @@ router.put("/:id", organisationController.updateOrganisation);
  *       404:
  *         description: Organisation non trouvée
  */
-router.delete("/:id", organisationController.deleteOrganisation);
+router.delete("/:id", IsAuthenticatedAdmin, organisationController.deleteOrganisation);
 
 /**
  * @swagger
@@ -131,6 +172,8 @@ router.delete("/:id", organisationController.deleteOrganisation);
  *   get:
  *     summary: Récupérer une organisation par ID
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -148,7 +191,7 @@ router.delete("/:id", organisationController.deleteOrganisation);
  *       404:
  *         description: Organisation non trouvée
  */
-router.get("/:id", organisationController.getOrganisation);
+router.get("/:id", IsAuthenticated, organisationController.getOrganisation);
 
 /**
  * @swagger
@@ -156,6 +199,8 @@ router.get("/:id", organisationController.getOrganisation);
  *   get:
  *     summary: Récupérer toutes les organisations
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Liste des organisations
@@ -166,7 +211,7 @@ router.get("/:id", organisationController.getOrganisation);
  *               items:
  *                 $ref: '#/components/schemas/Organisation'
  */
-router.get("/", organisationController.getAllOrganisations);
+router.get("/", IsAuthenticatedAdmin, organisationController.getAllOrganisations);
 
 /**
  * @swagger
@@ -174,6 +219,8 @@ router.get("/", organisationController.getAllOrganisations);
  *   get:
  *     summary: Récupérer les offres d'une organisation
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -191,7 +238,7 @@ router.get("/", organisationController.getAllOrganisations);
  *               items:
  *                 $ref: '#/components/schemas/Offre'
  */
-router.get("/:id/offres", organisationController.getOffresByOrganisation);
+router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffresByOrganisation);
 
 /**
  * @swagger
@@ -199,6 +246,8 @@ router.get("/:id/offres", organisationController.getOffresByOrganisation);
  *   get:
  *     summary: Récupérer les posts carrière d'une organisation
  *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -216,6 +265,33 @@ router.get("/:id/offres", organisationController.getOffresByOrganisation);
  *               items:
  *                 $ref: '#/components/schemas/PostCarriere'
  */
-router.get("/:id/postcarieres", organisationController.getPostCarieresByOrganisation);
+router.get("/:id/postcarieres", IsAuthenticatedAdmin, organisationController.getPostCarieresByOrganisation);
+
+/**
+ * @swagger
+ * /api/organisations/{id}/users:
+ *   get:
+ *     summary: Récupérer les utilisateurs d'une organisation
+ *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de l'organisation
+ *     responses:
+ *       200:
+ *         description: Liste des utilisateurs de l'organisation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
+router.get("/:id/users", IsAuthenticatedAdmin, organisationController.getUsersByOrganisation);
 
 module.exports = router;
