@@ -31,7 +31,7 @@ exports.createPostCarriere = async (req, res) => {
         const newPost = await PostCarriere.create({
             titre: req.body.titre,
             contenu: req.body.contenu,
-            organisation_id: req.body.organisation_id,
+            organisation_id: parseInt(req.body.organisation_id),
             images, 
         });
 
