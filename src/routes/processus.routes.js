@@ -430,7 +430,7 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  *                   type: string
  *                   example: "Processus de recrutement : Entretien Technique pour l'offre Développeur Backend a commencé."
  *       400:
- *         description: Erreur de validation (ex: offre encore ouverte, processus déjà en cours, etc.)
+ *         description: Erreur de validation (ex offre encore ouverte, processus déjà en cours, etc)
  *       404:
  *         description: Processus non trouvé
  *       500:
