@@ -12,6 +12,8 @@ const {
 } = require("../controllers/postulation.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
+const { validateRemarque } = require("../validators/postulation.validator");
+const errorHandler = require("../middlewares/error.handler");
 
 const upload = createUpload("candidats");
 
@@ -433,7 +435,7 @@ router.put("/:id/accept", rejectPostulation);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/:id/add-remarque", IsAuthenticatedAdmin ,addRemarquePostulation);
+router.post("/:id/add-remarque", validateRemarque, IsAuthenticatedAdmin,  errorHandler,  addRemarquePostulation);
 
 
 module.exports = router;
