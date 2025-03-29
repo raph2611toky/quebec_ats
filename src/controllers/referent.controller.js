@@ -6,20 +6,20 @@ exports.getReferent = async (req, res) => {
         if (!referent) {
             return res.status(404).json({ error: "Référent non trouvé" });
         }
-        res.status(200).json(referent);
+        return res.status(200).json(referent);
     } catch (error) {
         console.error("Erreur lors de la récupération du référent:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllReferents = async (req, res) => {
     try {
         const referents = await Referent.getAll();
-        res.status(200).json(referents);
+        return res.status(200).json(referents);
     } catch (error) {
         console.error("Erreur lors de la récupération des référents:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -31,9 +31,9 @@ exports.deleteReferent = async (req, res) => {
         }
 
         await Referent.delete(referent.id);
-        res.status(200).json({ message: "Référent supprimé avec succès" });
+        return res.status(200).json({ message: "Référent supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du référent:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };

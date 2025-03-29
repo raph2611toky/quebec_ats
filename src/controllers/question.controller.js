@@ -22,10 +22,10 @@ exports.createQuestion = async (req, res) => {
             processus_id: processusId,
         };
         const newQuestion = await Question.create(questionData);
-        res.status(201).json(newQuestion);
+        return res.status(201).json(newQuestion);
     } catch (error) {
         console.error("Erreur lors de la création de la question:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -33,18 +33,18 @@ exports.getOneQuestion = async (req, res) => {
     try {
         const question = await Question.getById(parseInt(req.params.id));
         if (!question) return res.status(404).json({ error: "Question non trouvée" });
-        res.status(200).json(question);
+        return res.status(200).json(question);
     } catch (error) {
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllQuestion = async (req, res) => {
     try {
         const questions = await Question.getAll();
-        res.status(200).json(questions);
+        return res.status(200).json(questions);
     } catch (error) {
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -67,10 +67,10 @@ exports.getAllQuestionByProcessus = async (req, res) => {
             },
         });
 
-        res.status(200).json(questions);
+        return res.status(200).json(questions);
     } catch (error) {
         console.error("Erreur lors de la récupération des questions par processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -79,9 +79,9 @@ exports.updateQuestion =    async (req, res) => {
         const question = await Question.getById(parseInt(req.params.id));
         if (!question) return res.status(404).json({ error: "Question non trouvée" });
         const updatedQuestion = await Question.update(parseInt(req.params.id), req.body);
-        res.status(200).json(updatedQuestion);
+        return res.status(200).json(updatedQuestion);
     } catch (error) {
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -90,9 +90,9 @@ exports.deleteQuestion =     async (req, res) => {
         const question = await Question.getById(parseInt(req.params.id));
         if (!question) return res.status(404).json({ error: "Question non trouvée" });
         await Question.delete(parseInt(req.params.id));
-        res.status(204).send();
+        return res.status(204).send();
     } catch (error) {
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 

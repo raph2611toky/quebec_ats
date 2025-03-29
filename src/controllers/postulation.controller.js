@@ -116,10 +116,10 @@ exports.createPostulation = async (req, res) => {
             saveToNotifications: true
         });
 
-        res.status(201).json(Postulation.fromPrisma(newPostulation, base_url));
+        return res.status(201).json(Postulation.fromPrisma(newPostulation, base_url));
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -129,20 +129,20 @@ exports.getPostulation = async (req, res) => {
         if (!postulation) {
             return res.status(404).json({ error: "Postulation non trouvée" });
         }
-        res.status(200).json(postulation); 
+        return res.status(200).json(postulation); 
     } catch (error) {
         console.error("Erreur lors de la récupération de la postulation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllPostulations = async (req, res) => {
     try {
         const postulations = await Postulation.getAll(req.base_url);
-        res.status(200).json(postulations);
+        return res.status(200).json(postulations);
     } catch (error) {
         console.error("Erreur lors de la récupération des postulations:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -185,10 +185,10 @@ exports.updatePostulation = async (req, res) => {
         }
 
         const updatedPostulation = await Postulation.update(postulation.id, updateData);
-        res.status(200).json(Postulation.fromPrisma(updatedPostulation, req.base_url));
+        return res.status(200).json(Postulation.fromPrisma(updatedPostulation, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de la postulation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -209,10 +209,10 @@ exports.deletePostulation = async (req, res) => {
         // }
 
         await Postulation.delete(postulation.id);
-        res.status(200).json({ message: "Postulation supprimée avec succès" });
+        return res.status(200).json({ message: "Postulation supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de la postulation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -260,13 +260,13 @@ exports.confirmReferenceWithRecommendation = async (req, res) => {
             statut: "APPROUVE"
         });
         
-        res.status(200).json({
+        return res.status(200).json({
             message: "Référence confirmée avec succès",
             referent: await Referent.getById(referent_id, process.env.FRONTEND_URL)
         });
     } catch (error) {
         console.error("Erreur lors de la confirmation de la référence:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 

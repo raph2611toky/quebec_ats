@@ -14,14 +14,14 @@ exports.createProcessus = async (req, res) => {
   
         const offre = await Offre.getById(processusData.offre_id)
         if(offre.status != Status.CREE){
-            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+            return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
         const newProcessus = await Processus.create(processusData);
-        res.status(201).json(newProcessus);
+        return res.status(201).json(newProcessus);
     } catch (error) {
         console.error("Erreur lors de la création du processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -36,7 +36,7 @@ exports.updateProcessus = async (req, res) => {
 
         const offre = await Offre.getById(existingProcessus.offre_id)
         if(offre.status != Status.CREE){
-            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+            return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
 
@@ -62,10 +62,10 @@ exports.updateProcessus = async (req, res) => {
         }
 
         const updatedProcessus = await Processus.update(processusId, updateData);
-        res.status(200).json(updatedProcessus);
+        return res.status(200).json(updatedProcessus);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -79,17 +79,17 @@ exports.deleteProcessus = async (req, res) => {
 
         const offre = await Offre.getById(processus.offre_id)
         if(offre.status != Status.CREE){
-            res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
+            return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
         if(processus.statut == StatutProcessus.EN_COURS){
             return res.status(400).json({ error: "Processus en cours, ne peux pas être supprimer" });
         }
         await Processus.delete(parseInt(req.params.id));
-        res.status(200).json({ message: "Processus supprimé avec succès" });
+        return res.status(200).json({ message: "Processus supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -99,20 +99,20 @@ exports.getProcessus = async (req, res) => {
         if (!processus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
-        res.status(200).json(processus);
+        return res.status(200).json(processus);
     } catch (error) {
         console.error("Erreur lors de la récupération du processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllProcessus = async (req, res) => {
     try {
         const processus = await Processus.getAll();
-        res.status(200).json(processus);
+        return res.status(200).json(processus);
     } catch (error) {
         console.error("Erreur lors de la récupération des processus:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -166,13 +166,23 @@ exports.addQuizzJson = async (req, res) => {
             createdQuestions.push(newQuestion);
         }
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "Quiz ajouté avec succès",
             questions: createdQuestions
         });
     } catch (error) {
         console.error("Erreur lors de l'ajout du quiz JSON:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.startProcess = async (req, res)=>{
+    try {
+        
+    } catch (error) {
+        console.log(error);
+        
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
 

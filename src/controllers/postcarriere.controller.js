@@ -49,10 +49,10 @@ exports.createPostCarriere = async (req, res) => {
         };
 
         const newPostCarriere = await PostCarriere.create(postCarriereData);
-        res.status(201).json(newPostCarriere);
+        return res.status(201).json(newPostCarriere);
     } catch (error) {
         console.error("Erreur lors de la création du post carrière:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -113,10 +113,10 @@ exports.updatePostCarriere = async (req, res) => {
         }
 
         const updatedPostCarriere = await PostCarriere.update(parseInt(req.params.id), updateData);
-        res.status(200).json(updatedPostCarriere);
+        return res.status(200).json(updatedPostCarriere);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du post carrière:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -135,10 +135,10 @@ exports.deletePostCarriere = async (req, res) => {
         }
 
         await PostCarriere.delete(parseInt(req.params.id));
-        res.status(200).json({ message: "Post carrière supprimé avec succès" });
+        return res.status(200).json({ message: "Post carrière supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du post carrière:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -148,20 +148,20 @@ exports.getPostCarriere = async (req, res) => {
         if (!postCarriere) {
             return res.status(404).json({ error: "Post carrière non trouvé" });
         }
-        res.status(200).json(postCarriere);
+        return res.status(200).json(postCarriere);
     } catch (error) {
         console.error("Erreur lors de la récupération du post carrière:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllPostCarieres = async (req, res) => {
     try {
         const postCarieres = await PostCarriere.getAll();
-        res.status(200).json(postCarieres);
+        return res.status(200).json(postCarieres);
     } catch (error) {
         console.error("Erreur lors de la récupération des posts carrière:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 

@@ -62,10 +62,10 @@ exports.registerAdmin = async (req, res) => {
             data: { otp }
         });
 
-        res.status(201).json({ email: newAdmin.email, message: "Vérifiez votre email pour l'OTP" });
+        return res.status(201).json({ email: newAdmin.email, message: "Vérifiez votre email pour l'OTP" });
     } catch (error) {
         console.error("Erreur lors de la création de l'administrateur:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -89,10 +89,10 @@ exports.confirmRegistration = async (req, res) => {
         await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
         const token = generateToken({ id: user.id });
 
-        res.status(200).json({ email: user.email, token });
+        return res.status(200).json({ email: user.email, token });
     } catch (error) {
         console.error("Erreur lors de la confirmation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -131,10 +131,10 @@ exports.resendOtp = async (req, res) => {
             data: { otp }
         });
 
-        res.status(200).json({ email: user.email, message: "Un nouvel OTP a été envoyé à votre email" });
+        return res.status(200).json({ email: user.email, message: "Un nouvel OTP a été envoyé à votre email" });
     } catch (error) {
         console.error("Erreur lors du renvoi de l'OTP:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -170,10 +170,10 @@ exports.forgotPassword = async (req, res) => {
             data: { resetLink }
         });
 
-        res.status(200).json({ message: "Un email de réinitialisation a été envoyé" });
+        return res.status(200).json({ message: "Un email de réinitialisation a été envoyé" });
     } catch (error) {
         console.error("Erreur lors de la demande de réinitialisation:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -212,10 +212,10 @@ exports.resetPassword = async (req, res) => {
 
         await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
 
-        res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
+        return res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la réinitialisation du mot de passe:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -229,10 +229,10 @@ exports.loginAdmin = async (req, res) => {
         }
         const token = generateToken({ id: user.id });
         await User.update(user.id, { is_active: true });
-        res.status(200).json({ name: user.name, token, organisations: user.organisations });
+        return res.status(200).json({ name: user.name, token, organisations: user.organisations });
     } catch (error) {
         console.error("Erreur lors de la connexion:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -242,10 +242,10 @@ exports.getAdminProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "Profil non trouvé" });
         }
-        res.status(200).json(user);
+        return res.status(200).json(user);
     } catch (error) {
         console.error("Erreur lors de la récupération du profil:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -291,30 +291,30 @@ exports.updateAdminProfile = async (req, res) => {
         }
 
         const updatedUser = await User.update(req.user.id, updateData);
-        res.status(200).json(updatedUser);
+        return res.status(200).json(updatedUser);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du profil:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.logout = async (req, res) => {
     try {
         await User.update(req.user.id, { is_active: false });
-        res.status(200).json({ message: "Déconnexion réussie" });
+        return res.status(200).json({ message: "Déconnexion réussie" });
     } catch (error) {
         console.error("Erreur lors de la déconnexion:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllUsers = async (req, res) => {
     try {
         const users = await User.getAll();
-        res.status(200).json(users);
+        return res.status(200).json(users);
     } catch (error) {
         console.error("Erreur lors de la récupération des utilisateurs:", error);
-        res.status(500).json({ error: "Erreur interne du serveur" });
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 

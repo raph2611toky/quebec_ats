@@ -53,10 +53,10 @@ exports.createOffre = async (req, res) => {
         };
 
         const newOffre = await Offre.create(offreData);
-        res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
+        return res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -137,10 +137,10 @@ exports.updateOffre = async (req, res) => {
         if (updateData.organisation_id) updateData.organisation_id = parseInt(updateData.organisation_id);
 
         const updatedOffre = await Offre.update(offreId, updateData);
-        res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
+        return res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -158,10 +158,10 @@ exports.deleteOffre = async (req, res) => {
             return res.status(401).json({ error: "Offre ne peut pas être supprimée, déjà publiée." });
         }
         await Offre.delete(parseInt(req.params.id));
-        res.status(200).json({ message: "Offre supprimée avec succès" });
+        return res.status(200).json({ message: "Offre supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'offre:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -176,10 +176,10 @@ exports.deleteOffreForce = async (req, res) => {
             await fs.unlink(imagePath).catch(() => {});
         }
         await Offre.delete(parseInt(req.params.id));
-        res.status(200).json({ message: "Offre supprimée avec succès" });
+        return res.status(200).json({ message: "Offre supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'offre:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -189,30 +189,30 @@ exports.getOffre = async (req, res) => {
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
-        res.status(200).json(offre);
+        return res.status(200).json(offre);
     } catch (error) {
         console.error("Erreur lors de la récupération de l'offre:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAllOffres = async (req, res) => {
     try {
         const offres = await Offre.getAll(req.base_url);
-        res.status(200).json(offres);
+        return res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la récupération des offres:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getAvalaibleOffres = async (req, res) => {
     try {
         const offres = await Offre.getAllAvailable(req.base_url);
-        res.status(200).json(offres);
+        return res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur get offre disponible:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -253,10 +253,10 @@ exports.filterOffres = async (req, res) => {
             where: filterConditions
         });
 
-        res.status(200).json(offres);
+        return res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors du filtrage des offres:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -268,10 +268,10 @@ exports.searchOffres = async (req, res) => {
         }
 
         const offres = await Offre.search(keyword, req.base_url);
-        res.status(200).json(offres);
+        return res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la recherche des offres:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -279,10 +279,10 @@ exports.getProcessusByOffre = async (req, res) => {
     try {
         const offreId = parseInt(req.params.offreId);
         const processus = await Offre.getAllProcessus(offreId);
-        res.status(200).json(processus);
+        return res.status(200).json(processus);
     } catch (error) {
         console.error("Erreur lors de la récupération des processus:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
