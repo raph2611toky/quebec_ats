@@ -94,7 +94,7 @@ exports.getAllOrganisations = async (req, res) => {
 
 exports.getOffresByOrganisation = async (req, res) => {
     try {
-        const offres = await Organisation.getOffresByOrganisation(parseInt(req.params.id));
+        const offres = await Organisation.getOffresByOrganisation(parseInt(req.params.id), req.base_url);
         return res.status(200).json(offres);
     } catch (error) {
         console.error("Erreur lors de la récupération des offres de l'organisation:", error);
@@ -104,7 +104,7 @@ exports.getOffresByOrganisation = async (req, res) => {
 
 exports.getPostCarieresByOrganisation = async (req, res) => {
     try {
-        const postCarieres = await PostCarriere.getByOrganisation(parseInt(req.params.id));
+        const postCarieres = await PostCarriere.getByOrganisation(parseInt(req.params.id), req.base_url);
         return res.status(200).json(postCarieres);
     } catch (error) {
         console.error("Erreur lors de la récupération des posts carrière de l'organisation:", error);

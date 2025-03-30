@@ -122,13 +122,13 @@ class Organisation {
         }
     }
 
-    static async getOffresByOrganisation(id) {
+    static async getOffresByOrganisation(id, base_url) {
         try {
             const organisation = await prisma.organisation.findUnique({
                 where: { id },
                 include: { offres: true }
             });
-            return organisation ? organisation.offres.map(Offre.fromPrisma) : [];
+            return organisation ? organisation.offres.map(offre => Offre.fromPrisma(offre, base_url)) : [];
         } catch (error) {
             console.error(`Erreur dans Organisation.getOffresByOrganisation(${id}):`, error);
             throw error;

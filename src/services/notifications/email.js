@@ -188,7 +188,55 @@ const templates = {
                 <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #ffc107; text-decoration: none;">support@atsquebec.com</a></p>
             </div>
         </div>
-    `
+    `,
+
+    existingUserInvitation: (inviteeName, organisationName, inviterName, invitationLink, role) => `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(90deg, #007bff, #00c4ff); padding: 20px; text-align: center;">
+        <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+        <p style="color: #e6f0ff; font-size: 16px; margin: 5px 0;">Rejoignez une organisation</p>
+      </div>
+      <div style="padding: 30px; background-color: #fff;">
+        <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Invitation à rejoindre ${organisationName}</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour ${inviteeName},</p>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+          ${inviterName} vous a invité(e) à rejoindre l’organisation "<strong>${organisationName}</strong>" en tant que ${role}. Cliquez sur le bouton ci-dessous pour accepter :
+        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${invitationLink}" style="display: inline-block; padding: 12px 30px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 25px; font-size: 16px; font-weight: bold;">Accepter l'invitation</a>
+        </div>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Ce lien est valide pendant 24 heures.</p>
+      </div>
+      <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+        <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+        <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #007bff; text-decoration: none;">support@atsquebec.com</a></p>
+      </div>
+    </div>
+  `,
+
+  newUserInvitation: (inviteeEmail, organisationName, inviterName, invitationLink, role) => `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #f9f9f9; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(90deg, #28a745, #5cd85a); padding: 20px; text-align: center;">
+        <h1 style="color: #fff; margin: 0; font-size: 28px;">ATS Québec</h1>
+        <p style="color: #e6ffe6; font-size: 16px; margin: 5px 0;">Bienvenue dans une nouvelle aventure</p>
+      </div>
+      <div style="padding: 30px; background-color: #fff;">
+        <h2 style="color: #333; font-size: 22px; margin-bottom: 20px;">Invitation à rejoindre ${organisationName}</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Bonjour,</p>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">
+          ${inviterName} vous a invité(e) à rejoindre l’organisation "<strong>${organisationName}</strong>" en tant que ${role}. Cliquez sur le bouton ci-dessous pour créer votre compte et accepter :
+        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${invitationLink}" style="display: inline-block; padding: 12px 30px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 25px; font-size: 16px; font-weight: bold;">Créer mon compte</a>
+        </div>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Ce lien est valide pendant 24 heures.</p>
+      </div>
+      <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #888;">
+        <p style="margin: 0;">Cordialement,<br><strong>L’équipe ATS Québec</strong></p>
+        <p style="margin: 10px 0 0;">ATS Québec | <a href="mailto:support@atsquebec.com" style="color: #28a745; text-decoration: none;">support@atsquebec.com</a></p>
+      </div>
+    </div>
+  `,
 };
 
 const existingType = {
@@ -198,10 +246,10 @@ const existingType = {
     forgotPassword: "forgotPassword",
     rejection: "rejection",
     hiring: "hiring",
-    meeting: "meeting"
+    meeting: "meeting",
+    existingUserInvitation: "existingUserInvitation",
+    newUserInvitation: "newUserInvitation"
 }
-
-const generateOtp = () => Math.floor(10000000 + Math.random() * 90000000).toString();
 
 async function sendEmail({ to, subject, type, data, saveToNotifications = false }) {
     let htmlContent;
