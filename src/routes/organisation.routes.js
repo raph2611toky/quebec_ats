@@ -322,4 +322,198 @@ router.get("/:id/users", IsAuthenticatedAdmin, organisationController.getUsersBy
  */
 router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffresByOrganisation);
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     OrganisationDashboardResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         name:
+ *           type: string
+ *         totalUsers:
+ *           type: integer
+ *         totalModerators:
+ *           type: integer
+ *         totalAdmins:
+ *           type: integer
+ *         totalActiveUsers:
+ *           type: integer
+ *         totalVerifiedUsers:
+ *           type: integer
+ *         totalOffres:
+ *           type: integer
+ *         top3OffresByPostulations:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               titre:
+ *                 type: string
+ *               postulationCount:
+ *                 type: integer
+ *         last3Offres:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               titre:
+ *                 type: string
+ *               createdAt:
+ *                 type: string
+ *                 format: date-time
+ *         totalPostulations:
+ *           type: integer
+ *         minPostulationsPerOffer:
+ *           type: integer
+ *         maxPostulationsPerOffer:
+ *           type: integer
+ *         avgPostulationsPerOffer:
+ *           type: number
+ *         avgSalary:
+ *           type: number
+ *         totalProcessus:
+ *           type: integer
+ *         processusByType:
+ *           type: object
+ *           properties:
+ *             tache:
+ *               type: integer
+ *             visioConference:
+ *               type: integer
+ *             questionnaire:
+ *               type: integer
+ *         avgProcessusDuree:
+ *           type: number
+ *         postulationsBySource:
+ *           type: object
+ *           properties:
+ *             linkedin:
+ *               type: integer
+ *             indeed:
+ *               type: integer
+ *             jooble:
+ *               type: integer
+ *             francetravail:
+ *               type: integer
+ *             messager:
+ *               type: integer
+ *             whatsapp:
+ *               type: integer
+ *             instagram:
+ *               type: integer
+ *             telegram:
+ *               type: integer
+ *             twitter:
+ *               type: integer
+ *             quebecSite:
+ *               type: integer
+ *         totalInvitations:
+ *           type: integer
+ *         pendingInvitations:
+ *           type: integer
+ *         totalPostCarriere:
+ *           type: integer
+ *       example:
+ *         id: 1
+ *         name: "Tech Corp"
+ *         totalUsers: 10
+ *         totalModerators: 8
+ *         totalAdmins: 2
+ *         totalActiveUsers: 9
+ *         totalVerifiedUsers: 7
+ *         totalOffres: 5
+ *         top3OffresByPostulations:
+ *           - { id: 1, titre: "Dev Senior", postulationCount: 20 }
+ *           - { id: 2, titre: "Designer", postulationCount: 15 }
+ *           - { id: 3, titre: "Manager", postulationCount: 10 }
+ *         last3Offres:
+ *           - { id: 5, titre: "Stagiaire", createdAt: "2025-03-28T10:00:00Z" }
+ *           - { id: 4, titre: "Dev Junior", createdAt: "2025-03-27T15:00:00Z" }
+ *           - { id: 3, titre: "Manager", createdAt: "2025-03-26T09:00:00Z" }
+ *         totalPostulations: 50
+ *         minPostulationsPerOffer: 5
+ *         maxPostulationsPerOffer: 20
+ *         avgPostulationsPerOffer: 10.0
+ *         avgSalary: 45000.50
+ *         totalProcessus: 8
+ *         processusByType: { tache: 3, visioConference: 2, questionnaire: 3 }
+ *         avgProcessusDuree: 45.5
+ *         postulationsBySource:
+ *           linkedin: 30
+ *           indeed: 10
+ *           jooble: 5
+ *           francetravail: 2
+ *           messager: 1
+ *           whatsapp: 1
+ *           instagram: 0
+ *           telegram: 0
+ *           twitter: 0
+ *           quebecSite: 1
+ *         totalInvitations: 15
+ *         pendingInvitations: 5
+ *         totalPostCarriere: 3
+ */
+
+/**
+ * @swagger
+ * /api/organisations/{id}/dashboard:
+ *   get:
+ *     summary: Récupérer les statistiques complètes d'une organisation
+ *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'organisation
+ *     responses:
+ *       '200':
+ *         description: Statistiques récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OrganisationDashboardResponse'
+ *       '400':
+ *         description: ID invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "ID d'organisation invalide"
+ *       '404':
+ *         description: Organisation non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Organisation non trouvée"
+ *       '500':
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur serveur lors de la récupération des statistiques"
+ */
+router.get("/:id/dashboard", IsAuthenticated, organisationController.getOrganisationDashboard);
+
 module.exports = router;
