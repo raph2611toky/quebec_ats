@@ -1,12 +1,14 @@
 require("dotenv").config();
 const User = require("../models/user.model");
+
 const { generateToken, verifyToken } = require("../utils/securite/jwt");
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// const { PrismaClient } = require("@prisma/client");
+// const prisma = new PrismaClient();
+const prisma = require("../config/prisma.config");
 const { sendEmail, existingType } = require("../services/notifications/email");
 
 const generateInvitationToken = () => {
@@ -653,5 +655,199 @@ exports.cancelInvitation = async (req, res) => {
       return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.getDashboardStats = async (req, res) => {
+    try {
+        // 1. Statistiques des utilisateurs
+        const userStats = await prisma.user.aggregate({
+            _count: {
+                id: true,
+            },
+            where: {
+                OR: [
+                    { role: "ADMINISTRATEUR" },
+                    { role: "MODERATEUR" }
+                ]
+            }
+        });
+
+        const adminCount = await prisma.user.count({
+            where: { role: "ADMINISTRATEUR" }
+        });
+
+        const moderatorCount = await prisma.user.count({
+            where: { role: "MODERATEUR" }
+        });
+
+        // 2. Statistiques des organisations
+        const orgStats = await prisma.organisation.aggregate({
+            _count: {
+                id: true,
+            }
+        });
+
+        // 3. Statistiques des offres
+        const offreStats = await prisma.offre.aggregate({
+            _count: {
+                id: true,
+            },
+            _min: {
+                nombre_requis: true,
+            },
+            _max: {
+                nombre_requis: true,
+            }
+        });
+
+        // 4. Top 3 organisations par nombre d'utilisateurs
+        const topOrgsByUsers = await prisma.organisation.findMany({
+            take: 3,
+            orderBy: {
+                users: {
+                    _count: "desc"
+                }
+            },
+            select: {
+                id: true,
+                nom: true,
+                _count: {
+                    select: { users: true }
+                }
+            }
+        });
+
+        // 5. Top 3 organisations par nombre d'offres
+        const topOrgsByOffres = await prisma.organisation.findMany({
+            take: 3,
+            orderBy: {
+                offres: {
+                    _count: "desc"
+                }
+            },
+            select: {
+                id: true,
+                nom: true,
+                _count: {
+                    select: { offres: true }
+                }
+            }
+        });
+
+        // 6. Statistiques des candidats
+        const candidateStats = await prisma.candidat.aggregate({
+            _count: {
+                id: true,
+            }
+        });
+
+        // 7. Min/Max candidats par offre
+        const postulationStats = await prisma.offre.findMany({
+            select: {
+                id: true,
+                titre: true,
+                _count: {
+                    select: { postulations: true }
+                }
+            }
+        });
+
+        const postulationsPerOffer = postulationStats.map(o => o._count.postulations);
+        const minCandidatesPerOffer = Math.min(...postulationsPerOffer);
+        const maxCandidatesPerOffer = Math.max(...postulationsPerOffer);
+
+        // 8. Top offres par nombre de postulations
+        const topOffresByPostulations = await prisma.offre.findMany({
+            take: 3,
+            orderBy: {
+                postulations: {
+                    _count: "desc"
+                }
+            },
+            select: {
+                id: true,
+                titre: true,
+                _count: {
+                    select: { postulations: true }
+                }
+            }
+        });
+
+        // 9. Moyenne de postulations par offre
+        const avgPostulations = postulationsPerOffer.length > 0 
+            ? postulationsPerOffer.reduce((a, b) => a + b, 0) / postulationsPerOffer.length 
+            : 0;
+
+        // 10. Top candidats par nombre de postulations
+        const topCandidatesByPostulations = await prisma.candidat.findMany({
+            take: 3,
+            orderBy: {
+                postulations: {
+                    _count: "desc"
+                }
+            },
+            select: {
+                id: true,
+                nom: true,
+                email: true,
+                _count: {
+                    select: { postulations: true }
+                }
+            }
+        });
+
+        // Construction de la réponse
+        const dashboardData = {
+            users: {
+                total: userStats._count.id,
+                admins: adminCount,
+                moderators: moderatorCount
+            },
+            organisations: {
+                total: orgStats._count.id,
+                topByUsers: topOrgsByUsers.map(org => ({
+                    id: org.id,
+                    name: org.nom,
+                    userCount: org._count.users
+                })),
+                topByOffres: topOrgsByOffres.map(org => ({
+                    id: org.id,
+                    name: org.nom,
+                    offreCount: org._count.offres
+                }))
+            },
+            offres: {
+                total: offreStats._count.id,
+                minRequired: offreStats._min.nombre_requis,
+                maxRequired: offreStats._max.nombre_requis,
+                topByPostulations: topOffresByPostulations.map(offre => ({
+                    id: offre.id,
+                    title: offre.titre,
+                    postulationCount: offre._count.postulations
+                })),
+                avgPostulationsPerOffer: Number(avgPostulations.toFixed(2))
+            },
+            candidates: {
+                total: candidateStats._count.id,
+                minPerOffer: minCandidatesPerOffer,
+                maxPerOffer: maxCandidatesPerOffer,
+                topByPostulations: topCandidatesByPostulations.map(candidat => ({
+                    id: candidat.id,
+                    name: candidat.nom,
+                    email: candidat.email,
+                    postulationCount: candidat._count.postulations
+                }))
+            }
+        };
+
+        res.status(200).json(dashboardData);
+
+    } catch (error) {
+        console.error("Erreur dans getDashboardStats:", error);
+        res.status(500).json({
+            success: false,
+            error: "Erreur serveur lors de la récupération des statistiques"
+        });
+    }
+}
 
 module.exports = exports;
