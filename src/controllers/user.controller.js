@@ -7,7 +7,6 @@ const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { generateToken } = require("../utils/securite/jwt");
 const { sendEmail, existingType } = require("../services/notifications/email");
 
 const generateInvitationToken = () => {
