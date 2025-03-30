@@ -4,7 +4,8 @@ const { generateToken, verifyToken } = require("../utils/securite/jwt")
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const Referent = require("../models/referent.model");
 const { OAuth2Client } = require('google-auth-library');
-const prisma = require("../config/prisma.config")
+const prisma = require("../config/prisma.config");
+const { TypeProcessus } = require("@prisma/client")
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { setupGoogleAuth } = require('../services/google/authentication');
 
@@ -281,3 +282,86 @@ exports.googleCallbackLogic = async (req, res) => {
         res.status(500).json({ error: 'Erreur serveur' });
     }
 };
+
+exports.getCandidatProcessus = async(req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ error: "Token requis dans le corps de la requête" });
+        }
+        let decoded;
+        try {
+            decoded = verifyToken(token);
+        } catch (error) {
+            return res.status(400).json({ error: "Token invalide ou expiré" });
+        }
+
+        if (decoded.candidat_id !== req.candidat.id) {
+            return res.status(401).json({ error: "Accès non autorisé : mismatch candidat" });
+        }
+
+        let processusId;
+        try {
+            processusId = parseInt(decryptAES(decoded.processus_id));
+        } catch (error) {
+            return res.status(400).json({ error: "Erreur lors du décryptage de l'ID du processus" });
+        }
+
+        const processus = await prisma.processus.findUnique({
+            where: { id: processusId },
+            include: {
+                offre: {
+                    select: {
+                        id: true,
+                        titre: true
+                    }
+                },
+                questions: {
+                    include: {
+                        reponses: true
+                    },
+                    orderBy: { ordre: 'asc' }
+                }
+            }
+        });
+
+        if (!processus) {
+            return res.status(404).json({ error: "Processus non trouvé" });
+        }
+
+        const postulation = await prisma.postulation.findFirst({
+            where: {
+                candidat_id: req.candidat.id,
+                offre_id: processus.offre_id
+            }
+        });
+
+        if (!postulation) {
+            return res.status(404).json({ error: "Vous n'avez pas accès à ce processus" });
+        }
+
+        if (processus.statut !== StatutProcessus.EN_COURS) {
+            return res.status(400).json({ 
+                error: "Le processus n'est pas en cours (peut-être à venir, terminé ou annulé)" 
+            });
+        }
+        return res.status(200).json({
+            id: processus.id,
+            titre: processus.titre,
+            type: processus.type,
+            description: processus.description,
+            statut: processus.statut,
+            duree: processus.duree,
+            offre: {
+                id: processus.offre.id,
+                titre: processus.offre.titre
+            },
+            questions: processus.type === TypeProcessus.QUESTIONNAIRE ? processus.questions : undefined
+        });
+
+    } catch (error) {
+        console.error("Erreur dans getCandidatProcessus:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}

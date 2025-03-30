@@ -1,7 +1,11 @@
+require("dotenv").config()
 const { StatutProcessus, TypeProcessus, Status } = require("@prisma/client");
 const Processus = require("../models/processus.model");
 const Question = require("../models/question.model");
 const Offre = require("../models/offre.model");
+const createGoogleMeet = require("../services/meet/googleMeet.services.js");
+const { generateToken } = require("../utils/securite/jwt.js")
+const { encryptAES } = require("../utils/securite/cryptographie.js")
 const prisma = require("../config/prisma.config");
 const { existingType, sendEmail } = require("../services/notifications/email")
 
@@ -70,7 +74,6 @@ exports.updateProcessus = async (req, res) => {
     }
 };
 
-
 exports.deleteProcessus = async (req, res) => {
     try {
         const processus = await Processus.getById(parseInt(req.params.id));
@@ -117,7 +120,6 @@ exports.getAllProcessus = async (req, res) => {
     }
 };
 
-
 exports.addQuizzJson = async (req, res) => {
     try {
         const processusId = parseInt(req.params.id);
@@ -145,27 +147,38 @@ exports.addQuizzJson = async (req, res) => {
                 error: "Le fichier JSON doit contenir un tableau non vide de questions" 
             });
         }
-
+        const existingQuestionsCount = await prisma.question.count({
+            where: { processus_id: processusId }
+        });
         const createdQuestions = [];
-        for (const questionData of quizzData) {
-            if (!questionData.label || !Array.isArray(questionData.reponses) || questionData.reponses.length === 0) {
-                return res.status(400).json({ 
-                    error: "Chaque question doit avoir un label et au moins une réponse" 
-                });
-            }
-
-            const newQuestion = await Question.create({
-                label: questionData.label,
-                processus_id: processusId,
-                reponses: {
-                    create: questionData.reponses.map(reponse => ({
-                        label: reponse.label,
-                        is_true: !!reponse.is_true // Convertit en booléen
-                    }))
+            for (let i = 0; i < quizzData.length; i++) {
+                const questionData = quizzData[i];
+                
+                if (!questionData.label || !Array.isArray(questionData.reponses) || questionData.reponses.length === 0) {
+                    return res.status(400).json({ 
+                        error: "Chaque question doit avoir un label et au moins une réponse" 
+                    });
                 }
-            });
-            createdQuestions.push(newQuestion);
-        }
+
+                const ordre = existingQuestionsCount + i + 1;
+
+                const newQuestion = await prisma.question.create({
+                    data: {
+                        label: questionData.label,
+                        ordre: ordre,
+                        processus: { connect: { id: processusId } },
+                        reponses: {
+                            create: questionData.reponses.map(reponse => ({
+                                label: reponse.label,
+                                is_true: !!reponse.is_true
+                            }))
+                        }
+                    },
+                    include: { reponses: true }
+                });
+                
+                createdQuestions.push(newQuestion);
+            }
 
         return res.status(201).json({
             message: "Quiz ajouté avec succès",
@@ -216,41 +229,68 @@ exports.startProcessus = async (req, res) => {
             include: { postulations: true }
         });
 
-        const envoiNotifications = async (message, subject) => {
+        const envoiNotifications = async (data, subject, processType) => {
             for (const candidat of candidats) {
-                // await sendEmail({
-                //     to: candidat.email,
-                //     subject,
-                //     type: existingType.postulationAcknowledgment,
-                //     data: message,
-                //     saveToNotifications: false
-                // });
+                const token = generateToken({
+                    candidat_id: candidat.id,
+                    processus_id: encryptAES(processus.id)
+                });
                 
+                const finalUrl = data.url ? `${data.url}${token}` : undefined;
+
+                await sendEmail({
+                    to: candidat.email,
+                    subject,
+                    type: existingType.recruitmentProcess,
+                    data: {
+                        candidatName: candidat.nom,
+                        offreTitre: processus.offre.titre,
+                        processType: processType,
+                        description: data.description,
+                        url: finalUrl,
+                        duree: processus.duree
+                    },
+                    saveToNotifications: false
+                });
             }
-            console.log("email send to all candidat");
-            
+            console.log("Emails envoyés à tous les candidats");
         };
 
         if (processus.type === TypeProcessus.QUESTIONNAIRE) {
-            const url = "http://test-quizz"
-            const message = `Un quizz pour le recrutement ${processus.offre.titre}. Lien: ${url}. Vous avez ${processus.duree} minutes.`;
-            await envoiNotifications(message, "Processus de Recrutement - QUIZZ");
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/quizz?token=`,
+                    description: `${processus.titre} - Répondez aux questions dans le temps imparti`
+                },
+                "Processus de Recrutement - Questionnaire",
+                "Questionnaire"
+            );
         } else if (processus.type === TypeProcessus.TACHE) {
-            const url = "http://test-tache"
-            const message = `Tâche pour le recrutement ${processus.offre.titre}. ${processus.titre}: ${processus.description}. Lien pour soumettre: ${url}. Vous avez ${processus.duree} minutes.`;
-            await envoiNotifications(message, "Processus de Recrutement - TACHE");
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/tache?token=`,
+                    description: `${processus.titre} - ${processus.description}`
+                },
+                "Processus de Recrutement - Tâche",
+                "Tâche"
+            );
         } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
-            const message = `Visio conférence bientôt pour le recrutement ${processus.offre.titre}. Soyez prêt. Durée: ${processus.duree} minutes.`;
-            await envoiNotifications(message, "Processus de Recrutement - VISIO CONFERENCE");
+            await envoiNotifications(
+                {
+                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
+                },
+                "Processus de Recrutement - Visio-conférence",
+                "Visio-conférence"
+            );
         } else {
             return res.status(500).json({ error: "Type de processus invalide" });
         }
 
-        return res.status(200).json({ message: `Processus de recrutement : ${processus.titre} pour l'offre ${processus.offre.titre} a commencé.` });
+        return res.status(200).json({ 
+            message: `Le processus "${processus.titre}" pour l'offre "${processus.offre.titre}" a démarré avec succès`
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
-
-
