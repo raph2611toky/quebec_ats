@@ -14,7 +14,7 @@ const {
     postulerOffre,
     deleteOffreForce,
     getDetailsOffres,
-    fermerOffre
+    fermerOffre, getOfferDetails
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1018,5 +1018,309 @@ router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
  */
 router.post("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
 
+/**
+ * @swagger
+ * /api/offres/{id}/details:
+ *   get:
+ *     summary: Récupérer les détails complets d'une offre
+ *     tags: [Offres]
+ *     description: Retourne toutes les informations d'une offre, y compris les processus de recrutement, les postulations, les candidats et les remarques associées.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre à récupérer
+ *     responses:
+ *       200:
+ *         description: Détails complets de l'offre
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   description: ID unique de l'offre
+ *                 titre:
+ *                   type: string
+ *                   description: Titre de l'offre
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                   description: Informations sur l'utilisateur créateur
+ *                 organisation:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     nom:
+ *                       type: string
+ *                     adresse:
+ *                       type: string
+ *                     ville:
+ *                       type: string
+ *                   description: Informations sur l'organisation
+ *                 image_url:
+ *                   type: string
+ *                   description: URL de l'image de l'offre
+ *                 description:
+ *                   type: string
+ *                   description: Description de l'offre
+ *                 date_limite:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date limite de l'offre
+ *                 status:
+ *                   type: string
+ *                   enum: [CREE, OUVERT, FERME]
+ *                   description: Statut de l'offre
+ *                 nombre_requis:
+ *                   type: integer
+ *                   description: Nombre de candidats requis
+ *                 lieu:
+ *                   type: string
+ *                   description: Lieu de l'emploi
+ *                 pays:
+ *                   type: string
+ *                   description: Pays de l'emploi
+ *                 type_emploi:
+ *                   type: string
+ *                   enum: [CDD, CDI, STAGE]
+ *                   description: Type d'emploi
+ *                 salaire:
+ *                   type: string
+ *                   description: Salaire (stocké comme Decimal)
+ *                 devise:
+ *                   type: string
+ *                   enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
+ *                   description: Devise du salaire
+ *                 horaire_ouverture:
+ *                   type: string
+ *                   description: Heure d'ouverture
+ *                 horaire_fermeture:
+ *                   type: string
+ *                   description: Heure de fermeture
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date de création
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date de mise à jour
+ *                 processus:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       titre:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                         enum: [TACHE, VISIO_CONFERENCE, QUESTIONNAIRE]
+ *                       description:
+ *                         type: string
+ *                       statut:
+ *                         type: string
+ *                         enum: [A_VENIR, EN_COURS, TERMINER, ANNULER]
+ *                       offre_id:
+ *                         type: integer
+ *                       duree:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                       questions:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                             label:
+ *                               type: string
+ *                             processus_id:
+ *                               type: integer
+ *                             reponses:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                                 properties:
+ *                                   id:
+ *                                     type: integer
+ *                                   label:
+ *                                     type: string
+ *                                   is_true:
+ *                                     type: boolean
+ *                                   question_id:
+ *                                     type: integer
+ *                   description: Liste des processus de recrutement
+ *                 postulations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       candidat:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           nom:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           telephone:
+ *                             type: string
+ *                             nullable: true
+ *                           image:
+ *                             type: string
+ *                       offre_id:
+ *                         type: integer
+ *                       date_soumission:
+ *                         type: string
+ *                         format: date-time
+ *                       etape_actuelle:
+ *                         type: string
+ *                         enum: [SOUMIS, EN_REVISION, ACCEPTE, REJETE]
+ *                       cv:
+ *                         type: string
+ *                       lettre_motivation:
+ *                         type: string
+ *                         nullable: true
+ *                       telephone:
+ *                         type: string
+ *                         nullable: true
+ *                       source_site:
+ *                         type: string
+ *                         enum: [LINKEDIN, INDEED, JOOBLE, FRANCETRAVAIL, MESSAGER, WHATSAPP, INSTAGRAM, TELEGRAM, TWITTER, QUEBEC_SITE]
+ *                       note:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                       remarques:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                             admin:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                             postulation_id:
+ *                               type: integer
+ *                             text:
+ *                               type: string
+ *                             created_at:
+ *                               type: string
+ *                               format: date-time
+ *                             updated_at:
+ *                               type: string
+ *                               format: date-time
+ *                   description: Liste des postulations
+ *             example:
+ *               id: 1
+ *               titre: "Développeur Full Stack"
+ *               user: { id: 1, name: "John Doe", email: "john.doe@example.com" }
+ *               organisation: { id: 1, nom: "Tech Corp", adresse: "123 Rue", ville: "Paris" }
+ *               image_url: "/uploads/offres/dev.jpg"
+ *               description: "Poste de développeur Full Stack..."
+ *               date_limite: "2025-04-30T23:59:59Z"
+ *               status: "OUVERT"
+ *               nombre_requis: 2
+ *               lieu: "Paris"
+ *               pays: "France"
+ *               type_emploi: "CDI"
+ *               salaire: "50000.75"
+ *               devise: "EURO"
+ *               horaire_ouverture: "09:00:00"
+ *               horaire_fermeture: "17:00:00"
+ *               created_at: "2025-03-18T10:00:00Z"
+ *               updated_at: "2025-03-18T10:00:00Z"
+ *               processus: [
+ *                 {
+ *                   id: 1,
+ *                   titre: "Entretien Visio",
+ *                   type: "VISIO_CONFERENCE",
+ *                   description: "Entretien initial",
+ *                   statut: "A_VENIR",
+ *                   offre_id: 1,
+ *                   duree: 30,
+ *                   created_at: "2025-03-18T10:05:00Z",
+ *                   updated_at: "2025-03-18T10:05:00Z",
+ *                   questions: []
+ *                 }
+ *               ]
+ *               postulations: [
+ *                 {
+ *                   id: 1,
+ *                   candidat: { id: 1, nom: "Jane Doe", email: "jane.doe@example.com", telephone: "+123456789", image: "/uploads/candidats/default.png" },
+ *                   offre_id: 1,
+ *                   date_soumission: "2025-03-19T09:00:00Z",
+ *                   etape_actuelle: "SOUMIS",
+ *                   cv: "/uploads/cv/jane_cv.pdf",
+ *                   lettre_motivation: "/uploads/lettre_motivation/jane_lm.pdf",
+ *                   telephone: "+123456789",
+ *                   source_site: "LINKEDIN",
+ *                   note: 0,
+ *                   created_at: "2025-03-19T09:00:00Z",
+ *                   updated_at: "2025-03-19T09:00:00Z",
+ *                   remarques: [
+ *                     {
+ *                       id: 1,
+ *                       admin: { id: 2, name: "Admin User" },
+ *                       postulation_id: 1,
+ *                       text: "Bonne première impression",
+ *                       created_at: "2025-03-19T10:00:00Z",
+ *                       updated_at: "2025-03-19T10:00:00Z"
+ *                     }
+ *                   ]
+ *                 }
+ *               ]
+ *       404:
+ *         description: Offre non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/:id/details", IsAuthenticated, getOfferDetails);
 
 module.exports = router;
