@@ -3,7 +3,7 @@ const { StatutProcessus, TypeProcessus, Status } = require("@prisma/client");
 const Processus = require("../models/processus.model");
 const Question = require("../models/question.model");
 const Offre = require("../models/offre.model");
-const createGoogleMeet = require("./googleMeet.services.js");
+const createGoogleMeet = require("../services/meet/googleMeet.services.js");
 const { generateToken } = require("../utils/securite/jwt.js")
 const { encryptAES } = require("../utils/securite/cryptographie.js")
 const prisma = require("../config/prisma.config");
@@ -119,7 +119,6 @@ exports.getAllProcessus = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
-
 
 exports.addQuizzJson = async (req, res) => {
     try {

@@ -9,7 +9,7 @@ const {
     getCandidatFullInfo,
     getCandidatFullInfoByEmail, getCandidatFullInfoMe,
     googleCallbackLogic,
-    loginWithGoogleLogic
+    loginWithGoogleLogic, getCandidatProcessus,
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
@@ -438,5 +438,136 @@ router.get("/auth/google", loginWithGoogleLogic);
  *                   example: "Erreur serveur"
  */
 router.post("/auth/google/verify", googleCallbackLogic);
+
+/**
+ * @swagger
+ * tags:
+ *   name: Candidat Processus
+ *   description: Gestion des processus de recrutement pour les candidats
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ProcessusCandidatResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID du processus
+ *         titre:
+ *           type: string
+ *           description: Titre du processus
+ *         type:
+ *           type: string
+ *           enum: [TACHE, VISIO_CONFERENCE, QUESTIONNAIRE]
+ *           description: Type du processus
+ *         description:
+ *           type: string
+ *           description: Description du processus
+ *         statut:
+ *           type: string
+ *           enum: [A_VENIR, EN_COURS, TERMINER, ANNULER]
+ *           description: Statut actuel du processus
+ *         duree:
+ *           type: integer
+ *           description: Durée en minutes
+ *         offre:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *             titre:
+ *               type: string
+ *         questions:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               label:
+ *                 type: string
+ *               ordre:
+ *                 type: integer
+ *               reponses:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     label:
+ *                       type: string
+ *                     is_true:
+ *                       type: boolean
+ *       example:
+ *         id: 1
+ *         titre: "Évaluation technique"
+ *         type: "QUESTIONNAIRE"
+ *         description: "Évaluation technique - Répondez aux questions"
+ *         statut: "EN_COURS"
+ *         duree: 30
+ *         offre:
+ *           id: 1
+ *           titre: "Développeur Senior"
+ *         questions:
+ *           - id: 1
+ *             label: "Quelle est la capitale de la France ?"
+ *             ordre: 1
+ *             reponses:
+ *               - id: 1
+ *                 label: "Paris"
+ *                 is_true: true
+ *               - id: 2
+ *                 label: "Londres"
+ *                 is_true: false
+ */
+
+/**
+     * @swagger
+     * /api/candidat/processus/check:
+     *   post:
+     *     summary: Récupérer les détails d'un processus pour un candidat authentifié
+     *     tags: [Candidat Processus]
+     *     security:
+     *       - BearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               token:
+     *                 type: string
+     *                 description: Token JWT reçu dans l'email
+     *             required:
+     *               - token
+     *           example:
+     *             token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+     *     responses:
+     *       200:
+     *         description: Détails du processus récupérés avec succès
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   $ref: '#/components/schemas/ProcessusCandidatResponse'
+     *       400:
+     *         description: Token invalide ou données manquantes
+     *       401:
+     *         description: Non autorisé (candidat non authentifié ou mismatch)
+     *       404:
+     *         description: Processus non trouvé ou accès non autorisé
+     *       500:
+     *         description: Erreur interne du serveur
+     */
+router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
 
 module.exports = router;
