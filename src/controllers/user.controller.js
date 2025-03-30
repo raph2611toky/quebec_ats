@@ -324,89 +324,87 @@ exports.getAllUsers = async (req, res) => {
 
 exports.sendInvitation = async (req, res) => {
     try {
-      const { invitee_email, organisation_id, role } = req.body;
-      const inviter_id = req.user.id;
-  
-      const inviter = await prisma.user.findUnique({
-        where: { id: inviter_id },
-      });
-      if (!inviter || inviter.role !== "ADMINISTRATEUR") {
-        return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
-      }
-  
-      let validatedOrganisationId = null;
-      if (role === "MODERATEUR") {
-        if (!organisation_id) {
-          return res.status(400).json({ error: "L'organisation est requise pour un modérateur" });
+        const { invitee_email, organisation_id, role } = req.body;
+        const inviter_id = req.user.id;
+    
+        const inviter = await User.getById(inviter_id)
+        if (!inviter || inviter.role !== "ADMINISTRATEUR") {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
         }
-        const organisation = await prisma.organisation.findUnique({
-          where: { id: organisation_id },
+    
+        let validatedOrganisationId = null;
+        if (role === "MODERATEUR") {
+            if (!organisation_id) {
+            return res.status(400).json({ error: "L'organisation est requise pour un modérateur" });
+            }
+            const organisation = await prisma.organisation.findUnique({
+            where: { id: organisation_id },
+            });
+            if (!organisation) {
+            return res.status(404).json({ error: "Organisation non trouvée" });
+            }
+            validatedOrganisationId = organisation_id;
+        } else if (role === "ADMINISTRATEUR") {
+            if (organisation_id) {
+            return res.status(400).json({ error: "L'organisation ne doit pas être spécifiée pour un administrateur" });
+            }
+        } else {
+            return res.status(400).json({ error: "Rôle invalide" });
+        }
+    
+        const existingUser = await prisma.user.findUnique({
+            where: { email: invitee_email },
         });
-        if (!organisation) {
-          return res.status(404).json({ error: "Organisation non trouvée" });
+    
+        const token = generateInvitationToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+        const invitation = await prisma.queueInvitationOrganisation.create({
+            data: {
+            inviter_id,
+            invitee_email,
+            organisation_id: validatedOrganisationId,
+            role: role || "MODERATEUR",
+            token,
+            expires_at: expiresAt,
+            },
+        });
+    
+        const baseUrl = process.env.FRONTEND_URL;
+        let invitationLink;
+        let emailType;
+        let emailData;
+    
+        if (existingUser) {
+            invitationLink = `${baseUrl}/organisation/invite?token=${token}`;
+            emailType = existingType.existingUserInvitation;
+            emailData = {
+                inviteeName: existingUser.name || invitee_email,
+                organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
+                inviterName: inviter.name,
+                invitationLink,
+                role,
+            };
+        } else {
+            invitationLink = `${baseUrl}/organisation/invite/add?token=${token}`;
+            emailType = existingType.newUserInvitation;
+            emailData = {
+                inviteeEmail: invitee_email,
+                organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
+                inviterName: inviter.name,
+                invitationLink,
+                role,
+            };
         }
-        validatedOrganisationId = organisation_id;
-      } else if (role === "ADMINISTRATEUR") {
-        if (organisation_id) {
-          return res.status(400).json({ error: "L'organisation ne doit pas être spécifiée pour un administrateur" });
-        }
-      } else {
-        return res.status(400).json({ error: "Rôle invalide" });
-      }
-  
-      const existingUser = await prisma.user.findUnique({
-        where: { email: invitee_email },
-      });
-  
-      const token = generateInvitationToken();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  
-      const invitation = await prisma.queueInvitationOrganisation.create({
-        data: {
-          inviter_id,
-          invitee_email,
-          organisation_id: validatedOrganisationId,
-          role: role || "MODERATEUR",
-          token,
-          expires_at: expiresAt,
-        },
-      });
-  
-      const baseUrl = process.env.FRONTEND_URL;
-      let invitationLink;
-      let emailType;
-      let emailData;
-  
-      if (existingUser) {
-        invitationLink = `${baseUrl}/organisation/invite?token=${token}`;
-        emailType = existingType.existingUserInvitation;
-        emailData = {
-          inviteeName: existingUser.name || invitee_email,
-          organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
-          inviterName: inviter.name,
-          invitationLink,
-          role,
-        };
-      } else {
-        invitationLink = `${baseUrl}/organisation/invite/add?token=${token}`;
-        emailType = existingType.newUserInvitation;
-        emailData = {
-          inviteeEmail: invitee_email,
-          organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
-          inviterName: inviter.name,
-          invitationLink,
-          role,
-        };
-      }
-  
-      await sendEmail({
-        to: invitee_email,
-        subject: `Invitation à rejoindre ${emailData.organisationName}`,
-        type: emailType,
-        data: emailData,
-      });
-  
-      return res.status(201).json({ message: "Invitation envoyée avec succès" });
+    
+        await sendEmail({
+            to: invitee_email,
+            subject: `Invitation à rejoindre ${emailData.organisationName}`,
+            type: emailType,
+            data: emailData,
+        });
+    
+        return res.status(201).json({ message: "Invitation envoyée avec succès" });
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'invitation:", error);
       return res.status(500).json({ error: "Erreur interne du serveur" });
@@ -514,6 +512,144 @@ exports.confirmInvitation = async (req, res) => {
       });
     } catch (error) {
       console.error("Erreur lors de l'acceptation de l'invitation:", error);
+      return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.removeFromOrganisation = async (req, res) => {
+    try {
+        const { user_id, organisation_id } = req.body;
+        const admin_id = req.user.id;
+    
+        const admin = await prisma.user.findUnique({
+            where: { id: admin_id },
+        });
+        if (!admin || admin.role !== "ADMINISTRATEUR") {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent retirer des utilisateurs" });
+        }
+    
+        const user = await prisma.user.findUnique({
+            where: { id: user_id },
+            include: { organisations: true },
+        });
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+    
+        if (user_id === admin_id) {
+            return res.status(400).json({ error: "Vous ne pouvez pas vous retirer vous-même" });
+        }
+    
+        let updatedOrganisations;
+        if (user.role === "MODERATEUR") {
+            if (!organisation_id) {
+            return res.status(400).json({ error: "L'ID de l'organisation est requis pour un modérateur" });
+            }
+            const organisation = await prisma.organisation.findUnique({
+            where: { id: organisation_id },
+            });
+            if (!organisation) {
+            return res.status(404).json({ error: "Organisation non trouvée" });
+            }
+    
+            const isInOrganisation = user.organisations.some(org => org.id === organisation_id);
+            if (!isInOrganisation) {
+            return res.status(400).json({ error: "L'utilisateur n'appartient pas à cette organisation" });
+            }
+    
+            updatedOrganisations = {
+            disconnect: { id: organisation_id },
+            };
+        } else if (user.role === "ADMINISTRATEUR") {
+            return res.status(400).json({ error: "Un administrateur ne peut pas etre detaché d'une organisation." });
+        }
+    
+        await prisma.user.update({
+            where: { id: user_id },
+            data: {
+            organisations: updatedOrganisations,
+            },
+        });
+    
+        const message = user.role === "MODERATEUR"
+            ? `L'utilisateur a été retiré de l'organisation ${organisation_id}`
+            : "L'utilisateur a été retiré de toutes les organisations";
+        
+        return res.status(200).json({ message });
+    } catch (error) {
+      console.error("Erreur lors du retrait de l'utilisateur de l'organisation:", error);
+      return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+  };
+
+  exports.listInvitationQueue = async (req, res) => {
+    try {
+        const admin_id = req.user.id;
+    
+        const admin = await prisma.user.findUnique({
+            where: { id: admin_id },
+        });
+        if (!admin || admin.role !== "ADMINISTRATEUR") {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent voir la liste des invitations" });
+        }
+    
+        const invitations = await prisma.queueInvitationOrganisation.findMany({
+            where: {
+            expires_at: { gt: new Date() }
+            },
+            include: {
+            inviter: {
+                select: { id: true, name: true, email: true },
+            },
+            organisation: {
+                select: { id: true, nom: true },
+            },
+            },
+            orderBy: { created_at: "desc" },
+        });
+    
+        return res.status(200).json(invitations);
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la liste des invitations:", error);
+      return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+  
+exports.cancelInvitation = async (req, res) => {
+    try {
+        const invitation_id = parseInt(req.params.invitation_id);
+        const admin_id = req.user.id;
+    
+        const admin = await prisma.user.findUnique({
+            where: { id: admin_id },
+        });
+        if (!admin || admin.role !== "ADMINISTRATEUR") {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent annuler des invitations" });
+        }
+    
+        const invitation = await prisma.queueInvitationOrganisation.findUnique({
+            where: { id: parseInt(invitation_id) },
+            include: { organisation: true },
+        });
+        if (!invitation) {
+            return res.status(404).json({ error: "Invitation non trouvée" });
+        }
+        if (new Date() > invitation.expires_at) {
+            return res.status(400).json({ error: "L'invitation est déjà expirée" });
+        }
+    
+        await prisma.queueInvitationOrganisation.delete({
+            where: { id: invitation_id },
+        });
+    
+        const orgName = invitation.role === "MODERATEUR" && invitation.organisation
+            ? invitation.organisation.nom
+            : "toutes les organisations";
+        return res.status(200).json({
+            message: `L'invitation pour ${invitation.invitee_email} à rejoindre ${orgName} a été annulée`,
+        });
+    } catch (error) {
+      console.error("Erreur lors de l'annulation de l'invitation:", error);
       return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };

@@ -256,45 +256,59 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
     let notificationData;
 
     switch (type) {
-        case "referentConfirmation":
+        case existingType.referentConfirmation:
             htmlContent = templates.referentConfirmation(data.candidatName, data.offreTitre, data.confirmationLink);
             notificationData = {
                 titre: `Confirmation de référence pour ${data.candidatName}`,
                 contenu: `Un email a été envoyé au référent pour confirmer la référence de ${data.candidatName} pour l'offre "${data.offreTitre}".`
             };
             break;
-        case "postulationAcknowledgment":
+        case existingType.postulationAcknowledgment:
             htmlContent = templates.postulationAcknowledgment(data.candidatName, data.offreTitre);
             notificationData = {
                 titre: `Accusé de réception pour ${data.candidatName}`,
                 contenu: `Postulation de ${data.candidatName} pour l'offre "${data.offreTitre}" bien reçue et en cours d'analyse.`
             };
             break;
-        case "otpValidation":
+        case existingType.otpValidation:
             htmlContent = templates.otpValidation(data.otp);
             break;
-        case "forgotPassword":
+        case existingType.forgotPassword:
             htmlContent = templates.forgotPassword(data.resetLink);
             break;
-        case "rejection":
+        case existingType.rejection:
             htmlContent = templates.rejection(data.candidatName, data.offreTitre);
             notificationData = {
                 titre: `Rejet de candidature pour ${data.candidatName}`,
                 contenu: `La candidature de ${data.candidatName} pour l'offre "${data.offreTitre}" a été rejetée.`
             };
             break;
-        case "hiring":
+        case existingType.hiring:
             htmlContent = templates.hiring(data.candidatName, data.offreTitre);
             notificationData = {
                 titre: `Embauche de ${data.candidatName}`,
                 contenu: `${data.candidatName} a été retenu(e) pour l'offre "${data.offreTitre}".`
             };
             break;
-        case "meeting":
+        case existingType.meeting:
             htmlContent = templates.meeting(data.candidatName, data.offreTitre, data.date, data.heure, data.meetLink);
             notificationData = {
                 titre: `Entretien pour ${data.candidatName}`,
                 contenu: `Rendez-vous fixé pour ${data.candidatName} le ${data.date} à ${data.heure} pour l'offre "${data.offreTitre}".`
+            };
+            break;
+        case existingType.existingUserInvitation:
+            htmlContent = templates.existingUserInvitation(data.inviteeName, data.organisationName, data.inviterName, data.invitationLink, data.role);
+            notificationData = {
+                titre: `Invitation de ${data.inviteeName} dans l'organisation ${data.organisationName}`,
+                contenu: `${data.inviterName} a invité(e) ${data.inviteeEmail} à rejoindre l’organisation ${data.organisationName} en tant que ${data.role}.`
+            };
+            break;
+        case existingType.newUserInvitation:
+            htmlContent = templates.newUserInvitation(data.inviteeName, data.organisationName, data.inviterName, data.invitationLink, data.role);
+            notificationData = {
+                titre: `Invitation de ${data.inviteeName} dans l'organisation ${data.organisationName}`,
+                contenu: `${data.inviterName} a invité(e) ${data.inviteeEmail} à rejoindre l’organisation ${data.organisationName} en tant que ${data.role}.`
             };
             break;
         default:

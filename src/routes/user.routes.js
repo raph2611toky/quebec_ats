@@ -7,7 +7,8 @@ const {
     updateAdminProfile,
     logout,
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
-    resendOtp, sendInvitation, confirmInvitation, acceptInvitation
+    resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
+    listInvitationQueue, cancelInvitation,
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -677,7 +678,7 @@ router.put("/logout", IsAuthenticated, logout);
 
 /**
  * @swagger
- * /api/invitations/send:
+ * /api/users/invitation/send:
  *   post:
  *     summary: Envoyer une invitation à rejoindre une organisation
  *     tags: [Invitations]
@@ -759,11 +760,11 @@ router.put("/logout", IsAuthenticated, logout);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/send", IsAuthenticated, IsAuthenticatedAdmin, sendInvitation);
+router.post("/invitation/send", IsAuthenticated, IsAuthenticatedAdmin, sendInvitation);
 
 /**
  * @swagger
- * /api/invitations/confirm:
+ * /api/users/invitation/confirm:
  *   post:
  *     summary: Confirmer une invitation (utilisateur existant)
  *     tags: [Invitations]
@@ -838,11 +839,11 @@ router.post("/send", IsAuthenticated, IsAuthenticatedAdmin, sendInvitation);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/confirm", confirmInvitation);
+router.post("/invitation/confirm", confirmInvitation);
 
 /**
  * @swagger
- * /api/invitations/accept:
+ * /api/users/invitation/accept:
  *   post:
  *     summary: Accepter une invitation et créer un compte (nouvel utilisateur)
  *     tags: [Invitations]
@@ -910,6 +911,199 @@ router.post("/confirm", confirmInvitation);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/accept", acceptInvitation);
+router.post("/invitation/accept", acceptInvitation);
+
+/**
+ * @swagger
+ * /api/users/invitation/remove:
+ *   post:
+ *     summary: Retirer un utilisateur d'une organisation
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 description: ID de l'utilisateur à retirer
+ *               organisation_id:
+ *                 type: integer
+ *                 description: ID de l'organisation (requis pour MODERATEUR, interdit pour ADMINISTRATEUR)
+ *             required:
+ *               - user_id
+ *           example:
+ *             user_id: 5
+ *             organisation_id: 3
+ *     responses:
+ *       200:
+ *         description: Utilisateur retiré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "L'utilisateur a été retiré de l'organisation 3"
+ *       400:
+ *         description: Données invalides (ex. organisation_id manquant pour MODERATEUR, ou self-removal)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "L'ID de l'organisation est requis pour un modérateur"
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent retirer des utilisateurs"
+ *       404:
+ *         description: Utilisateur ou organisation non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/invitation/remove", IsAuthenticated, IsAuthenticatedAdmin, removeFromOrganisation);
+
+/**
+ * @swagger
+ * /api/users/invitation/queue/list:
+ *   get:
+ *     summary: Lister toutes les invitations en attente
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des invitations en attente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 invitations:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/QueueInvitationOrganisation'
+ *                   description: Liste des invitations non expirées
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent voir la liste des invitations"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/invitation/queue/list", IsAuthenticated, IsAuthenticatedAdmin, listInvitationQueue);
+
+/**
+ * @swagger
+ * /api/users/invitation/cancel/{invitation_id}:
+ *   delete:
+ *     summary: Annuler une invitation en attente
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: invitation_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'invitation
+ *     responses:
+ *       200:
+ *         description: Invitation annulée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "L'invitation pour invitee@example.com à rejoindre Organisation X a été annulée"
+ *       400:
+ *         description: Invitation déjà expirée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "L'invitation est déjà expirée"
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent annuler des invitations"
+ *       404:
+ *         description: Invitation non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invitation non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.delete("/invitation/cancel/:invitation_id", IsAuthenticated, IsAuthenticatedAdmin, cancelInvitation);
 
 module.exports = router;
