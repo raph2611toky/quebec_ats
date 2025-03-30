@@ -148,6 +148,20 @@ class Organisation {
         }
     }
 
+    static async getOffresByOrganisation(id) {
+        try {
+            const organisation = await prisma.organisation.findUnique({
+                where: { id },
+                include: { offres: true }
+            });
+            return organisation ? organisation.offres.map(Offre.fromPrisma) : [];
+        } catch (error) {
+            console.error(`Erreur dans Organisation.getOffresByOrganisation(${id}):`, error);
+            throw error;
+        }
+    }
+
+
     static async getUniqueOrganisation(nom, ville, adresse) {
         try {
             const organisation = await prisma.organisation.findFirst({

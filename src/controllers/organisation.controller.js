@@ -123,4 +123,14 @@ exports.getUsersByOrganisation = async (req, res) => {
 };
 
 
+exports.getOffresByOrganisation = async (req, res) => {
+    try {
+        const users = await Organisation.getOffresByOrganisation(parseInt(req.params.id));
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des offres dans l'organisation:", error);
+        res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 module.exports = exports;

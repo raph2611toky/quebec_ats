@@ -294,4 +294,32 @@ router.get("/:id/postcarieres", IsAuthenticatedAdmin, organisationController.get
  */
 router.get("/:id/users", IsAuthenticatedAdmin, organisationController.getUsersByOrganisation);
 
+
+/**
+ * @swagger
+ * /api/organisations/{id}/offres:
+ *   get:
+ *     summary: Récupérer les offres d'une organisation
+ *     tags: [Organisations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de l'organisation
+ *     responses:
+ *       200:
+ *         description: Liste des offres de l'organisation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Offre'
+ */
+router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffresByOrganisation);
+
 module.exports = router;
