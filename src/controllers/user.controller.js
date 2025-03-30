@@ -370,7 +370,7 @@ exports.sendInvitation = async (req, res) => {
             },
         });
     
-        const baseUrl = process.env.FRONTEND_URL;
+        const baseUrl = process.env.FRONTEND_URL_DEV;
         let invitationLink;
         let emailType;
         let emailData;
