@@ -228,7 +228,44 @@ const templates = {
             <p style="margin: 8px 0 0;"><a href="mailto:support@atsquebec.com" style="color: #28a745; text-decoration: none;">support@atsquebec.com</a></p>
         </div>
     </div>
-`,
+    `,
+
+    recruitmentProcess: (candidatName, offreTitre, processType, description, url, duree) => `
+        <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #007bff, #00d4ff); padding: 40px 20px; text-align: center;">
+                <img src="https://via.placeholder.com/50/007bff/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
+                <p style="color: #d9efff; font-size: 16px; margin: 8px 0 0;">Votre parcours de recrutement</p>
+            </div>
+            <!-- Body -->
+            <div style="padding: 40px 30px; background-color: #ffffff;">
+                <h2 style="color: #1a2b49; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Processus de recrutement - ${processType}</h2>
+                <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">Bonjour ${candidatName},</p>
+                <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">
+                    Le processus de recrutement pour l'offre "<strong style="color: #007bff;">${offreTitre}</strong>" commence maintenant. Voici les détails :
+                </p>
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Type :</strong> ${processType}</p>
+                    <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Description :</strong> ${description}</p>
+                    <p style="color: #1a2b49; font-size: 16px; margin: 0;"><strong>Durée :</strong> ${duree} minutes</p>
+                </div>
+                ${
+                    url ? `
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${url}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(90deg, #007bff, #00c4ff); color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,123,255,0.3);">Commencer maintenant</a>
+                    </div>
+                    ` : ''
+                }
+                <p style="color: #4a5b76; font-size: 14px; line-height: 1.6; margin: 0;">Bonne chance dans cette étape !</p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0;">L’équipe ATS Québec</p>
+                <p style="margin: 8px 0 0;"><a href="mailto:support@atsquebec.com" style="color: #007bff; text-decoration: none;">support@atsquebec.com</a></p>
+            </div>
+        </div>
+    `,
 };
 
 const existingType = {
@@ -240,7 +277,8 @@ const existingType = {
     hiring: "hiring",
     meeting: "meeting",
     existingUserInvitation: "existingUserInvitation",
-    newUserInvitation: "newUserInvitation"
+    newUserInvitation: "newUserInvitation",
+    recruitmentProcess: "recruitmentProcess"
 }
 
 async function sendEmail({ to, subject, type, data, saveToNotifications = false }) {
@@ -301,6 +339,13 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
             notificationData = {
                 titre: `Invitation de ${data.inviteeName} dans l'organisation ${data.organisationName}`,
                 contenu: `${data.inviterName} a invité(e) ${data.inviteeEmail} à rejoindre l’organisation ${data.organisationName} en tant que ${data.role}.`
+            };
+            break;
+        case existingType.recruitmentProcess:
+            htmlContent = templates.recruitmentProcess(data.candidatName, data.offreTitre, data.processType, data.description, data.url, data.duree);
+            notificationData = {
+                titre: `Début du processus "${data.processType}" pour ${data.candidatName}`,
+                contenu: `Le processus de recrutement "${data.processType}" pour l'offre "${data.offreTitre}" a démarré pour ${data.candidatName}.`
             };
             break;
         default:
