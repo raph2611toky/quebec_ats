@@ -7,7 +7,8 @@ const {
     updateAdminProfile,
     logout,
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
-    resendOtp
+    resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
+    listInvitationQueue, cancelInvitation,
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -601,5 +602,508 @@ router.put("/me", IsAuthenticated, upload.single("profile"), updateUserValidatio
  *                   example: "Erreur interne du serveur"
  */
 router.put("/logout", IsAuthenticated, logout);
+
+/**
+ * @swagger
+ * tags:
+ *   name: Invitations
+ *   description: |
+ *     Gestion des invitations aux organisations
+ *     ### Fonctionnalités :
+ *     - **Envoi d'invitations à rejoindre une ou toutes les organisations selon le rôle**
+ *     - **Confirmation d'invitation pour les utilisateurs existants**
+ *     - **Acceptation d'invitation avec création de compte pour les nouveaux utilisateurs**
+ *     
+ *     ### Pré-requis :
+ *     - **Utilisateur connecté avec rôle ADMINISTRATEUR pour envoyer une invitation**
+ *     - **Token d'invitation valide pour confirmer ou accepter**
+ *     
+ *     ### Fonctionnement :
+ *     - **Envoi : Un administrateur envoie une invitation avec un rôle (MODERATEUR ou ADMINISTRATEUR). MODERATEUR est lié à une organisation spécifique, ADMINISTRATEUR à toutes.**
+ *     - **Confirmation : Un utilisateur existant accepte l'invitation et rejoint l'organisation (ou toutes si ADMINISTRATEUR).**
+ *     - **Acceptation : Un nouvel utilisateur crée un compte et rejoint l'organisation (ou toutes si ADMINISTRATEUR).**
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     QueueInvitationOrganisation:
+ *       type: object
+ *       required:
+ *         - inviter_id
+ *         - invitee_email
+ *         - role
+ *         - token
+ *         - expires_at
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique de l'invitation
+ *         inviter_id:
+ *           type: integer
+ *           description: ID de l'utilisateur qui envoie l'invitation
+ *         invitee_email:
+ *           type: string
+ *           description: Email de l'invité
+ *         organisation_id:
+ *           type: integer
+ *           nullable: true
+ *           description: ID de l'organisation (requis pour MODERATEUR, null pour ADMINISTRATEUR)
+ *         role:
+ *           type: string
+ *           enum: [MODERATEUR, ADMINISTRATEUR]
+ *           description: Rôle assigné à l'invité
+ *         token:
+ *           type: string
+ *           description: Jeton unique pour valider l'invitation
+ *         expires_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date d'expiration du jeton (24h après création)
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date de création de l'invitation
+ *       example:
+ *         id: 1
+ *         inviter_id: 2
+ *         invitee_email: "invitee@example.com"
+ *         organisation_id: 3
+ *         role: MODERATEUR
+ *         token: "jwt_invitation_token"
+ *         expires_at: "2025-03-30T12:00:00Z"
+ *         created_at: "2025-03-29T12:00:00Z"
+ */
+
+/**
+ * @swagger
+ * /api/users/invitation/send:
+ *   post:
+ *     summary: Envoyer une invitation à rejoindre une organisation
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               invitee_email:
+ *                 type: string
+ *                 description: Email de l'invité
+ *               organisation_id:
+ *                 type: integer
+ *                 description: ID de l'organisation (requis pour MODERATEUR, interdit pour ADMINISTRATEUR)
+ *               role:
+ *                 type: string
+ *                 enum: [MODERATEUR, ADMINISTRATEUR]
+ *                 description: Rôle de l'invité
+ *             required:
+ *               - invitee_email
+ *               - role
+ *           example:
+ *             invitee_email: "invitee@example.com"
+ *             organisation_id: 3
+ *             role: "MODERATEUR"
+ *     responses:
+ *       201:
+ *         description: Invitation envoyée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invitation envoyée avec succès"
+ *       400:
+ *         description: Données invalides (ex. organisation_id manquant pour MODERATEUR)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "L'organisation est requise pour un modérateur"
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent inviter"
+ *       404:
+ *         description: Organisation non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Organisation non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/invitation/send", IsAuthenticated, IsAuthenticatedAdmin, sendInvitation);
+
+/**
+ * @swagger
+ * /api/users/invitation/confirm:
+ *   post:
+ *     summary: Confirmer une invitation (utilisateur existant)
+ *     tags: [Invitations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Jeton de l'invitation
+ *               email:
+ *                 type: string
+ *                 description: Email de l'utilisateur confirmant
+ *             required:
+ *               - token
+ *               - email
+ *           example:
+ *             token: "jwt_invitation_token"
+ *             email: "invitee@example.com"
+ *     responses:
+ *       200:
+ *         description: Invitation confirmée, utilisateur ajouté à l'organisation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Vous avez rejoint Organisation X en tant que MODERATEUR"
+ *       400:
+ *         description: Lien d'invitation invalide ou expiré
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Lien d'invitation invalide ou expiré"
+ *       403:
+ *         description: Non autorisé (email ne correspond pas)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Vous n'êtes pas autorisé à accepter cette invitation"
+ *       404:
+ *         description: Utilisateur non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/invitation/confirm", confirmInvitation);
+
+/**
+ * @swagger
+ * /api/users/invitation/accept:
+ *   post:
+ *     summary: Accepter une invitation et créer un compte (nouvel utilisateur)
+ *     tags: [Invitations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Jeton de l'invitation
+ *               name:
+ *                 type: string
+ *                 description: Nom de l'utilisateur
+ *               password:
+ *                 type: string
+ *                 description: Mot de passe
+ *               phone:
+ *                 type: string
+ *                 description: Numéro de téléphone
+ *             required:
+ *               - token
+ *               - name
+ *               - password
+ *               - phone
+ *           example:
+ *             token: "jwt_invitation_token"
+ *             name: "Jane Doe"
+ *             password: "securepassword123"
+ *             phone: "+1234567890"
+ *     responses:
+ *       201:
+ *         description: Compte créé et utilisateur ajouté à l'organisation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Compte créé et vous avez rejoint Organisation X en tant que MODERATEUR"
+ *                 token:
+ *                   type: string
+ *                   example: "jwt_auth_token"
+ *       400:
+ *         description: Lien d'invitation invalide ou expiré
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Lien d'invitation invalide ou expiré"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/invitation/accept", acceptInvitation);
+
+/**
+ * @swagger
+ * /api/users/invitation/remove:
+ *   post:
+ *     summary: Retirer un utilisateur d'une organisation
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 description: ID de l'utilisateur à retirer
+ *               organisation_id:
+ *                 type: integer
+ *                 description: ID de l'organisation (requis pour MODERATEUR, interdit pour ADMINISTRATEUR)
+ *             required:
+ *               - user_id
+ *           example:
+ *             user_id: 5
+ *             organisation_id: 3
+ *     responses:
+ *       200:
+ *         description: Utilisateur retiré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "L'utilisateur a été retiré de l'organisation 3"
+ *       400:
+ *         description: Données invalides (ex. organisation_id manquant pour MODERATEUR, ou self-removal)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "L'ID de l'organisation est requis pour un modérateur"
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent retirer des utilisateurs"
+ *       404:
+ *         description: Utilisateur ou organisation non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/invitation/remove", IsAuthenticated, IsAuthenticatedAdmin, removeFromOrganisation);
+
+/**
+ * @swagger
+ * /api/users/invitation/queue/list:
+ *   get:
+ *     summary: Lister toutes les invitations en attente
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des invitations en attente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 invitations:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/QueueInvitationOrganisation'
+ *                   description: Liste des invitations non expirées
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent voir la liste des invitations"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/invitation/queue/list", IsAuthenticated, IsAuthenticatedAdmin, listInvitationQueue);
+
+/**
+ * @swagger
+ * /api/users/invitation/cancel/{invitation_id}:
+ *   delete:
+ *     summary: Annuler une invitation en attente
+ *     tags: [Invitations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: invitation_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'invitation
+ *     responses:
+ *       200:
+ *         description: Invitation annulée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "L'invitation pour invitee@example.com à rejoindre Organisation X a été annulée"
+ *       400:
+ *         description: Invitation déjà expirée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "L'invitation est déjà expirée"
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Seuls les administrateurs peuvent annuler des invitations"
+ *       404:
+ *         description: Invitation non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invitation non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.delete("/invitation/cancel/:invitation_id", IsAuthenticated, IsAuthenticatedAdmin, cancelInvitation);
 
 module.exports = router;

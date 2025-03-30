@@ -96,20 +96,36 @@ model User {
   otp_verfication OtpVerification[]
   remarques       Remarque[]        @relation("RemarqueAdmin")
   organisations   Organisation[]    @relation("UserOrganisations")
+  invitations_sent QueueInvitationOrganisation[] @relation("Inviter")
 }
 
 model Organisation {
-  id           Int            @id @default(autoincrement())
-  nom          String
-  adresse      String         @default("")
-  ville        String         @default("")
-  users        User[]         @relation("UserOrganisations")
-  offres       Offre[]        @relation("OrganisationOffres")
-  postcarieres PostCarriere[] @relation("OrganisationPostCarieres")
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
+  id            Int           @id @default(autoincrement())
+  nom           String
+  adresse       String        @default("")
+  ville         String        @default("")
+  users         User[]        @relation("UserOrganisations")
+  offres        Offre[]       @relation("OrganisationOffres")
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  postcarieres  PostCarriere[] @relation("OrganisationPostCarieres")
+  queueinvitation  QueueInvitationOrganisation[] @relation("QueueInvitationOrganisation")
+
 
   @@unique([nom, adresse, ville])
+}
+
+model QueueInvitationOrganisation {
+  id              Int      @id @default(autoincrement())
+  inviter_id      Int
+  invitee_email   String
+  organisation_id Int?
+  role            Role     @default(MODERATEUR)
+  token           String   @unique
+  expires_at      DateTime
+  created_at      DateTime @default(now())
+  inviter         User         @relation("Inviter", fields: [inviter_id], references: [id], onDelete: Cascade)
+  organisation    Organisation? @relation("QueueInvitationOrganisation", fields: [organisation_id], references: [id], onDelete: Cascade)
 }
 
 model PostCarriere {

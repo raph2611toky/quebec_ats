@@ -33,7 +33,7 @@ exports.createPostCarriere = async (req, res) => {
             contenu: req.body.contenu,
             organisation_id: parseInt(req.body.organisation_id),
             images, 
-        });
+        }, req.base_url);
 
         res.status(201).json({
             message: "Post carrière créé avec succès",
@@ -47,7 +47,7 @@ exports.createPostCarriere = async (req, res) => {
 
 exports.updatePostCarriere = async (req, res) => {
     try {
-        const existingPostCarriere = await PostCarriere.getById(parseInt(req.params.id));
+        const existingPostCarriere = await PostCarriere.getById(parseInt(req.params.id), req.base_url);
         if (!existingPostCarriere) {
             return res.status(404).json({ error: "Post carrière non trouvé" });
         }
@@ -101,7 +101,7 @@ exports.updatePostCarriere = async (req, res) => {
             updateData.organisation_id = parseInt(updateData.organisation_id);
         }
 
-        const updatedPostCarriere = await PostCarriere.update(parseInt(req.params.id), updateData);
+        const updatedPostCarriere = await PostCarriere.update(parseInt(req.params.id), updateData, req.base_url);
         return res.status(200).json(updatedPostCarriere);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du post carrière:", error);
@@ -133,7 +133,7 @@ exports.deletePostCarriere = async (req, res) => {
 
 exports.getPostCarriere = async (req, res) => {
     try {
-        const postCarriere = await PostCarriere.getById(parseInt(req.params.id));
+        const postCarriere = await PostCarriere.getById(parseInt(req.params.id), req.base_url);
         if (!postCarriere) {
             return res.status(404).json({ error: "Post carrière non trouvé" });
         }
@@ -146,7 +146,7 @@ exports.getPostCarriere = async (req, res) => {
 
 exports.getAllPostCarieres = async (req, res) => {
     try {
-        const postCarieres = await PostCarriere.getAll();
+        const postCarieres = await PostCarriere.getAll(req.base_url);
         return res.status(200).json(postCarieres);
     } catch (error) {
         console.error("Erreur lors de la récupération des posts carrière:", error);
