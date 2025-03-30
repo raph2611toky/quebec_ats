@@ -910,6 +910,8 @@ router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidatio
  *   get:
  *     summary: Récupère les détails d'un processus spécifique
  *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
  *     description: Retourne les détails d'un processus, y compris l'offre associée et les candidatures des candidats ayant postulé.
  *     parameters:
  *       - in: path
@@ -1024,6 +1026,8 @@ router.post("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
  *   get:
  *     summary: Récupérer les détails complets d'une offre
  *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: []
  *     description: Retourne toutes les informations d'une offre, y compris les processus de recrutement, les postulations, les candidats et les remarques associées.
  *     parameters:
  *       - in: path

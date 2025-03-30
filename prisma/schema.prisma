@@ -257,6 +257,9 @@ model Question {
   reponses     Reponse[] @relation("QuestionReponse")
   processus    Processus @relation("ProcessusQuestion", fields: [processus_id], references: [id], onDelete: Cascade)
   processus_id Int
+  ordre        Int
+
+  @@unique([ordre, processus_id])
 }
 
 model Reponse {
