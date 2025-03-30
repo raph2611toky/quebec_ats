@@ -7,9 +7,13 @@ const {
     addReferent, 
     removeReferent,
     getCandidatFullInfo,
-    getCandidatFullInfoByEmail
+    getCandidatFullInfoByEmail, getCandidatFullInfoMe,
+    googleCallbackLogic,
+    loginWithGoogleLogic
 } = require("../controllers/candidat.controller");
-const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const { googleCallback } = require('../middlewares/googleauthentication');
+// const { loginWithGoogle } = require("../services/google/authentication")
+const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger
@@ -328,5 +332,111 @@ router.get("/full-info/by-id/:id", IsAuthenticated, getCandidatFullInfo);
  *         description: Erreur interne du serveur
  */
 router.get("/full-info/by-email/:email", IsAuthenticated, getCandidatFullInfoByEmail);
+
+/**
+ * @swagger
+ * /api/candidats/full-info/me:
+ *   get:
+ *     summary: Récupérer toutes les informations d'un candidat par email
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Informations complètes du candidat récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CandidatFullInfo'
+ *       404:
+ *         description: Candidat non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/full-info/me", IsAuthenticatedCandidat, getCandidatFullInfoMe);
+
+/**
+ * @swagger
+ * /api/candidats/auth/google:
+ *   get:
+ *     summary: Initier la connexion via Google
+ *     tags: [Candidats]
+ *     description: Redirige l'utilisateur vers la page de connexion Google pour l'authentification
+ *     responses:
+ *       302:
+ *         description: Redirection vers la page d'authentification Google
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Erreur serveur
+ */
+router.get("/auth/google", loginWithGoogleLogic);
+
+/**
+ * @swagger
+ * /api/candidats/auth/google/verify:
+ *   post:
+ *     summary: Vérifier le code d'authentification Google et générer un token
+ *     tags: [Candidats]
+ *     description: Reçoit un code de Google depuis le frontend, valide l'authentification et retourne un token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Code d'autorisation fourni par Google
+ *                 example: "4/0AX4XfW..."
+ *     responses:
+ *       200:
+ *         description: Authentification réussie, retourne les informations du candidat et un token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 candidat_nom:
+ *                   type: string
+ *                   example: "Jean Dupont"
+ *                 token_candidat:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 message:
+ *                   type: string
+ *                   example: "Connexion réussie via Google"
+ *       401:
+ *         description: Échec de l'authentification
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Échec de l'authentification"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur serveur"
+ */
+router.post("/auth/google/verify", googleCallbackLogic);
 
 module.exports = router;

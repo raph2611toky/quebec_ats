@@ -91,7 +91,7 @@ exports.confirmRegistration = async (req, res) => {
 
         await User.update(user.id, { is_verified: true });
         await prisma.otpVerification.delete({ where: { id: otpRecord.id } });
-        const token = generateToken({ id: user.id });
+        const token = generateToken({ id: user.id, role: encryptAES(user.role) });
 
         return res.status(200).json({ email: user.email, token });
     } catch (error) {
@@ -231,9 +231,9 @@ exports.loginAdmin = async (req, res) => {
         if (!user || !(await User.comparePassword(password, user.password)) || !user.is_verified) {
             return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
         }
-        const token = generateToken({ id: user.id });
+        const token = generateToken({ id: user.id, role: encryptAES(user.role) });
         await User.update(user.id, { is_active: true });
-        return res.status(200).json({ name: user.name, token, organisations: user.organisations });
+        return res.status(200).json({ name: user.name, token });
     } catch (error) {
         console.error("Erreur lors de la connexion:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
@@ -466,7 +466,7 @@ exports.confirmInvitation = async (req, res) => {
     }
 };
 
-  exports.acceptInvitation = async (req, res) => {
+exports.acceptInvitation = async (req, res) => {
     try {
       const { token, name, password, phone } = req.body;
   
@@ -505,7 +505,7 @@ exports.confirmInvitation = async (req, res) => {
       });
   
       const orgName = invitation.role === "MODERATEUR" ? invitation.organisation.nom : "toutes les organisations";
-      const authToken = generateToken({ id: newUser.id });
+      const authToken = generateToken({ id: newUser.id , role: encryptAES(invitation.role)});
       return res.status(201).json({
         message: `Compte créé et vous avez rejoint ${orgName} en tant que ${invitation.role}`,
         token: authToken,

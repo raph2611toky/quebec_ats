@@ -1,9 +1,14 @@
 const Candidat = require("../models/candidat.model");
 const Postulation = require("../models/postulation.model");
+const { generateToken, verifyToken } = require("../utils/securite/jwt")
+const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const Referent = require("../models/referent.model");
-const fs = require("fs").promises;
-const path = require("path");
+const { OAuth2Client } = require('google-auth-library');
+const prisma = require("../config/prisma.config")
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const { setupGoogleAuth } = require('../services/google/authentication');
 
+setupGoogleAuth();
 
 exports.getCandidat = async (req, res) => {
     try {
@@ -134,6 +139,20 @@ exports.getCandidatFullInfoByEmail = async (req, res) => {
     }
 };
 
+exports.getCandidatFullInfoMe = async (req, res) => {
+    try {
+        const candidat = req.candidat;
+        if (!candidat) {
+            return res.status(404).json({ error: "Candidat non trouvé" });
+        }
+        req.params.id = candidat.id;
+        return exports.getCandidatFullInfo(req, res);
+    } catch (error) {
+        console.error("Erreur lors de la récupération par email:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getAllCandidats = async (req, res) => {
     try {
         const candidats = await Candidat.getAll(req.base_url);
@@ -188,5 +207,77 @@ exports.removeReferent = async (req, res) => {
     } catch (error) {
         console.error("Erreur lors de la suppression du référent:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.loginWithGoogleLogic = async (req, res) => {
+    try {
+        const oauth2Client = new OAuth2Client({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            redirectUri: `${process.env.FRONTEND_URL}/auth/google/callback`
+        });
+
+        const redirectUrl = oauth2Client.generateAuthUrl({
+            scope: ['profile', 'email'],
+            response_type: 'code'
+        });
+
+        res.status(200).json({
+            success: true,
+            redirect_url: redirectUrl
+        });
+    } catch (error) {
+        console.error('Erreur lors de la génération du lien Google:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+}
+
+exports.googleCallbackLogic = async (req, res) => {
+    const { code } = req.body;
+    if (!code) {
+        return res.status(400).json({ error: 'Code requis' });
+    }
+
+    try {
+        const oauth2Client = new OAuth2Client({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            redirectUri: `${process.env.FRONTEND_URL}/auth/google/callback`
+        });
+
+        const { tokens } = await oauth2Client.getToken({
+            code,
+            redirect_uri: `${process.env.FRONTEND_URL}/auth/google/callback`
+        });
+
+        const profile = await oauth2Client.verifyIdToken({
+            idToken: tokens.id_token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        }).then(ticket => ticket.getPayload());
+
+        const email = profile.email;
+        let candidat = await Candidat.findByEmail(email);
+        if (!candidat) {
+            candidat = await Candidat.create({
+                email: email,
+                nom: profile.name || 'Utilisateur Google',
+                is_email_active: true
+            });
+        }
+
+        const token = generateToken({ id: candidat.id, role: encryptAES("CANDIDAT") });
+        res.status(200).json({
+            success: true,
+            candidat_nom: candidat.nom,
+            token_candidat: token,
+            message: 'Connexion réussie via Google'
+        });
+    } catch (error) {
+        console.error('Erreur dans verify:', error.message);
+        if (error.response && error.response.status === 400) {
+            return res.status(400).json({ error: 'Code invalide ou expiré' });
+        }
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 };
