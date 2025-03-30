@@ -8,7 +8,7 @@ const {
     logout,
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
-    listInvitationQueue, cancelInvitation, getDashboardStats, 
+    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting,
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1285,5 +1285,123 @@ router.delete("/invitation/cancel/:invitation_id", IsAuthenticatedAdmin, cancelI
  *                   example: "Erreur serveur lors de la récupération des statistiques"
  */
 router.get("/dashboard", IsAuthenticated, getDashboardStats);
+
+/**
+ * @swagger
+ * tags:
+ *   name: Meetings
+ *   description: Gestion des réunions Google Meet
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ScheduleMeetingRequest:
+ *       type: object
+ *       required:
+ *         - users
+ *         - candidats
+ *         - start_time
+ *         - start_date
+ *         - duration
+ *       properties:
+ *         users:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Liste des IDs des utilisateurs
+ *         candidats:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Liste des IDs des candidats
+ *         start_time:
+ *           type: string
+ *           description: Heure de début au format HH:mm (exemple "14:30")
+ *         start_date:
+ *           type: string
+ *           format: date
+ *           description: Date de début au format YYYY-MM-DD (exemple "2025-04-10")
+ *         duration:
+ *           type: integer
+ *           description: Durée en minutes
+ *       example:
+ *         users: [1, 2]
+ *         candidats: [3, 4]
+ *         start_time: "14:30"
+ *         start_date: "2025-04-10"
+ *         duration: 60
+ * 
+ *     ScheduleMeetingResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         meetLink:
+ *           type: string
+ *           description: Lien Google Meet généré
+ *       example:
+ *         success: true
+ *         message: "Réunion planifiée et invitations envoyées avec succès"
+ *         meetLink: "https://meet.google.com/abc-defg-hij"
+ */
+
+/**
+ * @swagger
+ * /api/users/meetings/schedule:
+ *   post:
+ *     summary: Planifier une réunion Google Meet et envoyer des invitations
+ *     tags: [Meetings]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ScheduleMeetingRequest'
+ *     responses:
+ *       '200':
+ *         description: Réunion planifiée et invitations envoyées
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ScheduleMeetingResponse'
+ *       '400':
+ *         description: Données invalides ou manquantes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Tous les champs sont requis : users, candidats, start_time, start_date, duration"
+ *       '401':
+ *         description: Non autorisé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non authentifié"
+ *       '500':
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+
+router.post("/meetings/schedule", IsAuthenticated, scheduleMeeting);
 
 module.exports = router;

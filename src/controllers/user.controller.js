@@ -10,6 +10,7 @@ const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../uti
 // const prisma = new PrismaClient();
 const prisma = require("../config/prisma.config");
 const { sendEmail, existingType } = require("../services/notifications/email");
+const createGoogleMeet = require("../services/meet/googleMeet.services")
 
 const generateInvitationToken = () => {
   return generateToken({ type: "invitation" }, "24h");
@@ -847,6 +848,87 @@ exports.getDashboardStats = async (req, res) => {
             success: false,
             error: "Erreur serveur lors de la récupération des statistiques"
         });
+    }
+}
+
+exports.scheduleMeeting = async(req, res) => {
+    try {
+        const { users, candidats, start_time, start_date, duration } = req.body;
+
+        if (!Array.isArray(users) || !Array.isArray(candidats) || !start_time || !start_date || !duration) {
+            return res.status(400).json({ error: "Tous les champs sont requis : users, candidats, start_time, start_date, duration" });
+        }
+        if (!/^\d{2}:\d{2}$/.test(start_time)) {
+            return res.status(400).json({ error: "start_time doit être au format HH:mm" });
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+            return res.status(400).json({ error: "start_date doit être au format YYYY-MM-DD" });
+        }
+
+        if (!Number.isInteger(duration) || duration <= 0) {
+            return res.status(400).json({ error: "duration doit être un entier positif (en minutes)" });
+        }
+        const userList = await prisma.user.findMany({
+            where: { id: { in: users } },
+            select: { id: true, email: true, name: true }
+        });
+
+        const candidatList = await prisma.candidat.findMany({
+            where: { id: { in: candidats } },
+            select: { id: true, email: true, nom: true }
+        });
+
+        if (userList.length !== users.length || candidatList.length !== candidats.length) {
+            return res.status(400).json({ error: "Certains utilisateurs ou candidats n'existent pas" });
+        }
+        const [hours, minutes] = start_time.split(':');
+        const startDateTime = new Date(`${start_date}T${hours}:${minutes}:00Z`);
+        if (isNaN(startDateTime.getTime())) {
+            return res.status(400).json({ error: "Date ou heure invalide" });
+        }
+
+        const summary = `Réunion planifiée par ${req.user.name}`;
+        const description = `Réunion avec ${users.length} utilisateurs et ${candidats.length} candidats`;
+        const meetLink = await createGoogleMeet(startDateTime.toISOString(), duration, summary, description);
+
+        if (!meetLink) {
+            return res.status(500).json({ error: "Échec de la création du Google Meet" });
+        }
+        const dateStr = startDateTime.toLocaleDateString('fr-CA', { timeZone: 'UTC' });
+        const timeStr = startDateTime.toLocaleTimeString('fr-CA', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+
+        const envoiNotifications = async (recipients, type) => {
+            for (const recipient of recipients) {
+                await sendEmail({
+                    to: recipient.email,
+                    subject: `Invitation à une réunion - ${dateStr} à ${timeStr}`,
+                    type: existingType.meeting,
+                    data: {
+                        candidatName: type === 'candidat' ? recipient.nom : recipient.name,
+                        offreTitre: "N/A",
+                        date: dateStr,
+                        heure: timeStr,
+                        meetLink: meetLink
+                    },
+                    saveToNotifications: true
+                });
+            }
+        };
+
+        await envoiNotifications(userList, 'user');
+        await envoiNotifications(candidatList, 'candidat');
+
+        console.log("Emails envoyés à tous les participants");
+
+        return res.status(200).json({
+            success: true,
+            message: "Réunion planifiée et invitations envoyées avec succès",
+            meetLink
+        });
+
+    } catch (error) {
+        console.error("Erreur dans scheduleMeeting:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
 
