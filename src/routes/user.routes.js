@@ -8,7 +8,7 @@ const {
     logout,
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
-    listInvitationQueue, cancelInvitation,
+    listInvitationQueue, cancelInvitation, getDashboardStats, 
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1105,5 +1105,185 @@ router.get("/invitation/queue/list", IsAuthenticatedAdmin, listInvitationQueue);
  *                   example: "Erreur interne du serveur"
  */
 router.delete("/invitation/cancel/:invitation_id", IsAuthenticatedAdmin, cancelInvitation);
+
+/**
+ * @swagger
+ * tags:
+ *   name: Dashboard
+ *   description: |
+ *     Statistiques complètes du système pour les administrateurs
+ *     ### Fonctionnalités :
+ *     - Statistiques sur les utilisateurs (total, admins, modérateurs)
+ *     - Statistiques sur les organisations (total, top par utilisateurs/offres)
+ *     - Statistiques sur les offres (total, min/max, top par postulations)
+ *     - Statistiques sur les candidats (total, min/max par offre, top par postulations)
+ *     
+ *     ### Pré-requis :
+ *     - **Utilisateur connecté avec rôle ADMINISTRATEUR**
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     DashboardStats:
+ *       type: object
+ *       properties:
+ *         users:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               description: Nombre total d'utilisateurs (admins + modérateurs)
+ *             admins:
+ *               type: integer
+ *               description: Nombre d'administrateurs
+ *             moderators:
+ *               type: integer
+ *               description: Nombre de modérateurs
+ *         organisations:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               description: Nombre total d'organisations
+ *             topByUsers:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id: { type: integer }
+ *                   name: { type: string }
+ *                   userCount: { type: integer }
+ *             topByOffres:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id: { type: integer }
+ *                   name: { type: string }
+ *                   offreCount: { type: integer }
+ *         offres:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               description: Nombre total d'offres
+ *             minRequired:
+ *               type: integer
+ *               description: Nombre minimum requis par offre
+ *             maxRequired:
+ *               type: integer
+ *               description: Nombre maximum requis par offre
+ *             topByPostulations:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id: { type: integer }
+ *                   title: { type: string }
+ *                   postulationCount: { type: integer }
+ *             avgPostulationsPerOffer:
+ *               type: number
+ *               description: Moyenne des postulations par offre
+ *         candidates:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: integer
+ *               description: Nombre total de candidats
+ *             minPerOffer:
+ *               type: integer
+ *               description: Minimum de candidats par offre
+ *             maxPerOffer:
+ *               type: integer
+ *               description: Maximum de candidats par offre
+ *             topByPostulations:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id: { type: integer }
+ *                   name: { type: string }
+ *                   email: { type: string }
+ *                   postulationCount: { type: integer }
+ *       example:
+ *         users:
+ *           total: 50
+ *           admins: 5
+ *           moderators: 45
+ *         organisations:
+ *           total: 20
+ *           topByUsers:
+ *             - { id: 1, name: "Org A", userCount: 15 }
+ *             - { id: 2, name: "Org B", userCount: 12 }
+ *             - { id: 3, name: "Org C", userCount: 10 }
+ *           topByOffres:
+ *             - { id: 1, name: "Org A", offreCount: 25 }
+ *             - { id: 4, name: "Org D", offreCount: 20 }
+ *             - { id: 2, name: "Org B", offreCount: 18 }
+ *         offres:
+ *           total: 100
+ *           minRequired: 1
+ *           maxRequired: 10
+ *           topByPostulations:
+ *             - { id: 1, title: "Offre 1", postulationCount: 50 }
+ *             - { id: 2, title: "Offre 2", postulationCount: 45 }
+ *             - { id: 3, title: "Offre 3", postulationCount: 40 }
+ *           avgPostulationsPerOffer: 5.2
+ *         candidates:
+ *           total: 500
+ *           minPerOffer: 0
+ *           maxPerOffer: 50
+ *           topByPostulations:
+ *             - { id: 1, name: "Jean Dupont", email: "jean@example.com", postulationCount: 15 }
+ *             - { id: 2, name: "Marie Curie", email: "marie@example.com", postulationCount: 12 }
+ *             - { id: 3, name: "Paul Martin", email: "paul@example.com", postulationCount: 10 }
+ */
+
+/**
+ * @swagger
+ * /api/users/dashboard:
+ *   get:
+ *     summary: Récupérer toutes les statistiques du dashboard
+ *     tags: [Dashboard]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistiques récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               $ref: '#/components/schemas/DashboardStats'
+ *       403:
+ *         description: Accès interdit (non administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Accès réservé aux administrateurs"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur serveur lors de la récupération des statistiques"
+ */
+router.get("/dashboard", IsAuthenticated, getDashboardStats);
 
 module.exports = router;
