@@ -241,6 +241,9 @@ exports.loginAdmin = async (req, res) => {
 
     try {
         const user = await User.findByEmail(email);
+        console.log(user);
+        console.log(await User.comparePassword(password, user.password));
+        
         if (!user || !(await User.comparePassword(password, user.password)) || !user.is_verified) {
             return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
         }
@@ -506,7 +509,7 @@ exports.acceptInvitation = async (req, res) => {
             data: {
             email: invitation.invitee_email,
             name,
-            hashPassword,
+            password: hashPassword,
             phone,
             role: invitation.role,
             is_active: true,
