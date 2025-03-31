@@ -3,17 +3,12 @@ const { decryptAES } = require("../utils/securite/cryptographie");
 const User = require('../models/user.model');
 const Candidat = require("../models/candidat.model")
 
-module.exports.IsAuthenticatedCandidat = async (req, res, next) => {
-    console.log("Is Authenticated Candidat middleware.");
-    
+module.exports.IsAuthenticatedCandidat = async (req, res, next) => {    
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Pas de token fourni.' });
-    console.log(token);
     
     try {
         const decoded = await jwt.verifyToken(token);
-        console.log(decoded.role);
-        console.log(decryptAES(decoded.role));
         
         if(decryptAES(decoded.role) !== "CANDIDAT"){
             return res.status(401).json({ message: 'Token non autorisé , vous n\'etes pas un candidats.' });
