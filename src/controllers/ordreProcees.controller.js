@@ -125,13 +125,46 @@ exports.makeOrderBottom = async (req, res) => {
 
 exports.reverseOrder = async (req, res) => {
     try {
-        
-        return res.status(201).json({message: "Success"});
+        const { id1, id2 } = req.params; 
+
+        const processus1 = await prisma.processus.findUnique({
+            where: { id: parseInt(id1) }
+        });
+
+        const processus2 = await prisma.processus.findUnique({
+            where: { id: parseInt(id2) }
+        });
+
+        if (!processus1 || !processus2) {
+            return res.status(404).json({ message: "Un ou les deux processus introuvables" });
+        }
+
+        if (processus1.offre_id !== processus2.offre_id) {
+            return res.status(400).json({ message: "Les processus doivent appartenir à la même offre" });
+        }
+
+        const ordre1 = processus1.ordre;
+        const ordre2 = processus2.ordre;
+
+        await prisma.$transaction([
+            prisma.processus.update({
+                where: { id: parseInt(id1) },
+                data: { ordre: ordre2 }
+            }),
+            prisma.processus.update({
+                where: { id: parseInt(id2) },
+                data: { ordre: ordre1 }
+            })
+        ]);
+
+        return res.status(200).json({ message: "Ordres des processus inversés avec succès" });
+
     } catch (error) {
-        console.error("Erreur lors de la création du processus:", error);
+        console.error("Erreur lors de l'inversion des ordres des processus:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
 
 
 exports.updateOrder = async (req, res) => {
