@@ -10,7 +10,7 @@ const {
     getCandidatFullInfoByEmail, getCandidatFullInfoMe,
     googleCallbackLogic,
     loginWithGoogleLogic, getCandidatProcessus,
-    loginDevWithGoogleLogic,
+    loginDevWithGoogleLogic, getCandidatDashboard, getCandidatReferents, 
     googleCallbackDevLogic, getCandidatPostulation, 
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
@@ -529,6 +529,158 @@ router.get("/full-info/me", IsAuthenticatedCandidat, getCandidatFullInfoMe);
  *         - offre
  */
 router.get("/postulations/list", IsAuthenticatedCandidat, getCandidatPostulation);
+
+/**
+ * @swagger
+ * /api/candidats/referents/list:
+ *   get:
+ *     summary: Récupérer la liste des référents du candidat authentifié
+ *     description: Retourne la liste des référents assignés au candidat authentifié via un token Bearer. Les informations incluent l'identifiant, le nom, l'email, le téléphone, la recommandation, le statut et la date d'assignation de chaque référent.
+ *     tags:
+ *       - Candidats
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des référents récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Referent'
+ *       404:
+ *         description: Candidat non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Candidat non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ *
+ * components:
+ *   schemas:
+ *     Referent:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique du référent
+ *         nom:
+ *           type: string
+ *           description: Nom du référent
+ *         email:
+ *           type: string
+ *           description: Adresse email du référent
+ *         telephone:
+ *           type: string
+ *           description: Numéro de téléphone du référent
+ *         recommendation:
+ *           type: string
+ *           description: Recommandation du référent
+ *         statut:
+ *           type: string
+ *           description: Statut du référent
+ *         date_assignation:
+ *           type: string
+ *           format: date-time
+ *           description: Date d'assignation du référent au candidat
+ *       required:
+ *         - id
+ *         - nom
+ *         - email
+ *         - telephone
+ *         - recommendation
+ *         - statut
+ *         - date_assignation
+ */
+router.get("/referents/list", IsAuthenticatedCandidat, getCandidatReferents):
+
+/**
+ * @swagger
+ * /api/candidats/stats:
+ *   get:
+ *     summary: Récupérer les statistiques du tableau de bord du candidat authentifié
+ *     description: Retourne les statistiques du candidat authentifié via un token Bearer, incluant le nombre total de postulations, le nombre de référents assignés et la répartition des postulations par étape actuelle (SOUMIS, EN_REVISION, ENTRETIEN, ACCEPTE, REJETE).
+ *     tags:
+ *       - Candidats
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistiques du tableau de bord récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DashboardStatistics'
+ *       404:
+ *         description: Candidat non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Candidat non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ *
+ * components:
+ *   schemas:
+ *     DashboardStatistics:
+ *       type: object
+ *       properties:
+ *         nombre_postulations:
+ *           type: integer
+ *           description: Nombre total de postulations du candidat
+ *         nombre_referents:
+ *           type: integer
+ *           description: Nombre total de référents assignés au candidat
+ *         etapes_actuelles:
+ *           type: object
+ *           properties:
+ *             soumis:
+ *               type: integer
+ *               description: Nombre de postulations à l'étape "SOUMIS"
+ *             en_revision:
+ *               type: integer
+ *               description: Nombre de postulations à l'étape "EN_REVISION"
+ *             entretien:
+ *               type: integer
+ *               description: Nombre de postulations à l'étape "ENTRETIEN"
+ *             accepte:
+ *               type: integer
+ *               description: Nombre de postulations à l'étape "ACCEPTE"
+ *             rejete:
+ *               type: integer
+ *               description: Nombre de postulations à l'étape "REJETE"
+ *       required:
+ *         - nombre_postulations
+ *         - nombre_referents
+ *         - etapes_actuelles
+ */
+router.get("/stats", IsAuthenticatedCandidat, getCandidatDashboard);
 
 /**
  * @swagger
