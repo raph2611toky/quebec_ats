@@ -43,14 +43,23 @@ exports.registerAdmin = async (req, res) => {
             profileUrl = await uploadDefaultProfileImage();
         }
 
+        const allOrganisations = await prisma.organisation.findMany({
+            select: { id: true }
+        });
+
         const adminData = {
             ...req.body,
             profile: profileUrl,
             is_active: false,
             role: "ADMINISTRATEUR",
-            organisations: req.body.organisations
+            organisations: {
+                connect: allOrganisations.map(org => ({ id: org.id }))
+            }
         };
-        const newAdmin = await User.create(adminData);
+
+        const newAdmin = await prisma.user.create({
+            data: adminData
+        });
 
         const otp = generateOtp();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
