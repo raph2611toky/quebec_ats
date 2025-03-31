@@ -4,6 +4,7 @@ const processusController = require("../controllers/processus.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
+const { makeOrderTop } = require('../controllers/ordreProcees.controller');
 
 
 /**
@@ -65,6 +66,10 @@ const errorHandler = require('../middlewares/error.handler');
  *           type: integer
  *           description: Durée en minutes
  *           example: 60
+ *         ordre:
+ *           type: integer
+ *           description: ordre dans le processus de recrutement 
+ *           example: 60
  *         created_at:
  *           type: string
  *           format: date-time
@@ -80,6 +85,7 @@ const errorHandler = require('../middlewares/error.handler');
  *         - titre
  *         - description
  *         - duree
+ *         - ordre
  */
 
 /**
@@ -438,5 +444,39 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  */
 router.post("/:id/start", processusController.startProcessus);
 
+
+/**
+ * @swagger
+ * /api/processus/{id}/make-top:
+ *   put:
+ *     summary: Mettre un processus de recrutement en premier
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Mettre un processus de recrutement en premier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à mettre en premier
+ *     responses:
+ *       200:
+ *         description: Succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus de recrutement en tête de list"
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/make-top", IsAuthenticatedAdmin, makeOrderTop);
 
 module.exports = router;

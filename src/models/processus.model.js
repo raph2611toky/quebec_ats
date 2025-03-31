@@ -10,6 +10,7 @@ class Processus {
         description,
         statut = "A_VENIR",
         duree,
+        ordre,
         created_at = null,
         updated_at = null
     ) {
@@ -20,6 +21,7 @@ class Processus {
         this.description = description;
         this.statut = statut;
         this.duree = duree;
+        this.ordre = ordre;
         this.created_at = created_at;
         this.updated_at = updated_at;
     }
@@ -33,6 +35,7 @@ class Processus {
             processus.description,
             processus.statut,
             processus.duree,
+            processus.ordre,
             processus.created_at,
             processus.updated_at
         );
