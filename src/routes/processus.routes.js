@@ -416,7 +416,9 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  *   post:
  *     summary: Démarrer un processus de recrutement
  *     tags: [Processus]
- *     description: Démarre un processus de recrutement en fonction de son type (questionnaire, tâche, visio conférence) et envoie les notifications aux candidats.
+ *     security:
+ *       - BearerAuth: []
+ *     description: Démarre un processus de recrutement en fonction de son type (questionnaire, tâche, visio-conférence) et envoie les notifications aux candidats.
  *     parameters:
  *       - in: path
  *         name: id
@@ -436,14 +438,157 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  *                   type: string
  *                   example: "Processus de recrutement : Entretien Technique pour l'offre Développeur Backend a commencé."
  *       400:
- *         description: Erreur de validation (ex offre encore ouverte, processus déjà en cours, etc)
+ *         description: Erreur de validation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre encore ouverte ou processus déjà en cours"
  *       404:
  *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
  *       500:
  *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/start", processusController.startProcessus);
+router.post("/:id/start", IsAuthenticated, processusController.startProcessus);
 
+/**
+ * @swagger
+ * /api/processus/{id}/start-inacheve:
+ *   post:
+ *     summary: Démarrer un processus de recrutement pour les candidats inachevés
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Démarre un processus de recrutement pour les candidats qui n'ont pas encore commencé le processus spécifié. Envoie des notifications adaptées selon le type de processus (questionnaire, tâche, visio-conférence).
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à démarrer
+ *     responses:
+ *       200:
+ *         description: Processus démarré avec succès pour les candidats inachevés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Le processus \"Entretien Technique\" pour l'offre \"Développeur Backend\" a démarré avec succès"
+ *       400:
+ *         description: Erreur de validation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre encore ouverte ou aucun candidat inachevé"
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur ou type de processus invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/start-inacheve", IsAuthenticated, processusController.startProcessusInacheve);
+
+/**
+ * @swagger
+ * /api/processus/{id}/start-inacheve:
+ *   post:
+ *     summary: Démarrer un processus de recrutement pour les candidats inachevés
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Démarre un processus de recrutement pour les candidats qui n'ont pas encore commencé le processus spécifié. Envoie des notifications adaptées selon le type de processus (questionnaire, tâche, visio-conférence).
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à démarrer
+ *     responses:
+ *       200:
+ *         description: Processus démarré avec succès pour les candidats inachevés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Le processus \"Entretien Technique\" pour l'offre \"Développeur Backend\" a démarré avec succès"
+ *       400:
+ *         description: Erreur de validation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre encore ouverte ou aucun candidat inachevé"
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur ou type de processus invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/start-inacheve", IsAuthenticated, processusController.startProcessusInacheve);
 
 /**
  * @swagger
