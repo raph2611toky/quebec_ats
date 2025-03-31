@@ -941,4 +941,43 @@ exports.scheduleMeeting = async(req, res) => {
     }
 }
 
+exports.deleteAdmin = async (req, res) => {
+    try {
+        const adminIdToDelete = parseInt(req.params.id);
+        const currentUser = req.user;
+
+        const adminToDelete = await prisma.user.findUnique({
+            where: { 
+                id: adminIdToDelete
+            }
+        });
+
+        if (!adminToDelete) {
+            return res.status(404).json({ error: "Administrateur non trouvé" });
+        }
+
+        if (currentUser.id === adminIdToDelete) {
+            return res.status(403).json({ error: "Vous ne pouvez pas vous supprimer vous-même" });
+        }
+
+        const firstAdmin = await prisma.user.findFirst({
+            where: { role: 'ADMINISTRATEUR' },
+            orderBy: { id: 'asc' }
+        });
+
+        if (firstAdmin && firstAdmin.id === adminIdToDelete) {
+            return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
+        }
+
+        await prisma.user.delete({
+            where: { id: adminIdToDelete }
+        });
+
+        return res.status(200).json({ message: "Administrateur supprimé avec succès" });
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'administrateur:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 module.exports = exports;
