@@ -16,6 +16,7 @@ const {
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
 const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
+const { getActiveProcess } = require("../controllers/offre.controller");
 
 /**
  * @swagger
@@ -677,5 +678,51 @@ router.post("/auth-dev/google/verify", googleCallbackDevLogic);
      *         description: Erreur interne du serveur
      */
 router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
+
+/**
+ * @swagger
+ * /api/candidat/{id}/get-active-process:
+ *   get:
+ *     summary: Récupérer le processus de recrutement en cours d'une offre
+ *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Retourne active process d'une offre.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre à récupérer
+ *     responses:
+ *       200:
+ *         description: Détails complets de l'offre
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Processus'
+ *       404:
+ *         description: Offre non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/:id/get-active-process", IsAuthenticatedCandidat, getActiveProcess);
+
 
 module.exports = router;

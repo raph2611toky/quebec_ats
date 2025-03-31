@@ -1,5 +1,5 @@
 require("dotenv").config()
-const { StatutProcessus, TypeProcessus, Status } = require("@prisma/client");
+const { StatutProcessus, TypeProcessus, Status, StatutProcessusPasser } = require("@prisma/client");
 const Processus = require("../models/processus.model");
 const Question = require("../models/question.model");
 const Offre = require("../models/offre.model");
@@ -8,6 +8,9 @@ const { generateToken } = require("../utils/securite/jwt.js")
 const { encryptAES } = require("../utils/securite/cryptographie.js")
 const prisma = require("../config/prisma.config");
 const { existingType, sendEmail } = require("../services/notifications/email")
+const fs = require("fs").promises;
+const cloudinary = require("../config/cloudinary.config.js")
+
 
 exports.createProcessus = async (req, res) => {
     try {
@@ -431,14 +434,14 @@ exports.startProcessusForCandidats = async (req, res) => {
         if (processusEnCours) {
             return res.status(400).json({ error: "Un processus est déjà en cours pour cette offre." });
         }
-
+        
         await prisma.processus.update({
             where: { id: processus.id },
             data: { statut: StatutProcessus.EN_COURS }
         });
 
         const candidatsIds = req.body.candidats;
-
+        
         if (!Array.isArray(candidatsIds) || candidatsIds.length === 0) {
             return res.status(400).json({ error: "La liste des candidats est vide ou invalide" });
         }
@@ -520,3 +523,171 @@ exports.startProcessusForCandidats = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.submitQuizz = async (req, res) => {
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: {
+                id: parseInt(req.params.id),
+            },
+            include: {
+                questions : {
+                    include: {
+                        reponses: true
+                    }
+                }
+            }
+        })
+        
+        if(!processus){
+            return res.status(404).json({ error: "Processus non trouver." });
+        }
+        
+        if(processus.type != TypeProcessus.QUESTIONNAIRE){
+            return res.status(400).json({ error: "Le processus doit être type questionnaire." });
+        }
+        
+        if(processus.statut != StatutProcessus.EN_COURS){
+            return res.status(400).json({ error: "Le processus n'est pas en cours." });
+        }
+
+        const reponses = req.body 
+        if (!Array.isArray(reponses) || reponses.length === 0) {
+            return res.status(400).json({ error: "Aucune réponse fournie." });
+        }
+
+        const nombre_total_question = processus.questions.length
+        let score = 0
+
+        for (const { questionId, reponseId } of reponses) {
+            const question = processus.questions.find(q => q.id === questionId);
+            if (question) {
+                const bonneReponse = question.reponses.find(r => r.is_true);
+                if (bonneReponse && bonneReponse.id === reponseId) {
+                    score++;
+                }
+            }
+        }
+        
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                offre_id: processus.offre_id,
+                candidat_id: req.candidat.id
+            }
+        })
+        
+        if(!postulation){
+            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
+        }
+
+
+        // create processus passer 
+        await prisma.processusPasser.create(
+            {
+                data: 
+                {
+                    processus_id : processus.id,
+                    postulation_id : postulation.id,
+                    statut: StatutProcessusPasser.TERMINER,
+                    score,
+                    lien_web: null,
+                    lien_fichier: null, 
+                    lien_vision: null
+                }
+            }
+        )
+
+        await prisma.postulation.update({
+            where: {
+                id: postulation.id
+            },
+            data: {
+                note: postulation.note + score 
+            }
+        })
+
+        return res.status(200).json({
+            score, nombre_total_question
+        })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.submitTache = async (req, res)=>{
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: {
+                id: parseInt(req.params.id),
+            }
+        })
+        
+        if(!processus){
+            return res.status(404).json({ error: "Processus non trouver." });
+        }
+        
+        if(processus.type != TypeProcessus.TACHE){
+            return res.status(400).json({ error: "Le processus doit être type tache." });
+        }
+        
+        if(processus.statut != StatutProcessus.EN_COURS){
+            return res.status(400).json({ error: "Le processus n'est pas en cours." });
+        }
+        
+        let lien_fichier=null;
+        if (req.file?.path) {
+            try {
+                await fs.access(req.file.path);
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: "taches",
+                    use_filename: true,
+                    unique_filename: false
+                });
+                lien_fichier = result.secure_url;
+            } catch (error) {
+                console.error("Le fichier n'a pas été correctement transféré:", error);
+                return res.status(400).json({ error: "Erreur lors du transfert du fichier de validation tâche" });
+            }
+
+        } 
+
+
+        let lien_web = req.body?.lien || null 
+
+        if(!lien_fichier && !lien_web){
+            return res.status(400).json({message: "fichier ou lien est requis pour envoyer votre travaille sur la tâche : "+ processus.titre})
+        }
+
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                offre_id: processus.offre_id,
+                candidat_id: req.candidat.id
+            }
+        })
+        
+        if(!postulation){
+            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
+        }
+
+
+        const processusPasser = await prisma.processusPasser.create({
+            data: {
+                processus_id : processus.id,
+                postulation_id : postulation.id,
+                statut: StatutProcessusPasser.TERMINER,
+                score:0,
+                lien_web,
+                lien_fichier, 
+                lien_vision: null                
+            }    
+        })
+
+        return res.status(200).json({message: "Votre tâche est bien reçu ! "})
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}

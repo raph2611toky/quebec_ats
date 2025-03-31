@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const processusController = require("../controllers/processus.controller");
-const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
 const { makeOrderTop, makeOrderBottom, reverseOrder } = require('../controllers/ordreProcees.controller');
+const { createUpload } = require("../config/multer.config")
 
 
 /**
@@ -700,5 +701,128 @@ router.put("/:id/make-bottom", IsAuthenticatedAdmin, makeOrderBottom);
  */
 router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
 
+
+/**
+ * @swagger
+ * /api/processus/{id}/submit/quizz:
+ *   post:
+ *     summary: Soumettre un quiz pour un processus donné
+ *     tags: [Processus]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 question:
+ *                   type: string
+ *                   description: ID de la question
+ *                 reponse:
+ *                   type: string
+ *                   description: ID de la réponse sélectionnée
+ *     responses:
+ *       200:
+ *         description: Quiz soumis avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 score:
+ *                   type: integer
+ *                   example: 10
+ *                 nombre_total_question:
+ *                   type: integer
+ *                   example: 20
+ *       400:
+ *         description: Données invalides
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.submitQuizz)
+
+
+/**
+ * @swagger
+ * /api/processus/{id}/submit/tache:
+ *   post:
+ *     summary: Soumettre une tâche avec un fichier et/ou un lien
+ *     tags: [Processus]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fichier:
+ *                 type: string
+ *                 format: binary
+ *                 description: Fichier de preuve (optionnel)
+ *               lien:
+ *                 type: string
+ *                 description: Lien vers le travail effectué (optionnel)
+ *     responses:
+ *       200:
+ *         description: Tâche soumise avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Votre tâche a bien été reçue !"
+ *       400:
+ *         description: Erreur de validation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Un fichier ou un lien est requis pour soumettre votre travail."
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé."
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+ */
+router.post("/:id/submit/tache", IsAuthenticatedCandidat, createUpload("Taches").single("fichier"), processusController.submitTache);
 
 module.exports = router;

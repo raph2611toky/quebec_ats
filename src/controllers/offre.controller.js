@@ -2,7 +2,7 @@ const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
-const { Status, TypeProcessus } = require("@prisma/client");
+const { Status, TypeProcessus, StatutProcessus } = require("@prisma/client");
 const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
 const { count } = require("console");
@@ -529,12 +529,48 @@ exports.getOfferDetails = async (req, res) => {
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
-    
+        
         return res.status(200).json(offre);
     } catch (error) {
       console.error("Erreur lors de la récupération des détails de l'offre:", error);
       return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.getActiveProcess = async (req, res)=>{
+    try {
+        const offre = await prisma.offre.findUnique({
+            where:{id: parseInt(req.params.id)}
+        })
+        
+        if(!offre){
+            return res.status(404).json({ error: "Offre non trouvée" });
+        }
+        
+        const activeProcess = await prisma.processus.findUnique({
+            where:{
+                offre_id: offre.id,
+                statut: StatutProcessus.EN_COURS
+            },
+            include: {
+                questions: {
+                    include: {
+                        reponses: true
+                    }
+                },                
+            }
+        })
+        
+        if(!activeProcess){
+            return res.status(404).json({ error: "Aucun processu en cours pour l'offre" });
+        }
+
+        return res.status(200).json(activeProcess)
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
 
 module.exports = exports;
