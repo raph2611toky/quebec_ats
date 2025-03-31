@@ -133,7 +133,7 @@ router.get("/:id", IsAuthenticated, getCandidat);
  * @swagger
  * /api/candidats/me:
  *   get:
- *     summary: Récupérer un candidat par ID
+ *     summary: Récupérer un candidat par token
  *     tags: [Candidats]
  *     security:
  *       - BearerAuth: []

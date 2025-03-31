@@ -2,6 +2,7 @@ require("dotenv").config();
 const User = require("../models/user.model");
 
 const { generateToken, verifyToken } = require("../utils/securite/jwt");
+const bcrypt = require("../utils/securite/bcrypt");
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const cloudinary = require("../config/cloudinary.config");
 const fs = require("fs").promises;
@@ -480,48 +481,50 @@ exports.confirmInvitation = async (req, res) => {
 
 exports.acceptInvitation = async (req, res) => {
     try {
-      const { token, name, password, phone } = req.body;
-  
-      const invitation = await prisma.queueInvitationOrganisation.findUnique({
-        where: { token },
-        include: { organisation: true },
-      });
-  
-      if (!invitation || new Date() > invitation.expires_at) {
-        return res.status(400).json({ error: "Lien d'invitation invalide ou expiré" });
-      }
-  
-      let organisationConnect;
-      if (invitation.role === "MODERATEUR") {
-        organisationConnect = { connect: { id: invitation.organisation_id } };
-      } else if (invitation.role === "ADMINISTRATEUR") {
-        const allOrganisations = await prisma.organisation.findMany();
-        organisationConnect = { connect: allOrganisations.map(org => ({ id: org.id })) };
-      }
-  
-      const newUser = await prisma.user.create({
-        data: {
-          email: invitation.invitee_email,
-          name,
-          password,
-          phone,
-          role: invitation.role,
-          is_active: true,
-          is_verified: true,
-          organisations: organisationConnect,
-        },
-      });
-  
-      await prisma.queueInvitationOrganisation.delete({
-        where: { id: invitation.id },
-      });
-  
-      const orgName = invitation.role === "MODERATEUR" ? invitation.organisation.nom : "toutes les organisations";
-      const authToken = generateToken({ id: newUser.id , role: encryptAES(invitation.role)});
-      return res.status(201).json({
-        message: `Compte créé et vous avez rejoint ${orgName} en tant que ${invitation.role}`,
-        token: authToken,
-      });
+        const { token, name, password, phone } = req.body;
+    
+        const invitation = await prisma.queueInvitationOrganisation.findUnique({
+            where: { token },
+            include: { organisation: true },
+        });
+    
+        if (!invitation || new Date() > invitation.expires_at) {
+            return res.status(400).json({ error: "Lien d'invitation invalide ou expiré" });
+        }
+    
+        let organisationConnect;
+        if (invitation.role === "MODERATEUR") {
+            organisationConnect = { connect: { id: invitation.organisation_id } };
+        } else if (invitation.role === "ADMINISTRATEUR") {
+            const allOrganisations = await prisma.organisation.findMany();
+            organisationConnect = { connect: allOrganisations.map(org => ({ id: org.id })) };
+        }
+
+        const hashPassword = await bcrypt.hashPassword(password);
+    
+        const newUser = await prisma.user.create({
+            data: {
+            email: invitation.invitee_email,
+            name,
+            hashPassword,
+            phone,
+            role: invitation.role,
+            is_active: true,
+            is_verified: true,
+            organisations: organisationConnect,
+            },
+        });
+    
+        await prisma.queueInvitationOrganisation.delete({
+            where: { id: invitation.id },
+        });
+    
+        const orgName = invitation.role === "MODERATEUR" ? invitation.organisation.nom : "toutes les organisations";
+        const authToken = generateToken({ id: newUser.id , role: encryptAES(invitation.role)});
+        return res.status(201).json({
+            message: `Compte créé et vous avez rejoint ${orgName} en tant que ${invitation.role}`,
+            token: authToken,
+        });
     } catch (error) {
       console.error("Erreur lors de l'acceptation de l'invitation:", error);
       return res.status(500).json({ error: "Erreur interne du serveur" });
