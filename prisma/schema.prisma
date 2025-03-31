@@ -150,7 +150,7 @@ model Offre {
   user_id           Int
   organisation      Organisation  @relation("OrganisationOffres", fields: [organisation_id], references: [id], onDelete: Cascade)
   organisation_id   Int
-  image_url         String?
+  image_url         String        @default("")
   description       String
   date_limite       DateTime
   status            Status

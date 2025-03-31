@@ -43,7 +43,8 @@ class User {
             user.is_verified,
             user.created_at,
             user.updated_at,
-            user.organisations || []
+            user.organisations || [],
+            user.offres || []
         );
     }
 

@@ -1409,7 +1409,7 @@ router.post("/meetings/schedule", IsAuthenticated, scheduleMeeting);
  * /api/users/delete/{id}:
  *   delete:
  *     summary: Supprimer un administrateur
- *     tags: [Admin]
+ *     tags: [Users]
  *     security:
  *       - BearerAuth: []
  *     description: Supprime un administrateur spécifié par son ID, avec des restrictions pour empêcher la suppression de l'utilisateur actuel et du premier administrateur.

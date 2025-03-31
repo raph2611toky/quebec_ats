@@ -532,7 +532,7 @@ router.post("/:id/start-inacheve", IsAuthenticated, processusController.startPro
 
 /**
  * @swagger
- * /api/processus/{id}/start-inacheve:
+ * /api/processus/{id}/start-for-candidat:
  *   post:
  *     summary: Démarrer un processus de recrutement pour les candidats inachevés
  *     tags: [Processus]
@@ -588,7 +588,7 @@ router.post("/:id/start-inacheve", IsAuthenticated, processusController.startPro
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/start-inacheve", IsAuthenticated, processusController.startProcessusInacheve);
+router.post("/:id/start-for-candidat", IsAuthenticated, processusController.startProcessusForCandidats);
 
 /**
  * @swagger
