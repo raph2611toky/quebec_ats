@@ -294,3 +294,229 @@ exports.startProcessus = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.startProcessusInacheve = async (req, res) => {
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: { id: parseInt(req.params.id) },
+            include: { offre: true }
+        });
+
+        if (!processus) {
+            return res.status(404).json({ error: "Processus non trouvé" });
+        }
+
+        if (processus.offre.status === Status.OUVERT) {
+            return res.status(400).json({ error: "Offre encore ouverte (reçoit des candidatures)." });
+        } else if (processus.offre.status === Status.CREE) {
+            return res.status(400).json({ error: "Offre non encore publiée." });
+        }
+
+        if (processus.statut !== StatutProcessus.A_VENIR) {
+            return res.status(400).json({ error: "Processus déjà en cours ou terminé." });
+        }
+
+        const processusEnCours = await prisma.processus.findFirst({
+            where: { offre_id: processus.offre.id, statut: StatutProcessus.EN_COURS }
+        });
+
+        if (processusEnCours) {
+            return res.status(400).json({ error: "Un processus est déjà en cours pour cette offre." });
+        }
+
+        await prisma.processus.update({
+            where: { id: processus.id },
+            data: { statut: StatutProcessus.EN_COURS }
+        });
+
+        const candidats = await prisma.candidat.findMany({
+            where: {
+                postulations: { some: { offre_id: processus.offre.id } },
+                processus_candidats: { none: { processus_id: processus.id } }
+            },
+            include: { postulations: true }
+        });
+
+        const envoiNotifications = async (data, subject, processType) => {
+            for (const candidat of candidats) {
+                const token = generateToken({
+                    candidat_id: candidat.id,
+                    processus_id: encryptAES(processus.id)
+                });
+                
+                const finalUrl = data.url ? `${data.url}${token}` : undefined;
+
+                await sendEmail({
+                    to: candidat.email,
+                    subject,
+                    type: existingType.recruitmentProcess,
+                    data: {
+                        candidatName: candidat.nom,
+                        offreTitre: processus.offre.titre,
+                        processType: processType,
+                        description: data.description,
+                        url: finalUrl,
+                        duree: processus.duree
+                    },
+                    saveToNotifications: false
+                });
+            }
+            console.log("Emails envoyés à tous les candidats");
+        };
+
+        if (processus.type === TypeProcessus.QUESTIONNAIRE) {
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/quizz?token=`,
+                    description: `${processus.titre} - Répondez aux questions dans le temps imparti`
+                },
+                "Processus de Recrutement - Questionnaire",
+                "Questionnaire"
+            );
+        } else if (processus.type === TypeProcessus.TACHE) {
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/tache?token=`,
+                    description: `${processus.titre} - ${processus.description}`
+                },
+                "Processus de Recrutement - Tâche",
+                "Tâche"
+            );
+        } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
+            await envoiNotifications(
+                {
+                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
+                },
+                "Processus de Recrutement - Visio-conférence",
+                "Visio-conférence"
+            );
+        } else {
+            return res.status(500).json({ error: "Type de processus invalide" });
+        }
+
+        return res.status(200).json({ 
+            message: `Le processus "${processus.titre}" pour l'offre "${processus.offre.titre}" a démarré avec succès`
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.startProcessusForCandidats = async (req, res) => {
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: { id: parseInt(req.params.id) },
+            include: { offre: true }
+        });
+
+        if (!processus) {
+            return res.status(404).json({ error: "Processus non trouvé" });
+        }
+
+        if (processus.offre.status === Status.OUVERT) {
+            return res.status(400).json({ error: "Offre encore ouverte (reçoit des candidatures)." });
+        } else if (processus.offre.status === Status.CREE) {
+            return res.status(400).json({ error: "Offre non encore publiée." });
+        }
+
+        if (processus.statut !== StatutProcessus.A_VENIR) {
+            return res.status(400).json({ error: "Processus déjà en cours ou terminé." });
+        }
+
+        const processusEnCours = await prisma.processus.findFirst({
+            where: { offre_id: processus.offre.id, statut: StatutProcessus.EN_COURS }
+        });
+
+        if (processusEnCours) {
+            return res.status(400).json({ error: "Un processus est déjà en cours pour cette offre." });
+        }
+
+        await prisma.processus.update({
+            where: { id: processus.id },
+            data: { statut: StatutProcessus.EN_COURS }
+        });
+
+        const candidatsIds = req.body.candidats;
+
+        if (!Array.isArray(candidatsIds) || candidatsIds.length === 0) {
+            return res.status(400).json({ error: "La liste des candidats est vide ou invalide" });
+        }
+
+        const candidats = await prisma.candidat.findMany({
+            where: {
+                id: { in: candidatsIds },
+                postulations: { some: { offre_id: processus.offre.id } } 
+            },
+            include: { postulations: true }
+        });
+
+        if (candidats.length === 0) {
+            return res.status(400).json({ error: "Aucun candidat valide trouvé" });
+        }
+
+        const envoiNotifications = async (data, subject, processType) => {
+            for (const candidat of candidats) {
+                const token = generateToken({
+                    candidat_id: candidat.id,
+                    processus_id: encryptAES(processus.id)
+                });
+                
+                const finalUrl = data.url ? `${data.url}${token}` : undefined;
+
+                await sendEmail({
+                    to: candidat.email,
+                    subject,
+                    type: existingType.recruitmentProcess,
+                    data: {
+                        candidatName: candidat.nom,
+                        offreTitre: processus.offre.titre,
+                        processType: processType,
+                        description: data.description,
+                        url: finalUrl,
+                        duree: processus.duree
+                    },
+                    saveToNotifications: false
+                });
+            }
+            console.log("Emails envoyés aux candidats sélectionnés");
+        };
+
+        if (processus.type === TypeProcessus.QUESTIONNAIRE) {
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/quizz?token=`,
+                    description: `${processus.titre} - Répondez aux questions dans le temps imparti`
+                },
+                "Processus de Recrutement - Questionnaire",
+                "Questionnaire"
+            );
+        } else if (processus.type === TypeProcessus.TACHE) {
+            await envoiNotifications(
+                {
+                    url: `http://${process.env.FRONTEND_URL}/recruit/tache?token=`,
+                    description: `${processus.titre} - ${processus.description}`
+                },
+                "Processus de Recrutement - Tâche",
+                "Tâche"
+            );
+        } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
+            await envoiNotifications(
+                {
+                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
+                },
+                "Processus de Recrutement - Visio-conférence",
+                "Visio-conférence"
+            );
+        } else {
+            return res.status(500).json({ error: "Type de processus invalide" });
+        }
+
+        return res.status(200).json({ 
+            message: `Le processus "${processus.titre}" pour l'offre "${processus.offre.titre}" a démarré pour les candidats sélectionnés`
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
