@@ -5,7 +5,7 @@ const {
     loginAdmin, 
     getAdminProfile, 
     updateAdminProfile,
-    logout,
+    logout, deleteAdmin, 
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
     listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting,
@@ -1403,5 +1403,65 @@ router.get("/dashboard", IsAuthenticated, getDashboardStats);
  */
 
 router.post("/meetings/schedule", IsAuthenticated, scheduleMeeting);
+
+/**
+ * @swagger
+ * /api/users/delete/{id}:
+ *   delete:
+ *     summary: Supprimer un administrateur
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Supprime un administrateur spécifié par son ID, avec des restrictions pour empêcher la suppression de l'utilisateur actuel et du premier administrateur.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'administrateur à supprimer
+ *     responses:
+ *       '200':
+ *         description: Administrateur supprimé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Administrateur supprimé avec succès"
+ *       '403':
+ *         description: Interdiction de suppression (tentative de suppression de soi-même ou du premier administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Vous ne pouvez pas vous supprimer vous-même"
+ *       '404':
+ *         description: Administrateur non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Administrateur non trouvé"
+ *       '500':
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
 
 module.exports = router;
