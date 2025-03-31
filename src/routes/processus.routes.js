@@ -410,6 +410,8 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  *   post:
  *     summary: Démarrer un processus de recrutement
  *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
  *     description: Démarre un processus de recrutement en fonction de son type (questionnaire, tâche, visio conférence) et envoie les notifications aux candidats.
  *     parameters:
  *       - in: path
@@ -436,7 +438,141 @@ router.post('/:id/quizz', IsAuthenticatedAdmin, processusController.addQuizzJson
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/:id/start", processusController.startProcessus);
+router.post("/:id/start", IsAuthenticated, processusController.startProcessus);
 
+/**
+ * @swagger
+ * /api/processus/{id}/start-inacheve:
+ *   post:
+ *     summary: Démarrer un processus de recrutement pour les candidats inachevés
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Démarre un processus de recrutement pour les candidats qui n'ont pas encore commencé le processus spécifié. Envoie des notifications adaptées selon le type de processus (questionnaire, tâche, visio-conférence).
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à démarrer
+ *     responses:
+ *       200:
+ *         description: Processus démarré avec succès pour les candidats inachevés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Le processus \"Entretien Technique\" pour l'offre \"Développeur Backend\" a démarré avec succès"
+ *       400:
+ *         description: Erreur de validation (ex: offre encore ouverte, processus déjà en cours, aucun candidat inachevé)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre encore ouverte (reçoit des candidatures)."
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur ou type de processus invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/start-inacheve", IsAuthenticated, processusController.startProcessusInacheve);
+
+/**
+ * @swagger
+ * /api/processus/{id}/start-for-candidats:
+ *   post:
+ *     summary: Démarrer un processus de recrutement pour des candidats spécifiques
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Démarre un processus de recrutement pour une liste de candidats spécifiée dans le corps de la requête. Envoie des notifications adaptées selon le type de processus (questionnaire, tâche, visio-conférence).
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à démarrer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               candidats:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Liste des IDs des candidats pour lesquels démarrer le processus
+ *                 example: [1, 2, 3]
+ *             required:
+ *               - candidats
+ *     responses:
+ *       200:
+ *         description: Processus démarré avec succès pour les candidats sélectionnés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Le processus \"Entretien Technique\" pour l'offre \"Développeur Backend\" a démarré pour les candidats sélectionnés"
+ *       400:
+ *         description: Erreur de validation (ex: liste des candidats vide, offre encore ouverte, aucun candidat valide)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "La liste des candidats est vide ou invalide"
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur ou type de processus invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/start-for-candidats", IsAuthenticated, processusController.startProcessusForCandidats);
 
 module.exports = router;
