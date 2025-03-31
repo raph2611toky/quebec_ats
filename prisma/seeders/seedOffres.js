@@ -1,8 +1,28 @@
-const { Role } = require("@prisma/client");
 const prisma = require("../../src/config/prisma.config");
+const Offre = require("../../src/models/offre.model");
 
 async function seedOffres() {
     try {
+        const userIds = (await prisma.user.findMany({
+            select: { id: true }
+        })).map(user => user.id);
+
+
+        const organisationIds = (await prisma.organisation.findMany({
+            select: { id: true }
+        })).map(org => org.id);
+
+
+        if (userIds.length === 0) {
+            console.error("❌ Aucun utilisateur trouvé. Assurez-vous d'avoir exécuté le seed des utilisateurs.");
+            return;
+        }
+        if (organisationIds.length === 0) {
+            console.error("❌ Aucune organisation trouvée. Assurez-vous d'avoir exécuté le seed des organisations.");
+            return;
+        }
+
+
         const offresData = [
             { 
                 titre: "Développeur Full Stack", 
@@ -13,9 +33,12 @@ async function seedOffres() {
                 pays: "France",
                 type_emploi: "CDD",
                 salaire: "60000",
-                currency: "EURO",
+                devise: "EURO",
                 horaire_ouverture: "08:00:00",
                 horaire_fermeture: "18:00:00",
+                user_id: userIds[Math.floor(Math.random() * userIds.length)],
+                organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
+                status: "CREE"
             },
             { 
                 titre: "Développeur front end NextJs", 
@@ -26,9 +49,12 @@ async function seedOffres() {
                 pays: "France",
                 type_emploi: "CDI",
                 salaire: "50000",
-                currency: "EURO",
+                devise: "EURO",
                 horaire_ouverture: "08:00:00",
                 horaire_fermeture: "18:00:00",
+                user_id: userIds[Math.floor(Math.random() * userIds.length)],
+                organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
+                status: "CREE"
             },
             { 
                 titre: "Développeur backend Django", 
@@ -39,9 +65,12 @@ async function seedOffres() {
                 pays: "France",
                 type_emploi: "CDD",
                 salaire: "40000",
-                currency: "EURO",
+                devise: "EURO",
                 horaire_ouverture: "08:00:00",
                 horaire_fermeture: "18:00:00",
+                user_id: userIds[Math.floor(Math.random() * userIds.length)],
+                organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
+                status: "CREE"
             },
             { 
                 titre: "Développeur Full Stack Laravel", 
@@ -52,71 +81,30 @@ async function seedOffres() {
                 pays: "France",
                 type_emploi: "CDI",
                 salaire: "90000",
-                currency: "EURO",
+                devise: "EURO",
                 horaire_ouverture: "08:00:00",
                 horaire_fermeture: "18:00:00",
+                user_id: userIds[Math.floor(Math.random() * userIds.length)],
+                organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
+                status: "CREE"
             }
 
         ];
 
-        console.log("Création des organisations...");
+        console.log("Création des offres...");
 
-        // Création des organisations avec Prisma
-        const createdOrganisations = await Promise.all(
-            organisationsData.map(org =>
-                prisma.organisation.create({
-                    data: org
-                })
+        // Création des offres avec Prisma
+        const createdOffres = await Promise.all(
+            offresData.map(offre =>
+                Offre.create(offre)
             )
         );
 
-        console.log("Organisations créées avec succès !");
+        console.log("Offres créées avec succès !");
 
-        // Récupération des utilisateurs existants
-        const users = await prisma.user.findMany();
-        if (!users.length) {
-            console.warn("Aucun utilisateur trouvé. Impossible d'attribuer les rôles.");
-            return;
-        }
-
-        // Séparation des rôles
-        const admins = users.filter(user => user.role === Role.ADMINISTRATEUR);
-        const moderators = users.filter(user => user.role === Role.MODERATEUR);
-
-        // Association des admins à toutes les organisations
-        for (const admin of admins) {
-            await Promise.all(
-                createdOrganisations.map(org =>
-                    prisma.organisation.update({
-                        where: { id: org.id },
-                        data: {
-                            users: {
-                                connect: { id: admin.id }
-                            }
-                        }
-                    })
-                )
-            );
-        }
-
-        // Association des modérateurs uniquement à la première organisation
-        if (createdOrganisations.length > 0) {
-            for (const moderator of moderators) {
-                await prisma.organisation.update({
-                    where: { id: createdOrganisations[0].id },
-                    data: {
-                        users: {
-                            connect: { id: moderator.id }
-                        }
-                    }
-                });
-            }
-        }
-
-        console.log("Associations utilisateurs-organisations effectuées avec succès !");
     } catch (error) {
-        console.error("Erreur dans seedOrganisations:", error);
+        console.error("Erreur dans seedOffres:", error);
     }
 }
 
-module.exports = seedOrganisations;
+module.exports = seedOffres;

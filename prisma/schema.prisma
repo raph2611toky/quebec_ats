@@ -150,7 +150,7 @@ model Offre {
   user_id           Int
   organisation      Organisation  @relation("OrganisationOffres", fields: [organisation_id], references: [id], onDelete: Cascade)
   organisation_id   Int
-  image_url         String
+  image_url         String?
   description       String
   date_limite       DateTime
   status            Status
@@ -251,7 +251,7 @@ model Processus {
   offre            Offre             @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id         Int
   duree            Int
-  ordee            Int                @default(0)
+  ordre            Int                @default(0)
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   questions        Question[]        @relation("ProcessusQuestion")
