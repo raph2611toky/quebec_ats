@@ -4,7 +4,7 @@ const processusController = require("../controllers/processus.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
-const { makeOrderTop, makeOrderBottom } = require('../controllers/ordreProcees.controller');
+const { makeOrderTop, makeOrderBottom, reverseOrder } = require('../controllers/ordreProcees.controller');
 
 
 /**
@@ -657,5 +657,48 @@ router.put("/:id/make-top", IsAuthenticatedAdmin, makeOrderTop);
  *         description: Erreur interne du serveur
  */
 router.put("/:id/make-bottom", IsAuthenticatedAdmin, makeOrderBottom);
+
+/**
+ * @swagger
+ * /api/processus/{id1}/reverse-order/{id2}:
+ *   put:
+ *     summary: Inverser l'ordre de deux processus
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Inverser l'ordre de deux processus en fonction de leurs IDs.
+ *     parameters:
+ *       - in: path
+ *         name: id1
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du premier processus
+ *       - in: path
+ *         name: id2
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du deuxième processus
+ *     responses:
+ *       200:
+ *         description: Ordres des processus inversés avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Ordres des processus inversés avec succès"
+ *       400:
+ *         description: Les processus ne sont pas dans la même offre
+ *       404:
+ *         description: Un ou les deux processus introuvables
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
+
 
 module.exports = router;
