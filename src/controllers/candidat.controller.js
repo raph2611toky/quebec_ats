@@ -24,6 +24,19 @@ exports.getCandidat = async (req, res) => {
     }
 };
 
+exports.getCandidatMe = async (req, res) => {
+    try {
+        const candidat = req.candidat;
+        if (!candidat) {
+            return res.status(404).json({ error: "Candidat non trouvé" });
+        }
+        return res.status(200).json(candidat);
+    } catch (error) {
+        console.error("Erreur lors de la récupération du candidat:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getCandidatFullInfo = async (req, res) => {
     try {
         const candidatId = parseInt(req.params.id);

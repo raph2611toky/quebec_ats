@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { 
-    getCandidat, 
+    getCandidat, getCandidatMe, 
     getAllCandidats, 
     deleteCandidat, 
     addReferent, 
@@ -128,6 +128,28 @@ const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = requi
  *         description: Erreur interne du serveur
  */
 router.get("/:id", IsAuthenticated, getCandidat);
+
+/**
+ * @swagger
+ * /api/candidats/me:
+ *   get:
+ *     summary: Récupérer un candidat par ID
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Candidat récupéré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Candidat'
+ *       404:
+ *         description: Candidat non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/me", IsAuthenticatedCandidat, getCandidatMe);
 
 /**
  * @swagger
