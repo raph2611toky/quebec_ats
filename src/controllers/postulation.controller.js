@@ -383,3 +383,80 @@ exports.addRemarquePostulation = async (req,res ) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
+
+exports.getAllRemarquePostulation = async (req, res)=>{
+    try {
+        const postulation = await Postulation.getById(parseInt(req.params.id))
+        if (!postulation){
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+
+        const remarques = await prisma.remarque.findMany({
+            where: {
+                postulation_id : postulation.id
+            }
+        })
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.removeRemarquePostulation = async (req, res)=> {
+    try {
+        const admin_id = parseInt(req.user.id);
+        const remarque_id = parseInt(req.params.id)
+
+        const remarque = await Remarque.getById(remarque_id)
+
+        if(admin_id != remarque.admin_id){
+            return res.status(400).json({message : "cett Remarque n'est pas la vôtre !"})
+        }
+
+        await prisma.remarque.delete({
+            where: {
+                id: remarque_id
+            }
+        })
+
+        return res.status(200).json({ message: `Remarque enlevé sur le postulation du candidat ` });
+        
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+
+
+}
+
+exports.updateRemarquePostulation = async (req, res)=> {
+    try {
+        const admin_id = parseInt(req.user.id);
+        const remarque_id = parseInt(req.params.id)
+
+        const remarque = await Remarque.getById(remarque_id)
+
+        if(admin_id != remarque.admin_id){
+            return res.status(400).json({message : "cett Remarque n'est pas la vôtre !"})
+        }
+
+        await prisma.remarque.update({
+            where: {
+                id: remarque_id
+            },
+            data: {
+                text: req.body.text
+            }
+        })
+
+        return res.status(200).json({ message: `Remarque mis à jour.` });       
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+
+
+}

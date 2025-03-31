@@ -80,51 +80,55 @@ enum StatutProcessus {
   ANNULER
 }
 
+enum StatutProcessusPasser {
+  EN_COURS
+  TERMINER
+}
+
 model User {
-  id              Int               @id @default(autoincrement())
-  name            String
-  email           String            @unique
-  password        String
-  phone           String
-  profile         String            @default("profile.png")
-  role            Role              @default(MODERATEUR)
-  is_active       Boolean           @default(false)
-  is_verified     Boolean           @default(false)
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  offres          Offre[]           @relation("UserOffres")
-  otp_verfication OtpVerification[]
-  remarques       Remarque[]        @relation("RemarqueAdmin")
-  organisations   Organisation[]    @relation("UserOrganisations")
+  id               Int                           @id @default(autoincrement())
+  name             String
+  email            String                        @unique
+  password         String
+  phone            String
+  profile          String                        @default("profile.png")
+  role             Role                          @default(MODERATEUR)
+  is_active        Boolean                       @default(false)
+  is_verified      Boolean                       @default(false)
+  created_at       DateTime                      @default(now())
+  updated_at       DateTime                      @updatedAt
+  offres           Offre[]                       @relation("UserOffres")
+  otp_verfication  OtpVerification[]
+  remarques        Remarque[]                    @relation("RemarqueAdmin")
+  organisations    Organisation[]                @relation("UserOrganisations")
   invitations_sent QueueInvitationOrganisation[] @relation("Inviter")
 }
 
 model Organisation {
-  id            Int           @id @default(autoincrement())
-  nom           String
-  adresse       String        @default("")
-  ville         String        @default("")
-  users         User[]        @relation("UserOrganisations")
-  offres        Offre[]       @relation("OrganisationOffres")
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
-  postcarieres  PostCarriere[] @relation("OrganisationPostCarieres")
-  queueinvitation  QueueInvitationOrganisation[] @relation("QueueInvitationOrganisation")
-
+  id              Int                           @id @default(autoincrement())
+  nom             String
+  adresse         String                        @default("")
+  ville           String                        @default("")
+  users           User[]                        @relation("UserOrganisations")
+  offres          Offre[]                       @relation("OrganisationOffres")
+  created_at      DateTime                      @default(now())
+  updated_at      DateTime                      @updatedAt
+  postcarieres    PostCarriere[]                @relation("OrganisationPostCarieres")
+  queueinvitation QueueInvitationOrganisation[] @relation("QueueInvitationOrganisation")
 
   @@unique([nom, adresse, ville])
 }
 
 model QueueInvitationOrganisation {
-  id              Int      @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   inviter_id      Int
   invitee_email   String
   organisation_id Int?
-  role            Role     @default(MODERATEUR)
-  token           String   @unique
+  role            Role          @default(MODERATEUR)
+  token           String        @unique
   expires_at      DateTime
-  created_at      DateTime @default(now())
-  inviter         User         @relation("Inviter", fields: [inviter_id], references: [id], onDelete: Cascade)
+  created_at      DateTime      @default(now())
+  inviter         User          @relation("Inviter", fields: [inviter_id], references: [id], onDelete: Cascade)
   organisation    Organisation? @relation("QueueInvitationOrganisation", fields: [organisation_id], references: [id], onDelete: Cascade)
 }
 
@@ -178,21 +182,22 @@ model Candidat {
 }
 
 model Postulation {
-  id                Int           @id @default(autoincrement())
-  candidat          Candidat      @relation("CandidatPostulations", fields: [candidat_id], references: [id], onDelete: Cascade)
+  id                Int               @id @default(autoincrement())
+  candidat          Candidat          @relation("CandidatPostulations", fields: [candidat_id], references: [id], onDelete: Cascade)
   candidat_id       Int
-  offre             Offre         @relation("OffrePostulations", fields: [offre_id], references: [id], onDelete: Cascade)
+  offre             Offre             @relation("OffrePostulations", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id          Int
-  date_soumission   DateTime      @default(now())
-  etape_actuelle    EtapeActuelle @default(SOUMIS)
+  date_soumission   DateTime          @default(now())
+  etape_actuelle    EtapeActuelle     @default(SOUMIS)
   cv                String
   lettre_motivation String?
   telephone         String?
-  source_site       SourceSite    @default(LINKEDIN)
-  note              Int           @default(0)
-  created_at        DateTime      @default(now())
-  updated_at        DateTime      @updatedAt
-  remarques         Remarque[]    @relation("RemarquePostulation")
+  source_site       SourceSite        @default(LINKEDIN)
+  note              Int               @default(0)
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  remarques         Remarque[]        @relation("RemarquePostulation")
+  processus_passer  ProcessusPasser[] @relation("ProcessusPasserPostulation")
 
   @@unique([candidat_id, offre_id])
 }
@@ -238,17 +243,19 @@ model OtpVerification {
 }
 
 model Processus {
-  id          Int             @id @default(autoincrement())
-  titre       String
-  type        TypeProcessus   @default(VISIO_CONFERENCE)
-  description String
-  statut      StatutProcessus @default(A_VENIR)
-  offre       Offre           @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
-  offre_id    Int
-  duree       Int
-  created_at  DateTime        @default(now())
-  updated_at  DateTime        @updatedAt
-  questions   Question[]      @relation("ProcessusQuestion")
+  id               Int               @id @default(autoincrement())
+  titre            String
+  type             TypeProcessus     @default(VISIO_CONFERENCE)
+  description      String
+  statut           StatutProcessus   @default(A_VENIR)
+  offre            Offre             @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
+  offre_id         Int
+  duree            Int
+  ordee            Int                @default(0)
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  questions        Question[]        @relation("ProcessusQuestion")
+  processus_passer ProcessusPasser[] @relation("ProcessusPasserProcess")
 }
 
 model Question {
@@ -279,4 +286,19 @@ model Remarque {
   text           String
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
+}
+
+model ProcessusPasser {
+  id             Int             @id @default(autoincrement())
+  processus      Processus       @relation("ProcessusPasserProcess", fields: [processus_id], references: [id], onDelete: Cascade)
+  processus_id   Int
+  postulation    Postulation     @relation("ProcessusPasserPostulation", fields: [postulation_id], references: [id], onDelete: Cascade)
+  postulation_id Int
+  statut         StatutProcessus @default(EN_COURS)
+  score          Int             @default(0)
+  lien_web       String?
+  lien_fichier   String?
+  lien_vision    String?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
 }

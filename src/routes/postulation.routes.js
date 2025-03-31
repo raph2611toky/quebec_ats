@@ -8,7 +8,8 @@ const {
     confirmReferenceWithRecommendation,
     acceptPostulation,
     rejectPostulation,
-    addRemarquePostulation
+    addRemarquePostulation,
+    removeRemarquePostulation
 } = require("../controllers/postulation.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
@@ -436,6 +437,114 @@ router.put("/:id/accept", rejectPostulation);
  *         description: Erreur interne du serveur
  */
 router.post("/:id/add-remarque", validateRemarque, IsAuthenticatedAdmin,  errorHandler,  addRemarquePostulation);
+
+
+/**
+ * @swagger
+ * /api/postulations/{id}/all-remarque:
+ *   get:
+ *     summary: Liste tous remarque à une postulation par ID
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation cible
+ *     responses:
+ *       200:
+ *         description: Remarques retourné 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Remarque retourné"
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/:id/all-remarque", IsAuthenticatedAdmin, removeRemarquePostulation);
+
+/**
+ * @swagger
+ * /api/postulations/{id}/remove-my-remarque:
+ *   delete:
+ *     summary: Supprimer une remarque à une postulation par ID
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la remarque cible
+ *     responses:
+ *       200:
+ *         description: Remarque enlevé 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Remarque enlevé sur le postulation du candidat "
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.delete("/:id/remove-my-remarque", IsAuthenticatedAdmin,  removeRemarquePostulation);
+
+/**
+ * @swagger
+ * /api/postulations/{id}/update-my-remarque:
+ *   put:
+ *     summary: Mettre à jour une remarque à une postulation par ID
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la remarque cible
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: remarque textuelle
+ *             required:
+ *               - text
+ *     responses:
+ *       200:
+ *         description: Remarque enlevé 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Remarque mis à jour."
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/update-my-remarque", IsAuthenticatedAdmin,  removeRemarquePostulation);
+
+
 
 
 module.exports = router;
