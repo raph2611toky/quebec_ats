@@ -182,11 +182,16 @@ exports.getCandidatPostulation = async (req, res) => {
                     include: {
                         user: true
                     }
+                },
+                processus_passer: {
+                    include: {
+                        processus: true
+                    }
                 }
             }
         });
 
-        const postulationsList = await postulations.map(post => ({
+        const postulationsList = postulations.map(post => ({
             id: post.id,
             date_soumission: post.date_soumission,
             etape_actuelle: post.etape_actuelle,
@@ -210,7 +215,20 @@ exports.getCandidatPostulation = async (req, res) => {
                     nom: post.offre.user.name,
                     email: post.offre.user.email
                 }
-            }
+            },
+            processus_passer: post.processus_passer.map(pp => ({
+                id: pp.id,
+                processus_id: pp.processus_id,
+                titre: pp.processus.titre,
+                type: pp.processus.type,
+                statut: pp.statut,
+                score: pp.score,
+                lien_web: pp.lien_web,
+                lien_fichier: pp.lien_fichier,
+                lien_vision: pp.lien_vision,
+                created_at: pp.created_at,
+                updated_at: pp.updated_at
+            }))
         }));
 
         return res.status(200).json(postulationsList)
@@ -267,6 +285,11 @@ exports.getCandidatDashboard = async (req, res) => {
                     include: {
                         user: true
                     }
+                },
+                processus_passer: {
+                    include: {
+                        processus: true
+                    }
                 }
             }
         });
@@ -287,8 +310,14 @@ exports.getCandidatDashboard = async (req, res) => {
                 entretien: postulations.filter(p => p.etape_actuelle === "ENTRETIEN").length,
                 accepte: postulations.filter(p => p.etape_actuelle === "ACCEPTE").length,
                 rejete: postulations.filter(p => p.etape_actuelle === "REJETE").length
-            }
-        }
+            },
+            postulations_scores: postulations.map(p => ({
+                postulation_id: p.id,
+                offre_titre: p.offre.titre,
+                score_total: p.processus_passer.reduce((total, pp) => total + pp.score, 0),
+                nombre_processus: p.processus_passer.length
+            }))
+        };
 
         return res.status(200).json(statistics)
     } catch (error) {
