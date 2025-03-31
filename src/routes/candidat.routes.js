@@ -133,7 +133,7 @@ router.get("/:id", IsAuthenticated, getCandidat);
 
 /**
  * @swagger
- * /api/candidats/me:
+ * /api/candidats/profile/me:
  *   get:
  *     summary: Récupérer un candidat par token
  *     tags: [Candidats]
@@ -151,7 +151,7 @@ router.get("/:id", IsAuthenticated, getCandidat);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/me", IsAuthenticatedCandidat, getCandidatMe);
+router.get("/profile/me", IsAuthenticatedCandidat, getCandidatMe);
 
 /**
  * @swagger
