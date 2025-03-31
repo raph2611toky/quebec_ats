@@ -984,7 +984,7 @@ router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
 /**
  * @swagger
  * /api/offres/{id}/fermer:
- *   post:
+ *   put:
  *     summary: Fermer candidature à une offre.
  *     tags: [Offres]
  *     security:
@@ -1018,7 +1018,7 @@ router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
+router.put("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
 
 /**
  * @swagger
