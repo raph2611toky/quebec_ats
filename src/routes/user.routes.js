@@ -760,7 +760,7 @@ router.put("/logout", IsAuthenticated, logout);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/invitation/send", IsAuthenticated, IsAuthenticatedAdmin, sendInvitation);
+router.post("/invitation/send", IsAuthenticated, sendInvitation);
 
 /**
  * @swagger
@@ -1035,7 +1035,7 @@ router.post("/invitation/remove", IsAuthenticatedAdmin, removeFromOrganisation);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.get("/invitation/queue/list", IsAuthenticatedAdmin, listInvitationQueue);
+router.get("/invitation/queue/list", IsAuthenticated, listInvitationQueue);
 
 /**
  * @swagger
@@ -1104,7 +1104,7 @@ router.get("/invitation/queue/list", IsAuthenticatedAdmin, listInvitationQueue);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.delete("/invitation/cancel/:invitation_id", IsAuthenticatedAdmin, cancelInvitation);
+router.delete("/invitation/cancel/:invitation_id", IsAuthenticated, cancelInvitation);
 
 /**
  * @swagger

@@ -5,6 +5,7 @@ const { generateToken, verifyToken } = require("../utils/securite/jwt");
 const bcrypt = require("../utils/securite/bcrypt");
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const cloudinary = require("../config/cloudinary.config");
+const { Role } = require("@prisma/client")
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
 // const { PrismaClient } = require("@prisma/client");
@@ -52,7 +53,7 @@ exports.registerAdmin = async (req, res) => {
             ...req.body,
             profile: profileUrl,
             is_active: false,
-            role: "ADMINISTRATEUR",
+            role: Role.ADMINISTRATEUR,
             organisations: {
                 connect: allOrganisations.map(org => ({ id: org.id }))
             }
@@ -338,30 +339,34 @@ exports.getAllUsers = async (req, res) => {
 
 exports.sendInvitation = async (req, res) => {
     try {
-        const { invitee_email, organisation_id, role } = req.body;
+        let { invitee_email, organisation_id, role } = req.body;
         const inviter_id = req.user.id;
     
         const inviter = await User.getById(inviter_id)
-        if (!inviter || inviter.role !== "ADMINISTRATEUR") {
-            return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
-        }
-    
+        const inviter_organisation_ids = inviter.organisations.map(org => org.id)
+        // if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
+        //     return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
+        // }    
         let validatedOrganisationId = null;
-        if (role === "MODERATEUR") {
+        role = inviter.role === Role.MODERATEUR ? Role.MODERATEUR : role
+        if (role === Role.MODERATEUR) {
             if (!organisation_id) {
-            return res.status(400).json({ error: "L'organisation est requise pour un modérateur" });
+                return res.status(400).json({ error: "L'organisation est requise pour un modérateur" });
+            }            
+            if ( ! inviter_organisation_ids.includes(organisation_id)){
+                return res.status(401).json({"erreur":"Vous n'avez de droit d'accès à cette organisation"})
             }
             const organisation = await prisma.organisation.findUnique({
             where: { id: organisation_id },
             });
             if (!organisation) {
-            return res.status(404).json({ error: "Organisation non trouvée" });
+                return res.status(404).json({ error: "Organisation non trouvée" });
             }
             validatedOrganisationId = organisation_id;
-        } else if (role === "ADMINISTRATEUR") {
-            if (organisation_id) {
-            return res.status(400).json({ error: "L'organisation ne doit pas être spécifiée pour un administrateur" });
-            }
+        } else if (role === Role.ADMINISTRATEUR) {
+            // if (organisation_id) {
+            //     return res.status(400).json({ error: "L'organisation ne doit pas être spécifiée pour un administrateur" });
+            // }
         } else {
             return res.status(400).json({ error: "Rôle invalide" });
         }
@@ -378,7 +383,7 @@ exports.sendInvitation = async (req, res) => {
             inviter_id,
             invitee_email,
             organisation_id: validatedOrganisationId,
-            role: role || "MODERATEUR",
+            role: role || Role.MODERATEUR,
             token,
             expires_at: expiresAt,
             },
@@ -394,7 +399,7 @@ exports.sendInvitation = async (req, res) => {
             emailType = existingType.existingUserInvitation;
             emailData = {
                 inviteeName: existingUser.name || invitee_email,
-                organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
+                organisationName: role === Role.MODERATEUR ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
                 inviterName: inviter.name,
                 invitationLink,
                 role,
@@ -404,7 +409,7 @@ exports.sendInvitation = async (req, res) => {
             emailType = existingType.newUserInvitation;
             emailData = {
                 inviteeEmail: invitee_email,
-                organisationName: role === "MODERATEUR" ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
+                organisationName: role === Role.MODERATEUR ? (await prisma.organisation.findUnique({ where: { id: validatedOrganisationId } })).nom : "toutes les organisations",
                 inviterName: inviter.name,
                 invitationLink,
                 role,
@@ -447,16 +452,16 @@ exports.confirmInvitation = async (req, res) => {
       }
   
       let updateData;
-      if (invitation.role === "MODERATEUR") {
+      if (invitation.role === Role.MODERATEUR) {
         updateData = {
           organisations: {
             connect: { id: invitation.organisation_id },
           },
         };
-      } else if (invitation.role === "ADMINISTRATEUR") {
+      } else if (invitation.role === Role.ADMINISTRATEUR) {
         const allOrganisations = await prisma.organisation.findMany();
         updateData = {
-          role: "ADMINISTRATEUR",
+          role: Role.ADMINISTRATEUR,
           organisations: {
             connect: allOrganisations.map(org => ({ id: org.id })),
           },
@@ -472,7 +477,7 @@ exports.confirmInvitation = async (req, res) => {
         where: { id: invitation.id },
       });
   
-      const orgName = invitation.role === "MODERATEUR" ? invitation.organisation.nom : "toutes les organisations";
+      const orgName = invitation.role === Role.MODERATEUR ? invitation.organisation.nom : "toutes les organisations";
       return res.status(200).json({ message: `Vous avez rejoint ${orgName} en tant que ${invitation.role}` });
     } catch (error) {
       console.error("Erreur lors de la confirmation de l'invitation:", error);
@@ -494,9 +499,9 @@ exports.acceptInvitation = async (req, res) => {
         }
     
         let organisationConnect;
-        if (invitation.role === "MODERATEUR") {
+        if (invitation.role === Role.MODERATEUR) {
             organisationConnect = { connect: { id: invitation.organisation_id } };
-        } else if (invitation.role === "ADMINISTRATEUR") {
+        } else if (invitation.role === Role.ADMINISTRATEUR) {
             const allOrganisations = await prisma.organisation.findMany();
             organisationConnect = { connect: allOrganisations.map(org => ({ id: org.id })) };
         }
@@ -520,7 +525,7 @@ exports.acceptInvitation = async (req, res) => {
             where: { id: invitation.id },
         });
     
-        const orgName = invitation.role === "MODERATEUR" ? invitation.organisation.nom : "toutes les organisations";
+        const orgName = invitation.role === Role.MODERATEUR ? invitation.organisation.nom : "toutes les organisations";
         const authToken = generateToken({ id: newUser.id , role: encryptAES(invitation.role)});
         return res.status(201).json({
             message: `Compte créé et vous avez rejoint ${orgName} en tant que ${invitation.role}`,
@@ -540,7 +545,7 @@ exports.removeFromOrganisation = async (req, res) => {
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
-        if (!admin || admin.role !== "ADMINISTRATEUR") {
+        if (!admin || admin.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent retirer des utilisateurs" });
         }
     
@@ -557,7 +562,7 @@ exports.removeFromOrganisation = async (req, res) => {
         }
     
         let updatedOrganisations;
-        if (user.role === "MODERATEUR") {
+        if (user.role === Role.MODERATEUR) {
             if (!organisation_id) {
             return res.status(400).json({ error: "L'ID de l'organisation est requis pour un modérateur" });
             }
@@ -576,7 +581,7 @@ exports.removeFromOrganisation = async (req, res) => {
             updatedOrganisations = {
             disconnect: { id: organisation_id },
             };
-        } else if (user.role === "ADMINISTRATEUR") {
+        } else if (user.role === Role.ADMINISTRATEUR) {
             return res.status(400).json({ error: "Un administrateur ne peut pas etre detaché d'une organisation." });
         }
     
@@ -587,7 +592,7 @@ exports.removeFromOrganisation = async (req, res) => {
             },
         });
     
-        const message = user.role === "MODERATEUR"
+        const message = user.role === Role.MODERATEUR
             ? `L'utilisateur a été retiré de l'organisation ${organisation_id}`
             : "L'utilisateur a été retiré de toutes les organisations";
         
@@ -598,33 +603,51 @@ exports.removeFromOrganisation = async (req, res) => {
     }
   };
 
-  exports.listInvitationQueue = async (req, res) => {
+exports.listInvitationQueue = async (req, res) => {
     try {
         const admin_id = req.user.id;
     
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
-        if (!admin || admin.role !== "ADMINISTRATEUR") {
+        if (!admin) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent voir la liste des invitations" });
         }
+        if (admin.role === Role.ADMINISTRATEUR){
+            const invitations = await prisma.queueInvitationOrganisation.findMany({
+                where: {
+                    expires_at: { gt: new Date() }
+                },
+                include: {
+                inviter: {
+                    select: { id: true, name: true, email: true },
+                },
+                organisation: {
+                    select: { id: true, nom: true },
+                },
+                },
+                orderBy: { created_at: "desc" },
+            });
+            return res.status(200).json(invitations);
+        }else{
+            const invitations = await prisma.queueInvitationOrganisation.findMany({
+                where: {
+                    expires_at: { gt: new Date() },
+                    inviter_id: admin_id
+                },
+                include: {
+                    inviter: {
+                        select: { id: true, name: true, email: true },
+                    },
+                organisation: {
+                    select: { id: true, nom: true },
+                },
+                },
+                orderBy: { created_at: "desc" },
+            });
+            return res.status(200).json(invitations);
+        }
     
-        const invitations = await prisma.queueInvitationOrganisation.findMany({
-            where: {
-            expires_at: { gt: new Date() }
-            },
-            include: {
-            inviter: {
-                select: { id: true, name: true, email: true },
-            },
-            organisation: {
-                select: { id: true, nom: true },
-            },
-            },
-            orderBy: { created_at: "desc" },
-        });
-    
-        return res.status(200).json(invitations);
     } catch (error) {
       console.error("Erreur lors de la récupération de la liste des invitations:", error);
       return res.status(500).json({ error: "Erreur interne du serveur" });
@@ -639,16 +662,18 @@ exports.cancelInvitation = async (req, res) => {
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
-        if (!admin || admin.role !== "ADMINISTRATEUR") {
+        if (!admin || admin.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent annuler des invitations" });
         }
-    
         const invitation = await prisma.queueInvitationOrganisation.findUnique({
             where: { id: parseInt(invitation_id) },
             include: { organisation: true },
         });
         if (!invitation) {
             return res.status(404).json({ error: "Invitation non trouvée" });
+        }
+        if (admin.role === Role.MODERATEUR && invitation.inviter_id !== admin.id){
+            return res.status(401).json({"erreur":"vous n'avez pas l'autorisation pour cette action."})
         }
         if (new Date() > invitation.expires_at) {
             return res.status(400).json({ error: "L'invitation est déjà expirée" });
@@ -658,7 +683,7 @@ exports.cancelInvitation = async (req, res) => {
             where: { id: invitation_id },
         });
     
-        const orgName = invitation.role === "MODERATEUR" && invitation.organisation
+        const orgName = invitation.role === Role.MODERATEUR && invitation.organisation
             ? invitation.organisation.nom
             : "toutes les organisations";
         return res.status(200).json({
@@ -679,18 +704,18 @@ exports.getDashboardStats = async (req, res) => {
             },
             where: {
                 OR: [
-                    { role: "ADMINISTRATEUR" },
-                    { role: "MODERATEUR" }
+                    { role: Role.ADMINISTRATEUR },
+                    { role: Role.MODERATEUR }
                 ]
             }
         });
 
         const adminCount = await prisma.user.count({
-            where: { role: "ADMINISTRATEUR" }
+            where: { role: Role.ADMINISTRATEUR }
         });
 
         const moderatorCount = await prisma.user.count({
-            where: { role: "MODERATEUR" }
+            where: { role: Role.MODERATEUR }
         });
 
         // 2. Statistiques des organisations
