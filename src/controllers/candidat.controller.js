@@ -173,7 +173,7 @@ exports.getCandidatPostulation = async (req, res) => {
         if (!candidat) {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
-        const candidatId = parseInt(req.params.id);
+        const candidatId = parseInt(candidat.id);
 
         const postulations = await prisma.postulation.findMany({
             where: { candidat_id: candidatId },
@@ -211,9 +211,86 @@ exports.getCandidatPostulation = async (req, res) => {
                     email: post.offre.user.email
                 }
             }
-        }))
+        }));
 
         return res.status(200).json(postulationsList)
+    } catch (error) {
+        console.error("Erreur lors de la récupération par email:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.getCandidatReferents = async (req, res) => {
+    try {
+        const candidat = req.candidat;
+        if (!candidat) {
+            return res.status(404).json({ error: "Candidat non trouvé" });
+        }
+        const candidatId = parseInt(candidat.id);
+
+        const referents = await prisma.candidatReferent.findMany({
+            where: { candidat_id: candidatId },
+            include: {
+                referent: true
+            }
+        });
+
+        const referentsList = await referents.map(ref => ({
+            id: ref.referent.id,
+            nom: ref.referent.nom,
+            email: ref.referent.email,
+            telephone: ref.referent.telephone,
+            recommendation: ref.referent.recommendation,
+            statut: ref.referent.statut,
+            date_assignation: ref.assigned_at
+        }));
+
+        return res.status(200).json(referentsList)
+    } catch (error) {
+        console.error("Erreur lors de la récupération par email:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.getCandidatDashboard = async (req, res) => {
+    try {
+        const candidat = req.candidat;
+        if (!candidat) {
+            return res.status(404).json({ error: "Candidat non trouvé" });
+        }
+        const candidatId = parseInt(candidat.id);
+
+        const postulations = await prisma.postulation.findMany({
+            where: { candidat_id: candidatId },
+            include: {
+                offre: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+
+        const referents = await prisma.candidatReferent.findMany({
+            where: { candidat_id: candidatId },
+            include: {
+                referent: true
+            }
+        });
+
+        const statistics = {
+            nombre_postulations: postulations.length,
+            nombre_referents: referents.length,
+            etapes_actuelles: {
+                soumis: postulations.filter(p => p.etape_actuelle === "SOUMIS").length,
+                en_revision: postulations.filter(p => p.etape_actuelle === "EN_REVISION").length,
+                entretien: postulations.filter(p => p.etape_actuelle === "ENTRETIEN").length,
+                accepte: postulations.filter(p => p.etape_actuelle === "ACCEPTE").length,
+                rejete: postulations.filter(p => p.etape_actuelle === "REJETE").length
+            }
+        }
+
+        return res.status(200).json(statistics)
     } catch (error) {
         console.error("Erreur lors de la récupération par email:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
