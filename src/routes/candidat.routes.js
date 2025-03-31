@@ -606,7 +606,7 @@ router.get("/postulations/list", IsAuthenticatedCandidat, getCandidatPostulation
  *         - statut
  *         - date_assignation
  */
-router.get("/referents/list", IsAuthenticatedCandidat, getCandidatReferents):
+router.get("/referents/list", IsAuthenticatedCandidat, getCandidatReferents);
 
 /**
  * @swagger
