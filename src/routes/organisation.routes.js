@@ -211,7 +211,7 @@ router.get("/:id", IsAuthenticated, organisationController.getOrganisation);
  *               items:
  *                 $ref: '#/components/schemas/Organisation'
  */
-router.get("/", IsAuthenticatedAdmin, organisationController.getAllOrganisations);
+router.get("/", IsAuthenticated, organisationController.getAllOrganisations);
 
 /**
  * @swagger
