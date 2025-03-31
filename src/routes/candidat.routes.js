@@ -11,7 +11,7 @@ const {
     googleCallbackLogic,
     loginWithGoogleLogic, getCandidatProcessus,
     loginDevWithGoogleLogic,
-    googleCallbackDevLogic,
+    googleCallbackDevLogic, getCandidatPostulation, 
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
@@ -378,6 +378,157 @@ router.get("/full-info/by-email/:email", IsAuthenticated, getCandidatFullInfoByE
  *         description: Erreur interne du serveur
  */
 router.get("/full-info/me", IsAuthenticatedCandidat, getCandidatFullInfoMe);
+
+/**
+ * @swagger
+ * /candidats/postulations/list:
+ *   get:
+ *     summary: Récupérer toutes les postulations du candidat authentifié
+ *     description: Retourne la liste des postulations associées au candidat authentifié via le token Bearer.
+ *     tags:
+ *       - Candidats
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des postulations du candidat récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Postulation'
+ *       404:
+ *         description: Candidat non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Candidat non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ *
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique de l’utilisateur
+ *         nom:
+ *           type: string
+ *           description: Nom de l’utilisateur
+ *         email:
+ *           type: string
+ *           description: Adresse email de l’utilisateur
+ *       required:
+ *         - id
+ *         - nom
+ *         - email
+ *
+ *     Offre:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique de l’offre
+ *         titre:
+ *           type: string
+ *           description: Titre de l’offre
+ *         description:
+ *           type: string
+ *           description: Description de l’offre
+ *         lieu:
+ *           type: string
+ *           description: Lieu de l’offre
+ *         pays:
+ *           type: string
+ *           description: Pays de l’offre
+ *         type_emploi:
+ *           type: string
+ *           description: Type d’emploi (ex. CDI, CDD)
+ *         salaire:
+ *           type: string
+ *           description: Salaire proposé
+ *         devise:
+ *           type: string
+ *           description: Devise du salaire (ex. EUR, USD)
+ *         status:
+ *           type: string
+ *           description: Statut de l’offre (ex. ouverte, fermée)
+ *         date_limite:
+ *           type: string
+ *           format: date-time
+ *           description: Date limite de candidature
+ *         createur:
+ *           $ref: '#/components/schemas/User'
+ *           description: Créateur de l’offre
+ *       required:
+ *         - id
+ *         - titre
+ *         - description
+ *         - lieu
+ *         - pays
+ *         - type_emploi
+ *         - salaire
+ *         - devise
+ *         - status
+ *         - date_limite
+ *         - createur
+ *
+ *     Postulation:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Identifiant unique de la postulation
+ *         date_soumission:
+ *           type: string
+ *           format: date-time
+ *           description: Date de soumission de la postulation
+ *         etape_actuelle:
+ *           type: string
+ *           description: Étape actuelle du processus de candidature
+ *         cv:
+ *           type: string
+ *           format: uri
+ *           description: URL complète du CV du candidat
+ *         lettre_motivation:
+ *           type: string
+ *           format: uri
+ *           description: URL complète de la lettre de motivation
+ *         telephone:
+ *           type: string
+ *           description: Numéro de téléphone du candidat
+ *         source_site:
+ *           type: string
+ *           description: Site source de la postulation
+ *         offre:
+ *           $ref: '#/components/schemas/Offre'
+ *           description: Détails de l’offre associée à la postulation
+ *       required:
+ *         - id
+ *         - date_soumission
+ *         - etape_actuelle
+ *         - cv
+ *         - lettre_motivation
+ *         - telephone
+ *         - source_site
+ *         - offre
+ */
+router.get("/postulations/list", IsAuthenticatedCandidat, getCandidatPostulation);
 
 /**
  * @swagger

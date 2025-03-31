@@ -167,6 +167,59 @@ exports.getCandidatFullInfoMe = async (req, res) => {
     }
 };
 
+exports.getCandidatPostulation = async (req, res) => {
+    try {
+        const candidat = req.candidat;
+        if (!candidat) {
+            return res.status(404).json({ error: "Candidat non trouvé" });
+        }
+        const candidatId = parseInt(req.params.id);
+
+        const postulations = await prisma.postulation.findMany({
+            where: { candidat_id: candidatId },
+            include: {
+                offre: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+
+        const postulationsList = await postulations.map(post => ({
+            id: post.id,
+            date_soumission: post.date_soumission,
+            etape_actuelle: post.etape_actuelle,
+            cv: getFullUrl(post.cv, req.base_url),
+            lettre_motivation: getFullUrl(post.lettre_motivation, req.base_url),
+            telephone: post.telephone,
+            source_site: post.source_site,
+            offre: {
+                id: post.offre.id,
+                titre: post.offre.titre,
+                description: post.offre.description,
+                lieu: post.offre.lieu,
+                pays: post.offre.pays,
+                type_emploi: post.offre.type_emploi,
+                salaire: post.offre.salaire.toString(),
+                devise: post.offre.devise,
+                status: post.offre.status,
+                date_limite: post.offre.date_limite,
+                createur: {
+                    id: post.offre.user.id,
+                    nom: post.offre.user.name,
+                    email: post.offre.user.email
+                }
+            }
+        }))
+
+        return res.status(200).json(postulationsList)
+    } catch (error) {
+        console.error("Erreur lors de la récupération par email:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getAllCandidats = async (req, res) => {
     try {
         const candidats = await Candidat.getAll(req.base_url);
