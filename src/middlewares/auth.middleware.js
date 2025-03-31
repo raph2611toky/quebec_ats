@@ -9,6 +9,7 @@ module.exports.IsAuthenticatedCandidat = async (req, res, next) => {
 
     try {
         const decoded = jwt.verifyToken(token);
+        console.log(decoded.role);
         
         if(decryptAES(decoded.role) !== "CANDIDAT"){
             res.status(401).json({ message: 'Token non autorisé.' });
