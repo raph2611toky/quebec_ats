@@ -4,7 +4,7 @@ const processusController = require("../controllers/processus.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
-const { makeOrderTop } = require('../controllers/ordreProcees.controller');
+const { makeOrderTop, makeOrderBottom } = require('../controllers/ordreProcees.controller');
 
 
 /**
@@ -478,5 +478,39 @@ router.post("/:id/start", processusController.startProcessus);
  *         description: Erreur interne du serveur
  */
 router.put("/:id/make-top", IsAuthenticatedAdmin, makeOrderTop);
+
+/**
+ * @swagger
+ * /api/processus/{id}/make-bottom:
+ *   put:
+ *     summary: Mettre un processus de recrutement en dernier
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Mettre un processus de recrutement en dernier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à mettre en dernier
+ *     responses:
+ *       200:
+ *         description: Succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus de recrutement en tête de list"
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.put("/:id/make-bottom", IsAuthenticatedAdmin, makeOrderBottom);
 
 module.exports = router;

@@ -69,13 +69,58 @@ exports.makeOrderTop = async (req, res) => {
 
 exports.makeOrderBottom = async (req, res) => {
     try {
+        const processusId = parseInt(req.params.id);
 
-        return res.status(201).json({message: "Success"});
+        const processus = await prisma.processus.findUnique({
+            where: { id: processusId }
+        });
+
+        if (!processus) {
+            return res.status(404).json({ message: "Processus introuvable" });
+        }
+
+        const offre = await prisma.offre.findUnique({
+            where: { id: processus.offre_id },
+            include: {
+                processus: {
+                    orderBy: { ordre: 'asc' }
+                }
+            }
+        });
+
+        if (!offre) {
+            return res.status(404).json({ message: "Offre introuvable" });
+        }
+
+        const updatedProcessus = [];
+        let newOrder = 1;
+
+        for (const p of offre.processus) {
+            if (p.id !== processus.id) {
+                updatedProcessus.push({ id: p.id, ordre: newOrder++ });
+            }
+        }
+
+        updatedProcessus.push({ id: processus.id, ordre: newOrder });
+
+        await prisma.$transaction(
+            updatedProcessus.map(p =>
+                prisma.processus.update({
+                    where: { id: p.id },
+                    data: { ordre: p.ordre }
+                })
+            )
+        );
+
+        return res.status(200).json({ message: "Ordre mis à jour avec succès" });
+
     } catch (error) {
-        console.error("Erreur lors de la création du processus:", error);
+        console.error("Erreur lors de la mise à jour de l'ordre du processus:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+
 
 
 exports.reverseOrder = async (req, res) => {
