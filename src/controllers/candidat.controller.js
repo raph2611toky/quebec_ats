@@ -247,6 +247,29 @@ exports.loginWithGoogleLogic = async (req, res) => {
     }
 }
 
+exports.loginDevWithGoogleLogic = async (req, res) => {
+    try {
+        const oauth2Client = new OAuth2Client({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            redirectUri: `${process.env.FRONTEND_URL_DEV}/auth/google/callback`
+        });
+
+        const redirectUrl = oauth2Client.generateAuthUrl({
+            scope: ['profile', 'email'],
+            response_type: 'code'
+        });
+
+        res.status(200).json({
+            success: true,
+            redirect_url: redirectUrl
+        });
+    } catch (error) {
+        console.error('Erreur lors de la génération du lien Google:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+}
+
 exports.googleCallbackLogic = async (req, res) => {
     const { code } = req.body;
     if (!code) {

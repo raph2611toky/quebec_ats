@@ -10,6 +10,7 @@ const {
     getCandidatFullInfoByEmail, getCandidatFullInfoMe,
     googleCallbackLogic,
     loginWithGoogleLogic, getCandidatProcessus,
+    loginDevWithGoogleLogic,
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
@@ -399,6 +400,29 @@ router.get("/full-info/me", IsAuthenticatedCandidat, getCandidatFullInfoMe);
  *                   example: Erreur serveur
  */
 router.get("/auth/google", loginWithGoogleLogic);
+
+/**
+ * @swagger
+ * /api/candidats/auth-dev/google:
+ *   get:
+ *     summary: Initier la connexion via  mode dev Google
+ *     tags: [Candidats]
+ *     description: Redirige l'utilisateur vers la page de connexion Google pour l'authentification
+ *     responses:
+ *       302:
+ *         description: Redirection vers la page d'authentification Google
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Erreur serveur
+ */
+router.get("/auth-dev/google", loginDevWithGoogleLogic);
 
 /**
  * @swagger
