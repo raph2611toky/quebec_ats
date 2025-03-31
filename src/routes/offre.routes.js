@@ -979,7 +979,7 @@ router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidatio
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
+router.get("/processus/:id/details", IsAuthenticated, getDetailsOffres);
 
 /**
  * @swagger
@@ -1018,7 +1018,7 @@ router.get("/processus/:id/details", IsAuthenticatedAdmin, getDetailsOffres);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.put("/:id/fermer", IsAuthenticatedAdmin, fermerOffre);
+router.put("/:id/fermer", IsAuthenticated, fermerOffre);
 
 /**
  * @swagger
