@@ -681,7 +681,7 @@ router.get("/referents/list", IsAuthenticatedCandidat, getCandidatReferents);
  *         - nombre_referents
  *         - etapes_actuelles
  */
-router.get("/stats", IsAuthenticatedCandidat, getCandidatDashboard);
+router.get("/dashboard/stats", IsAuthenticatedCandidat, getCandidatDashboard);
 
 /**
  * @swagger
