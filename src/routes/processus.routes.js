@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const processusController = require("../controllers/processus.controller");
-const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
 const { makeOrderTop, makeOrderBottom, reverseOrder } = require('../controllers/ordreProcees.controller');
+const  createUpload  = require("../config/multer.config")
 
 
 /**
@@ -87,6 +88,62 @@ const { makeOrderTop, makeOrderBottom, reverseOrder } = require('../controllers/
  *         - duree
  *         - ordre
  */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     StartMeetingProcessRequest:
+ *       type: object
+ *       required:
+ *         - users
+ *         - candidats
+ *         - start_time
+ *         - start_date
+ *       properties:
+ *         users:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Liste des IDs des utilisateurs
+ *         candidats:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Liste des IDs des candidats
+ *         start_time:
+ *           type: string
+ *           description: Heure de début au format HH:mm (exemple "14:30")
+ *         start_date:
+ *           type: string
+ *           format: date
+ *           description: Date de début au format YYYY-MM-DD (exemple "2025-04-10")
+ *         duration:
+ *           type: integer
+ *           description: Durée en minutes
+ *       example:
+ *         processus_id: 2
+ *         users: [1, 2]
+ *         candidats: [3, 4]
+ *         start_time: "14:30"
+ *         start_date: "2025-04-10"
+ * 
+ *     StartMeetingProcessusResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         meetLink:
+ *           type: string
+ *           description: Lien Google Meet généré
+ *       example:
+ *         success: true
+ *         message: "Réunion planifiée et invitations envoyées avec succès"
+ *         meetLink: "https://meet.google.com/abc-defg-hij"
+ */
+
 
 /**
  * @swagger
@@ -699,6 +756,261 @@ router.put("/:id/make-bottom", IsAuthenticatedAdmin, makeOrderBottom);
  *         description: Erreur interne du serveur
  */
 router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
+
+
+/**
+ * @swagger
+ * /api/processus/{id}/submit/quizz:
+ *   post:
+ *     summary: Soumettre un quiz pour un processus donné
+ *     tags: [Processus]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 question:
+ *                   type: string
+ *                   description: ID de la question
+ *                 reponse:
+ *                   type: string
+ *                   description: ID de la réponse sélectionnée
+ *     responses:
+ *       200:
+ *         description: Quiz soumis avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 score:
+ *                   type: integer
+ *                   example: 10
+ *                 nombre_total_question:
+ *                   type: integer
+ *                   example: 20
+ *       400:
+ *         description: Données invalides
+ *       404:
+ *         description: Processus non trouvé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.submitQuizz)
+
+
+/**
+ * @swagger
+ * /api/processus/{id}/submit/tache:
+ *   post:
+ *     summary: Soumettre une tâche avec un fichier et/ou un lien
+ *     tags: [Processus]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fichier:
+ *                 type: string
+ *                 format: binary
+ *                 description: Fichier de preuve (optionnel)
+ *               lien:
+ *                 type: string
+ *                 description: Lien vers le travail effectué (optionnel)
+ *     responses:
+ *       200:
+ *         description: Tâche soumise avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Votre tâche a bien été reçue !"
+ *       400:
+ *         description: Erreur de validation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Un fichier ou un lien est requis pour soumettre votre travail."
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé."
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+ */
+router.post("/:id/submit/tache", IsAuthenticatedCandidat, createUpload("Taches").single("fichier"), processusController.submitTache);
+
+/**
+ * @swagger
+ * /api/processus/{id}/start/visio:
+ *   post:
+ *     summary: Commencer un visio avec un ou plusieurs candidats pour un processus donné
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/StartMeetingProcessRequest'
+ *     responses:
+ *       '200':
+ *         description: Réunion planifiée et invitations envoyées
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StartMeetingProcessusResponse'
+ *       '400':
+ *         description: Données invalides ou manquantes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Tous les champs sont requis : users, candidats, start_time, start_date, duration"
+ *       '401':
+ *         description: Non autorisé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Utilisateur non authentifié"
+ *       '500':
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:id/start/visio",IsAuthenticatedAdmin,processusController.startVision)
+
+
+/**
+ * @swagger
+ * /api/processus/{processus_id}/noter/{postulation_id}:
+ *   post:
+ *     summary: Attribuer une note à un candidat pour un processus donné
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: processus_id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: postulation_id
+ *         required: true
+ *         description: ID de la postulation du candidat
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               note:
+ *                 type: integer
+ *                 description: Note attribuée au candidat
+ *                 example: 10
+ *     responses:
+ *       200:
+ *         description: Postulation du candidat notée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Postulation Candidat noté avec succès"
+ *       400:
+ *         description: Requête invalide (exemple processus non commencé ou note manquante)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Note requis"
+ *       404:
+ *         description: Processus ou postulation non trouvé(e)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus ou Postulation cible introuvables"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.post("/:processus_id/noter/postulation_id", IsAuthenticatedAdmin, processusController.giveNotePostulation)
 
 
 module.exports = router;

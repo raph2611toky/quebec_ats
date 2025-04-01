@@ -294,7 +294,7 @@ model ProcessusPasser {
   processus_id   Int
   postulation    Postulation     @relation("ProcessusPasserPostulation", fields: [postulation_id], references: [id], onDelete: Cascade)
   postulation_id Int
-  statut         StatutProcessus @default(EN_COURS)
+  statut         StatutProcessusPasser @default(EN_COURS)
   score          Int             @default(0)
   lien_web       String?
   lien_fichier   String?
