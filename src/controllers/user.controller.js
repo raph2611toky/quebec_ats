@@ -241,7 +241,11 @@ exports.loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findByEmail(email);
+        //const user = await User.findByEmail(email);
+
+        const user = await prisma.user.findUnique({
+            where: { email }
+        });
         
         if (!user || !(await User.comparePassword(password, user.password)) || !user.is_verified) {
             return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
