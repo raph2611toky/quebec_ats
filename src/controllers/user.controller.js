@@ -255,9 +255,22 @@ exports.loginAdmin = async (req, res) => {
     }
 };
 
+exports.getAdminProfileMe = async (req, res) => {
+    try {
+        const user = await User.getById(parseInt(req.user.id), details=true);
+        if (!user) {
+            return res.status(404).json({ error: "Profil non trouvé" });
+        }
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error("Erreur lors de la récupération du profil:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getAdminProfile = async (req, res) => {
     try {
-        const user = await User.getById(req.user.id);
+        const user = await User.getById(parseInt(req.params.id), details=true);
         if (!user) {
             return res.status(404).json({ error: "Profil non trouvé" });
         }
@@ -1017,11 +1030,14 @@ exports.updateUserRole = async (req, res) => {
     try {
         const requestingUser = req.user;
         const targetUserId = parseInt(req.params.id);
+        if (req.body.role === Role.MODERATEUR && (!req.body.organisations || !Array.isArray(req.body.organisations) || req.body.organisations.length === 0)) {
+            return res.status(400).json({ error: "Les organisations doivent être spécifiées pour un Modérateur" });
+        }
 
         if (requestingUser.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les Administrateurs peuvent modifier les rôles" });
         }
-
+        
         const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
         if (!targetUser) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
