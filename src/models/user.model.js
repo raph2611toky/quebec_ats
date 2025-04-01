@@ -191,7 +191,7 @@ class User {
     }
 
     static async comparePassword(password, hashPassword) {
-        return bcrypt.compare(password, hashPassword);
+        return bcrypt.comparePassword(password, hashPassword);
     }
 }
 
