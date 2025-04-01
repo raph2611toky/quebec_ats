@@ -1,4 +1,4 @@
-const bcrypt = require("../utils/securite/bcrypt");
+const {comparePassword, hashPassword} = require("../utils/securite/bcrypt");
 const prisma = require("../config/prisma.config");
 
 class User {
@@ -147,7 +147,7 @@ class User {
     static async create(data) {
         try {
             if (data.password) {
-                data.password = await bcrypt.hashPassword(data.password);
+                data.password = await hashPassword(data.password);
             }
             const newUser = await prisma.user.create({ 
                 data: {
@@ -165,7 +165,7 @@ class User {
     static async update(id, data) {
         try {
             if (data.password) {
-                data.password = await bcrypt.hashPassword(data.password);
+                data.password = await hashPassword(data.password);
             }
             const updatedUser = await prisma.user.update({
                 where: { id },
@@ -191,7 +191,7 @@ class User {
     }
 
     static async comparePassword(password, hashPassword) {
-        return bcrypt.comparePassword(password, hashPassword);
+        return comparePassword(password, hashPassword);
     }
 }
 
