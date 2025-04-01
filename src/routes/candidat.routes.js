@@ -698,6 +698,7 @@ router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
  *     responses:
  *       200:
  *         description: Détails complets de l'offre
+ *         content:  
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Processus'

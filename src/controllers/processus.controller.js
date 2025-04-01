@@ -691,3 +691,169 @@ exports.submitTache = async (req, res)=>{
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
+
+exports.startVision = async (req, res)=>{
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: {
+                id: parseInt(req.params.id),
+            }
+        })
+        
+        if(!processus){
+            return res.status(404).json({ error: "Processus non trouver." });
+        }
+        
+        if(processus.type != TypeProcessus.VISIO_CONFERENCE){
+            return res.status(400).json({ error: "Le processus doit être type vision conference." });
+        }
+        
+        if(processus.statut != StatutProcessus.EN_COURS){
+            return res.status(400).json({ error: "Le processus n'est pas en cours." });
+        }
+
+        const { candidats, start_time, start_date } = req.body;
+
+        const duration = processus.duree
+
+        if (!Array.isArray(users) || !Array.isArray(candidats) || !start_time || !start_date ) {
+            return res.status(400).json({ error: "Tous les champs sont requis : users, candidats, start_time, start_date, duration" });
+        }
+        if (!/^\d{2}:\d{2}$/.test(start_time)) {
+            return res.status(400).json({ error: "start_time doit être au format HH:mm" });
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+            return res.status(400).json({ error: "start_date doit être au format YYYY-MM-DD" });
+        }
+
+        const userList = await prisma.user.findMany({
+            where: { id: { in: users } },
+            select: { id: true, email: true, name: true }
+        });
+
+        const candidatList = await prisma.candidat.findMany({
+            where: { id: { in: candidats } },
+            select: { id: true, email: true, nom: true }
+        });
+
+        if (userList.length !== users.length || candidatList.length !== candidats.length) {
+            return res.status(400).json({ error: "Certains utilisateurs ou candidats n'existent pas" });
+        }
+        const [hours, minutes] = start_time.split(':');
+        const startDateTime = new Date(`${start_date}T${hours}:${minutes}:00Z`);
+        if (isNaN(startDateTime.getTime())) {
+            return res.status(400).json({ error: "Date ou heure invalide" });
+        }
+
+        const summary = `Réunion planifiée par ${req.user.name}`;
+        const description = `Réunion avec ${users.length} utilisateurs et ${candidats.length} candidats`;
+        const meetLink = await createGoogleMeet(startDateTime.toISOString(), duration, summary, description);
+
+        if (!meetLink) {
+            return res.status(500).json({ error: "Échec de la création du Google Meet" });
+        }
+        const dateStr = startDateTime.toLocaleDateString('fr-CA', { timeZone: 'UTC' });
+        const timeStr = startDateTime.toLocaleTimeString('fr-CA', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+
+        const envoiNotifications = async (recipients, type) => {
+            for (const recipient of recipients) {
+                await sendEmail({
+                    to: recipient.email,
+                    subject: `Invitation à une réunion - ${dateStr} à ${timeStr}`,
+                    type: existingType.meeting,
+                    data: {
+                        candidatName: type === 'candidat' ? recipient.nom : recipient.name,
+                        offreTitre: "N/A",
+                        date: dateStr,
+                        heure: timeStr,
+                        meetLink: meetLink
+                    },
+                    saveToNotifications: true
+                });
+            }
+        };
+
+        await envoiNotifications(userList, 'user');
+        await envoiNotifications(candidatList, 'candidat');
+
+        console.log("Emails envoyés à tous les participants");
+
+        return res.status(200).json({
+            success: true,
+            message: "Réunion planifiée et invitations envoyées avec succès",
+            meetLink
+        });
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.giveNotePostulation = async (req, res)=>{
+    try {
+        const { processus_id, postulation_id } = req.params; 
+        const processus = await prisma.processus.findUnique({
+            where: { id: parseInt(processus_id) }
+        });
+
+        const postulation = await prisma.postulation.findUnique({
+            where: { id: parseInt(postulation_id) }, include: { candidat: true, offre: true}
+        });
+
+        if (!postulation || !processus) {
+            return res.status(404).json({ message: "Processus ou Postulation cible introuvables" });
+        }
+        
+        if(processus.statut !== StatutProcessus.EN_COURS && processus.statut != StatutProcessus.TERMINER){
+            return res.status(400).json({ message: "Processus cible n'a pas encore commencer." });
+        }
+        
+        const { note } = req.body 
+        if (!note || isNaN(note)) {
+            return res.status(400).json({ message: "Note requise et doit être un nombre valide" });
+        }
+
+        const processusPasser = await prisma.processusPasser.findUnique({
+            where: {
+                processus_id: processus.id,
+                postulation_id: postulation.id                
+            }
+        })
+        
+        if(!processusPasser){
+            return res.status(404).json({ message: "Le candidat n'a pas encore passer le processus." });
+        }
+
+        await prisma.processusPasser.update({
+            where: {
+                id: processus.id,
+            },
+            data: {
+                score: processusPasser.score + parseInt(note)
+            }
+        })
+
+
+        if(processusPasser.statut !== StatutProcessusPasser.TERMINER){
+            await prisma.processusPasser.update({
+                where:{
+                    id: processusPasser.id,
+                },
+                data: {
+                    statut: StatutProcessusPasser.TERMINER
+                }
+            })            
+        }
+
+        return res.status(200).json({message: "Postulation Candidat noté avec succèss"})        
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+
+

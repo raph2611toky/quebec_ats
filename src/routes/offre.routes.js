@@ -1346,7 +1346,8 @@ router.get("/:id/details", IsAuthenticated, getOfferDetails);
  *         description: ID de l'offre à récupérer
  *     responses:
  *       200:
- *         description: Détails complets de l'offre
+ *         description: Processus actif
+ *         content: 
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Processus'
