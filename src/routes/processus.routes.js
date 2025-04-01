@@ -1013,4 +1013,126 @@ router.post("/:id/start/visio",IsAuthenticatedAdmin,processusController.startVis
 router.post("/:processus_id/noter/postulation_id", IsAuthenticatedAdmin, processusController.giveNotePostulation)
 
 
+/**
+ * @swagger
+ * /api/processus/{id}/terminate:
+ *   post:
+ *     summary: Marquer un processus comme terminé
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Permet de terminer un processus de recrutement s'il est en cours et que des candidats ont déjà été notés.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à terminer.
+ *     responses:
+ *       200:
+ *         description: Processus marqué comme terminé avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus marqué comme terminé."
+ *       400:
+ *         description: Impossible de terminer le processus.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Aucun candidat n'a encore de note à ce processus."
+ *       404:
+ *         description: Processus non trouvé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus cible introuvable."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+ */
+router.post("/:id/terminate", IsAuthenticatedAdmin, processusController.terminateProcessus)
+
+
+/**
+ * @swagger
+ * /api/processus/{id}/annuler:
+ *   post:
+ *     summary: Annuler un processus de recrutement
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Permet d'annuler un processus de recrutement s'il n'a pas encore commencé.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à annuler.
+ *     responses:
+ *       200:
+ *         description: Processus annulé avec succès.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus annulé. Ce processus de recrutement ne sera plus pris en compte."
+ *       400:
+ *         description: Impossible d'annuler le processus.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus a déjà commencé."
+ *       404:
+ *         description: Processus non trouvé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Processus cible introuvable."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+*/
+router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProcessus)
+
+
 module.exports = router;

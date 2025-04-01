@@ -855,5 +855,79 @@ exports.giveNotePostulation = async (req, res)=>{
     }
 }
 
+exports.terminateProcessus = async (req, res )=>{
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: { id: parseInt(req.params.id) }, include: { processus_passer: true}
+        });
 
+        if (!processus ) {
+            return res.status(404).json({ message: "Processus cible introuvable" });
+        }
+        
+        if(processus.statut != StatutProcessus.EN_COURS){
+            return res.status(400).json({ message: "Processus n'a pas encore commencer" });
+        }
+        
+        if(processus.processus_passer.length == 0){
+            return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
+        }
+        
+        const lengthScoreZero = await prisma.processusPasser.count({
+            where: {
+                score: 0
+            }
+        })
+        
+        if(lengthScoreZero == processus.processus_passer.length){
+            return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
+        }
+        
+        await prisma.processus.update({
+            where: {
+                id: processus.id
+            },
+            data: {
+                statut: StatutProcessus.TERMINER
+            }
+        })
+
+        return res.status(200).json({message: "Processus marquer comme terminer."})        
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.cancelProcessus = async (req, res)=>{
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: { id: parseInt(req.params.id) }, include: { processus_passer: true}
+        });
+
+        if (!processus ) {
+            return res.status(404).json({ message: "Processus cible introuvable" });
+        }
+        
+        if(processus.statut != StatutProcessus.A_VENIR){
+            return res.status(400).json({ message: "Processus a déjà commencer" });
+        }
+
+        await prisma.processus.update({
+            where: {
+                id: processus.id,
+            },
+            data: {
+                statut: StatutProcessus.ANNULER
+            }
+        })
+        
+        return res.status(200).json({message: "Processus annulé. Ce processus de recrutement ne sera plus prise en compte."})        
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
 
