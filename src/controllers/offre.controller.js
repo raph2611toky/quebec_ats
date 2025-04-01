@@ -425,11 +425,26 @@ exports.getDetailsOffres = async (req, res)=>{
                 id: parseInt(req.params.id)
             },
             include: {
-                processus: true, 
+                processus: {
+                    include: {
+                        questions: {
+                            include: {
+                                reponses: true
+                            }
+                        }
+                    }
+                }, 
                 postulations: {
                     include: {
-                        candidat: true 
-                    }
+                        candidat: true,
+                        processus_passer: true, 
+                        remarques: {
+                            include: {
+                                admin: true
+                            }
+                        } 
+                    },
+                    
                 }
             }
         });
