@@ -3,7 +3,7 @@ const router = express.Router();
 const { 
     registerAdmin, 
     loginAdmin, 
-    getAdminProfile, 
+    getAdminProfile, getAdminProfileMe,
     updateAdminProfile,
     logout, deleteAdmin, 
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
@@ -175,7 +175,52 @@ router.get("/", IsAuthenticated, IsAuthenticatedAdmin, getAllUsers);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.get("/me", IsAuthenticated, getAdminProfile);
+router.get("/me", IsAuthenticated, getAdminProfileMe);
+
+/**
+ * @swagger
+ * /api/users/{id}/profile:
+ *   get:
+ *     summary: Récupérer le profil de l'utilisateur connecté
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'administrateur à visualiser
+ *     responses:
+ *       200:
+ *         description: Profil de l'utilisateur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Profil non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Profil non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
 
 /**
  * @swagger
@@ -1467,7 +1512,7 @@ router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
 /**
  * @swagger
  * /api/users/{id}/change/role:
- *   post:
+ *   put:
  *     summary: Modifier le rôle d'un utilisateur
  *     description: Permet à un administrateur de modifier le rôle d'un utilisateur spécifié par son ID. Le nouveau rôle peut être `ADMINISTRATEUR` ou `MODERATEUR`. Si le rôle est `MODERATEUR`, une liste d'organisations peut être fournie.
  *     tags: [Users]

@@ -13,8 +13,7 @@ class User {
         is_active = false,
         is_verified = false,
         created_at = null,
-        updated_at = null,
-        organisations = []
+        updated_at = null
     ) {
         this.id = id;
         this.name = name;
@@ -27,85 +26,120 @@ class User {
         this.is_verified = is_verified;
         this.created_at = created_at;
         this.updated_at = updated_at;
-        this.organisations = organisations;
     }
 
-    static fromPrisma(user) {
-        return new User(
-            user.id,
-            user.name,
-            user.email,
-            user.password,
-            user.phone,
-            user.profile,
-            user.role,
-            user.is_active,
-            user.is_verified,
-            user.created_at,
-            user.updated_at,
-            user.organisations || [],
-            user.offres || []
-        );
+    static fromPrisma(user, details = false) {
+        const baseUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            profile: user.profile,
+            role: user.role,
+            is_active: user.is_active,
+            is_verified: user.is_verified,
+            created_at: user.created_at,
+            updated_at: user.updated_at
+        };
+
+        if (details) {
+            return {
+                ...baseUser,
+                organisations: user.organisations || [],
+                offres: user.offres || [],
+                otp_verfication: user.otp_verfication || [],
+                remarques: user.remarques || [],
+                invitations_sent: user.invitations_sent || []
+            };
+        }
+
+        return baseUser;
     }
 
-    static async getById(id) {
+    static async getById(id, details = false) {
         try {
+            const include = details ? {
+                offres: true,
+                organisations: true,
+                remarques: true,
+                invitations_sent: true,
+                otp_verfication: true
+            } : {};
+
             const user = await prisma.user.findUnique({
                 where: { id },
-                include: { 
-                    offres: true,
-                    organisations: true
-                }
+                include
             });
-            return user ? User.fromPrisma(user) : null;
+            
+            return user ? User.fromPrisma(user, details) : null;
         } catch (error) {
             console.error(`Erreur dans User.getById(${id}):`, error);
             throw error;
         }
     }
 
-    static async findByEmail(email) {
+    static async findByEmail(email, details = false) {
         try {
+            const include = details ? {
+                offres: true,
+                organisations: true,
+                remarques: true,
+                invitations_sent: true,
+                otp_verfication: true
+            } : {};
+
             const user = await prisma.user.findUnique({
                 where: { email },
-                include: { 
-                    offres: true,
-                    organisations: true
-                }
+                include
             });
-            return user ? User.fromPrisma(user) : null;
+            return user ? User.fromPrisma(user, details) : null;
         } catch (error) {
             console.error(`Erreur dans User.findByEmail(${email}):`, error);
             throw error;
         }
     }
 
-    static async getAll(skip = 0, take = 10) {
+    static async getAll(skip = 0, take = 10, details = false) {
         try {
+            const include = details ? {
+                offres: true,
+                organisations: true,
+                remarques: true,
+                invitations_sent: true,
+                otp_verfication: true
+            } : {};
+
             const users = await prisma.user.findMany({
                 skip,
                 take,
-                include: { 
-                    offres: true,
-                    organisations: true
-                }
+                include
             });
-            return users.map(User.fromPrisma);
+            return users.map(user => User.fromPrisma(user, details));
         } catch (error) {
             console.error("Erreur dans User.getAll:", error);
             throw error;
         }
     }
 
-    static async getAlladmin(skip = 0, take = 10) {
+    static async getAlladmin(skip = 0, take = 10, details = false) {
         try {
+            const include = details ? {
+                offres: true,
+                organisations: true,
+                remarques: true,
+                invitations_sent: true,
+                otp_verfication: true
+            } : {};
+
             const admins = await prisma.user.findMany({
                 where: { role: "ADMINISTRATEUR" },
-                select: { id: true },
+                skip,
+                take,
+                include
             });
-            return admins.map(User.fromPrisma);
+            return admins.map(user => User.fromPrisma(user, details));
         } catch (error) {
-            console.error("Erreur dans User.getAll:", error);
+            console.error("Erreur dans User.getAlladmin:", error);
             throw error;
         }
     }
