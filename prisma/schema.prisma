@@ -85,6 +85,11 @@ enum StatutProcessusPasser {
   TERMINER
 }
 
+enum TypeTemps {
+  PLEIN_TEMPS
+  TEMPS_PARTIEL
+}
+
 model User {
   id               Int                           @id @default(autoincrement())
   name             String
@@ -158,6 +163,7 @@ model Offre {
   lieu              String
   pays              String
   type_emploi       TypeEmploi    @default(CDD)
+  type_temps        TypeTemps     @default(PLEIN_TEMPS)
   salaire           Decimal
   devise            Devise
   horaire_ouverture String

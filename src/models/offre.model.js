@@ -21,6 +21,7 @@ class Offre {
         lieu,
         pays,
         type_emploi = TypeEmploi.CDD,
+        type_temps = "PLEIN_TEMPS",
         salaire,
         devise,
         horaire_ouverture,
@@ -41,6 +42,7 @@ class Offre {
         this.lieu = lieu;
         this.pays = pays;
         this.type_emploi = type_emploi;
+        this.type_temps = type_temps;
         this.salaire = salaire;
         this.devise = devise;
         this.horaire_ouverture = horaire_ouverture;
@@ -63,6 +65,7 @@ class Offre {
             offre.lieu,
             offre.pays,
             offre.type_emploi,
+            offre.type_temps,
             offre.salaire.toString(),
             offre.devise,
             offre.horaire_ouverture,

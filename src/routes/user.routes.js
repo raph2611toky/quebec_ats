@@ -8,7 +8,7 @@ const {
     logout, deleteAdmin, 
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
-    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting,
+    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting, updateUserRole
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1463,5 +1463,106 @@ router.post("/meetings/schedule", IsAuthenticated, scheduleMeeting);
  *                   example: "Erreur interne du serveur"
  */
 router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
+
+/**
+ * @swagger
+ * /api/users/{id}/change/role:
+ *   post:
+ *     summary: Modifier le rôle d'un utilisateur
+ *     description: Permet à un administrateur de modifier le rôle d'un utilisateur spécifié par son ID. Le nouveau rôle peut être `ADMINISTRATEUR` ou `MODERATEUR`. Si le rôle est `MODERATEUR`, une liste d'organisations peut être fournie.
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'utilisateur dont le rôle doit être modifié
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - role
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [ADMINISTRATEUR, MODERATEUR]
+ *                 description: Nouveau rôle de l'utilisateur
+ *               organisations:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Liste des IDs d'organisations à assigner (requis si le nouveau rôle est MODERATEUR, ignoré sinon)
+ *             example:
+ *               role: "MODERATEUR"
+ *               organisations: [1, 3]
+ *     responses:
+ *       200:
+ *         description: Rôle mis à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *             example:
+ *               id: 2
+ *               name: "John Doe"
+ *               email: "john.doe@example.com"
+ *               phone: "+261341234567"
+ *               profile: "https://res.cloudinary.com/example/image/upload/v1234567890/user_profiles/profile.jpg"
+ *               role: "MODERATEUR"
+ *               is_active: true
+ *               created_at: "2025-03-18T10:00:00Z"
+ *               updated_at: "2025-03-18T12:00:00Z"
+ *       400:
+ *         description: Données invalides ou manquantes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *             example:
+ *               error: "Rôle invalide. Valeurs possibles : ADMINISTRATEUR, MODERATEUR"
+ *       403:
+ *         description: Accès interdit (non administrateur ou tentative de modification du premier administrateur)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *             example:
+ *               error: "Seuls les Administrateurs peuvent modifier les rôles"
+ *       404:
+ *         description: Utilisateur non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *             example:
+ *               error: "Utilisateur non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *             example:
+ *               error: "Erreur interne du serveur"
+ */
+router.put("/:id/change/role", IsAuthenticatedAdmin, updateUserRole);
 
 module.exports = router;

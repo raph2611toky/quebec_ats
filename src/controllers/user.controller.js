@@ -270,6 +270,7 @@ exports.getAdminProfile = async (req, res) => {
 
 exports.updateAdminProfile = async (req, res) => {
     try {
+        const user = req.user;
         let updateData = { ...req.body };
         const existingUser = await User.getById(req.user.id);
         if (!existingUser) {
@@ -303,6 +304,9 @@ exports.updateAdminProfile = async (req, res) => {
             updateData.profile = await uploadDefaultProfileImage();
         }
 
+        if(updateData.role && updateData.role !== user.role){
+            return res.status(403).json({"erreur":"Vous ne pouvez pas "});
+        }
         if (updateData.organisations) {
             updateData.organisations = Array.isArray(updateData.organisations)
                 ? updateData.organisations.map(id => parseInt(id))
@@ -1008,5 +1012,68 @@ exports.deleteAdmin = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.updateUserRole = async (req, res) => {
+    try {
+        const requestingUser = req.user;
+        const targetUserId = parseInt(req.params.id);
+
+        if (requestingUser.role !== Role.ADMINISTRATEUR) {
+            return res.status(403).json({ error: "Seuls les Administrateurs peuvent modifier les rôles" });
+        }
+
+        const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!targetUser) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        const firstAdmin = await prisma.user.findFirst({
+            where: { role: Role.ADMINISTRATEUR },
+            orderBy: { id: 'asc' }
+        });
+        if (firstAdmin && firstAdmin.id === targetUserId) {
+            return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
+        }
+
+        const newRole = req.body.role;
+        if (!newRole || ![Role.ADMINISTRATEUR, Role.MODERATEUR].includes(newRole)) {
+            return res.status(400).json({ error: "Rôle invalide. Valeurs possibles : ADMINISTRATEUR, MODERATEUR" });
+        }
+
+        let updateData = { role: newRole };
+
+        if (newRole === Role.MODERATEUR && targetUser.role === Role.ADMINISTRATEUR) {
+            if (!req.body.organisations || !Array.isArray(req.body.organisations) || req.body.organisations.length === 0) {
+                return res.status(400).json({ error: "Les organisations doivent être spécifiées pour un Modérateur" });
+            }
+            const orgIds = req.body.organisations.map(id => parseInt(id));
+            const existingOrgs = await prisma.organisation.findMany({ where: { id: { in: orgIds } } });
+            if (existingOrgs.length !== orgIds.length) {
+                return res.status(400).json({ error: "Certaines organisations spécifiées n'existent pas" });
+            }
+            updateData.organisations = {
+                set: orgIds.map(id => ({ id })),
+            };
+        }
+        else if (newRole === Role.ADMINISTRATEUR && targetUser.role === Role.MODERATEUR) {
+            const allOrgs = await prisma.organisation.findMany();
+            const allOrgIds = allOrgs.map(org => ({ id: org.id }));
+            updateData.organisations = {
+                set: allOrgIds,
+            };
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: targetUserId },
+            data: updateData,
+        });
+        return res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error("Erreur lors de la modification du rôle :", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+
 
 module.exports = exports;

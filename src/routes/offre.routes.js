@@ -65,6 +65,7 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *         - lieu
  *         - pays
  *         - type_emploi
+ *         - type_temps
  *         - salaire
  *         - devise
  *         - horaire_ouverture
@@ -108,6 +109,10 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *         type_emploi:
  *           type: string
  *           description: Type d'emploi (CDI, CDD, etc.)
+ *         type_temps:
+ *           type: string
+ *           enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
+ *           description: Type de temps de travail (PLEIN_TEMPS ou TEMPS_PARTIEL)
  *         salaire:
  *           type: string
  *           description: Salaire (stocké comme BigInt)
@@ -141,6 +146,7 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *         lieu: "Paris"
  *         pays: "France"
  *         type_emploi: "CDI"
+ *         type_temps: "PLEIN_TEMPS"
  *         salaire: "50000.75"
  *         devise: "EURO"
  *         horaire_ouverture: "09:00:00"
@@ -192,6 +198,7 @@ router.get("/", getAllOffres);
  *         - lieu
  *         - pays
  *         - type_emploi
+ *         - type_temps
  *         - salaire
  *         - devise
  *         - horaire_ouverture
@@ -232,6 +239,9 @@ router.get("/", getAllOffres);
  *         type_emploi:
  *           type: string
  *           description: Type d'emploi (CDI, CDD, etc.)
+ *         type_temps:
+ *           type: string
+ *           enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *         salaire:
  *           type: string
  *           description: Salaire (stocké comme BigInt)
@@ -265,6 +275,7 @@ router.get("/", getAllOffres);
  *         lieu: "Paris"
  *         pays: "France"
  *         type_emploi: "CDI"
+ *         type_temps: "PLEIN_TEMPS"
  *         salaire: "50000.75"
  *         devise: "EURO"
  *         horaire_ouverture: "09:00:00"
@@ -324,7 +335,10 @@ router.get("/available", getAvalaibleOffres);
  *         description: Pays de l'offre
  *       - in: query
  *         name: type_emploi
- *         description: Type d'emploi (par exemple, "temps plein")
+ *         description: Type d'emploi (par exemple, "CDD")
+ *       - in: query
+ *         name: type_temps
+ *         description: Type de d'occupation de travail (par exemple, "temps plein")
  *       - in: query
  *         name: salaire
  *         description: Salaire minimum de l'offre
@@ -546,6 +560,7 @@ router.get("/:id", getOffre);
  *               - lieu
  *               - pays
  *               - type_emploi
+ *               - type_temps
  *               - salaire
  *               - devise
  *               - horaire_ouverture
@@ -584,6 +599,10 @@ router.get("/:id", getOffre);
  *                 type: string
  *                 description: Type d'emploi
  *                 enum: [CDD, CDI, STAGE]
+ *               type_temps:
+ *                 type: string
+ *                 description: Type de temps d'occupationtype_temps
+ *                 enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *               salaire:
  *                 type: string
  *                 description: Salaire
@@ -680,6 +699,10 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                 type: string
  *                 description: Nouveau type d'emploi
  *                 example: "CDD"
+ *               type_temps:
+ *                 type: string
+ *                 description: Type d'emploi
+ *                 example: "PLEIN_TEMPS"
  *               salaire:
  *                 type: string
  *                 description: Nouveau salaire
@@ -1100,6 +1123,10 @@ router.put("/:id/fermer", IsAuthenticated, fermerOffre);
  *                   type: string
  *                   enum: [CDD, CDI, STAGE]
  *                   description: Type d'emploi
+ *                 type_temps:
+ *                   type: string
+ *                   enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
+ *                   description: Type de temps d'occupation de travail
  *                 salaire:
  *                   type: string
  *                   description: Salaire (stocké comme Decimal)
@@ -1259,6 +1286,7 @@ router.put("/:id/fermer", IsAuthenticated, fermerOffre);
  *               lieu: "Paris"
  *               pays: "France"
  *               type_emploi: "CDI"
+ *               type_temps: "PLEIN_TEMPS"
  *               salaire: "50000.75"
  *               devise: "EURO"
  *               horaire_ouverture: "09:00:00"
