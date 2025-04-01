@@ -85,8 +85,9 @@ exports.getOrganisation = async (req, res) => {
 
 exports.getAllOrganisations = async (req, res) => {
     try {
-        const organisations = await Organisation.getAll();
-        return res.status(200).json(organisations);
+        const userId = req.user.id;
+        const user = await User.getById(userId);
+        return res.status(200).json(user.organisations);
     } catch (error) {
         console.error("Erreur lors de la récupération des organisations:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });

@@ -211,7 +211,7 @@ router.get("/:id", IsAuthenticated, organisationController.getOrganisation);
  *               items:
  *                 $ref: '#/components/schemas/Organisation'
  */
-router.get("/", IsAuthenticatedAdmin, organisationController.getAllOrganisations);
+router.get("/", IsAuthenticated, organisationController.getAllOrganisations);
 
 /**
  * @swagger
@@ -238,7 +238,7 @@ router.get("/", IsAuthenticatedAdmin, organisationController.getAllOrganisations
  *               items:
  *                 $ref: '#/components/schemas/Offre'
  */
-router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffresByOrganisation);
+router.get("/:id/offres", IsAuthenticated, organisationController.getOffresByOrganisation);
 
 /**
  * @swagger
@@ -265,7 +265,7 @@ router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffres
  *               items:
  *                 $ref: '#/components/schemas/PostCarriere'
  */
-router.get("/:id/postcarieres", IsAuthenticatedAdmin, organisationController.getPostCarieresByOrganisation);
+router.get("/:id/postcarieres", IsAuthenticated, organisationController.getPostCarieresByOrganisation);
 
 /**
  * @swagger
@@ -292,7 +292,7 @@ router.get("/:id/postcarieres", IsAuthenticatedAdmin, organisationController.get
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get("/:id/users", IsAuthenticatedAdmin, organisationController.getUsersByOrganisation);
+router.get("/:id/users", IsAuthenticated, organisationController.getUsersByOrganisation);
 
 
 /**
@@ -320,7 +320,7 @@ router.get("/:id/users", IsAuthenticatedAdmin, organisationController.getUsersBy
  *               items:
  *                 $ref: '#/components/schemas/Offre'
  */
-router.get("/:id/offres", IsAuthenticatedAdmin, organisationController.getOffresByOrganisation);
+router.get("/:id/offres", IsAuthenticated, organisationController.getOffresByOrganisation);
 
 /**
  * @swagger
