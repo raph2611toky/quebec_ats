@@ -94,7 +94,8 @@ exports.updateOffre = async (req, res) => {
             return res.status(401).json({ error: "Offre ne peut plus être modifiée." });
         }
 
-        let updateData = { ...req.body };
+        let { id, ...updateData } = req.body;
+
         if (req.file) {
             const subDir = "offres";
             const uploadDir = path.join(__dirname, "../uploads", subDir);
