@@ -830,11 +830,13 @@ router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
  *               type: object
  *               properties:
  *                 question:
- *                   type: string
+ *                   type: integer
  *                   description: ID de la question
+ *                   example: 2
  *                 reponse:
- *                   type: string
+ *                   type: integer
  *                   description: ID de la réponse sélectionnée
+ *                   example: 4
  *     responses:
  *       200:
  *         description: Quiz soumis avec succès
