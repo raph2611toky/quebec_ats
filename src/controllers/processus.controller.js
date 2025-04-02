@@ -102,7 +102,19 @@ exports.deleteProcessus = async (req, res) => {
 
 exports.getProcessus = async (req, res) => {
     try {
-        const processus = await Processus.getById(parseInt(req.params.id));
+        const processus = await prisma.processus.findUnique({
+            where: {
+                id: parseInt(req.params.id),
+            },
+            include: {
+                questions: {
+                    include: {
+                        reponses: true
+                    }
+                }
+            }
+        });
+        
         if (!processus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }

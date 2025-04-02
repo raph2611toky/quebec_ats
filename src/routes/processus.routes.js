@@ -232,21 +232,70 @@ router.get('/', processusController.getAllProcessus);
  * @swagger
  * /api/processus/{id}:
  *   get:
- *     summary: Récupérer un processus par ID
+ *     summary: Récupérer un processus par ID avec ses questions et réponses
  *     tags: [Processus]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
- *         description: Processus créé avec succès
+ *         description: Processus récupéré avec succès
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Processus'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 nom:
+ *                   type: string
+ *                   example: "Processus de recrutement"
+ *                 questions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 10
+ *                       texte:
+ *                         type: string
+ *                         example: "Quelle est votre expérience ?"
+ *                       reponses:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 100
+ *                             texte:
+ *                               type: string
+ *                               example: "J'ai 5 ans d'expérience."
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 router.get('/:id', processusController.getProcessus);
 
