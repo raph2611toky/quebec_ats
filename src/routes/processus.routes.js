@@ -251,9 +251,33 @@ router.get('/', processusController.getAllProcessus);
  *                 id:
  *                   type: integer
  *                   example: 1
- *                 nom:
+ *                 titre:
  *                   type: string
  *                   example: "Processus de recrutement"
+ *                 type:
+ *                   type: string
+ *                   enum:
+ *                     - TACHE
+ *                     - VISIO_CONFERENCE
+ *                     - QUESTIONNAIRE
+ *                   example: "QUESTIONNAIRE"
+ *                 description:
+ *                   type: string
+ *                   example: "Ce processus permet d'évaluer les candidats pour le poste."
+ *                 statut:
+ *                   type: string
+ *                   enum:
+ *                     - A_VENIR
+ *                     - EN_COURS
+ *                     - TERMINER
+ *                     - ANNULER
+ *                   example: "A_VENIR"
+ *                 duree:
+ *                   type: integer
+ *                   example: 60
+ *                 ordre:
+ *                   type: integer
+ *                   example: 1
  *                 questions:
  *                   type: array
  *                   items:
@@ -262,7 +286,7 @@ router.get('/', processusController.getAllProcessus);
  *                       id:
  *                         type: integer
  *                         example: 10
- *                       texte:
+ *                       label:
  *                         type: string
  *                         example: "Quelle est votre expérience ?"
  *                       reponses:
@@ -273,9 +297,12 @@ router.get('/', processusController.getAllProcessus);
  *                             id:
  *                               type: integer
  *                               example: 100
- *                             texte:
+ *                             label:
  *                               type: string
  *                               example: "J'ai 5 ans d'expérience."
+ *                             is_true:
+ *                               type: boolean
+ *                               example: true
  *       404:
  *         description: Processus non trouvé
  *         content:
