@@ -8,6 +8,7 @@ const prisma = require("../config/prisma.config");
 const { TypeProcessus } = require("@prisma/client")
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { setupGoogleAuth } = require('../services/google/authentication');
+const Offre = require("../models/offre.model");
 
 setupGoogleAuth();
 
@@ -573,14 +574,14 @@ exports.getCandidatProcessus = async(req, res) => {
         if (!processus) {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
-
+        
         const postulation = await prisma.postulation.findFirst({
             where: {
                 candidat_id: req.candidat.id,
                 offre_id: processus.offre_id
             }
         });
-
+        
         if (!postulation) {
             return res.status(404).json({ error: "Vous n'avez pas accès à ce processus" });
         }
@@ -610,3 +611,32 @@ exports.getCandidatProcessus = async(req, res) => {
     }
 }
 
+
+exports.getPassedProcess = async (req, res)=>{
+    try {
+        const offre = Offre.getById(parseInt(req.params.id))
+        const candidat_id = req.candidat.id 
+
+        if(!offre){
+            return res.status(404).json({ error: "Offre non trouvé" });
+        }
+
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                candidat_id: candidat_id, 
+                offre_id: offre.id
+            }
+        })
+        const passedProcess = prisma.processusPasser.findUnique({
+            where: {
+               postulation_id:  postulation.id,
+            }
+        })
+
+        return res.status(200).json(passedProcess)
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}

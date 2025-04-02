@@ -536,6 +536,7 @@ exports.getOfferDetails = async (req, res) => {
                     },
                     },
                 },
+                processus_passer: true
                 },
             },
             },

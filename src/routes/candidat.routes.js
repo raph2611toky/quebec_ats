@@ -11,7 +11,8 @@ const {
     googleCallbackLogic,
     loginWithGoogleLogic, getCandidatProcessus,
     loginDevWithGoogleLogic, getCandidatDashboard, getCandidatReferents, 
-    googleCallbackDevLogic, getCandidatPostulation, 
+    googleCallbackDevLogic, getCandidatPostulation,
+    getPassedProcess, 
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
@@ -102,6 +103,69 @@ const { getActiveProcess } = require("../controllers/offre.controller");
  *               recommendation: "Excellent candidat"
  *               statut: "Manager"
  */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ProcessusPasser:
+ *       type: object
+ *       required:
+ *         - processus_id
+ *         - postulation_id
+ *         - statut
+ *         - score
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique du processus passé
+ *         processus_id:
+ *           type: integer
+ *           description: ID du processus associé
+ *         postulation_id:
+ *           type: integer
+ *           description: ID de la postulation associée
+ *         statut:
+ *           type: string
+ *           enum: [EN_COURS, TERMINE, REFUSE]
+ *           description: Statut du processus passé
+ *         score:
+ *           type: integer
+ *           description: Score obtenu dans le processus
+ *           default: 0
+ *         lien_web:
+ *           type: string
+ *           description: Lien vers une ressource web
+ *           nullable: true
+ *         lien_fichier:
+ *           type: string
+ *           description: Lien vers un fichier
+ *           nullable: true
+ *         lien_vision:
+ *           type: string
+ *           description: Lien vers une vision spécifique
+ *           nullable: true
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date de création du processus passé
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Date de mise à jour du processus passé
+ *       example:
+ *         id: 1
+ *         processus_id: 10
+ *         postulation_id: 5
+ *         statut: "EN_COURS"
+ *         score: 85
+ *         lien_web: "https://exemple.com/test"
+ *         lien_fichier: "https://exemple.com/fichier.pdf"
+ *         lien_vision: "https://exemple.com/vision.mp4"
+ *         created_at: "2025-03-31T12:00:00Z"
+ *         updated_at: "2025-03-31T12:30:00Z"
+ */
+
 
 /**
  * @swagger
@@ -938,48 +1002,48 @@ router.post("/auth-dev/google/verify", googleCallbackDevLogic);
  */
 
 /**
-     * @swagger
-     * /api/candidat/processus/check:
-     *   post:
-     *     summary: Récupérer les détails d'un processus pour un candidat authentifié
-     *     tags: [Candidat Processus]
-     *     security:
-     *       - BearerAuth: []
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               token:
-     *                 type: string
-     *                 description: Token JWT reçu dans l'email
-     *             required:
-     *               - token
-     *           example:
-     *             token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-     *     responses:
-     *       200:
-     *         description: Détails du processus récupérés avec succès
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 success:
-     *                   type: boolean
-     *                 data:
-     *                   $ref: '#/components/schemas/ProcessusCandidatResponse'
-     *       400:
-     *         description: Token invalide ou données manquantes
-     *       401:
-     *         description: Non autorisé (candidat non authentifié ou mismatch)
-     *       404:
-     *         description: Processus non trouvé ou accès non autorisé
-     *       500:
-     *         description: Erreur interne du serveur
-     */
+ * @swagger
+ * /api/candidat/processus/check:
+ *   post:
+ *     summary: Récupérer les détails d'un processus pour un candidat authentifié
+ *     tags: [Candidat Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Token JWT reçu dans l'email
+ *             required:
+ *               - token
+ *           example:
+ *             token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *     responses:
+ *       200:
+ *         description: Détails du processus récupérés avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/ProcessusCandidatResponse'
+ *       400:
+ *         description: Token invalide ou données manquantes
+ *       401:
+ *         description: Non autorisé (candidat non authentifié ou mismatch)
+ *       404:
+ *         description: Processus non trouvé ou accès non autorisé
+ *       500:
+ *         description: Erreur interne du serveur
+ */
 router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
 
 /**
@@ -1027,6 +1091,53 @@ router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
  *                   example: "Erreur interne du serveur"
  */
 router.get("/:id/get-active-process", IsAuthenticatedCandidat, getActiveProcess);
+
+
+/**
+ * @swagger
+ * /api/candidat/{id}/passed-process:
+ *   get:
+ *     summary: Récupérer les processus de recrutement passé d'une offre
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Retourne les processus passer sur une offre postuler.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre cible
+ *     responses:
+ *       200:
+ *         description: Processus passer sur une offre
+ *         content:  
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProcessusPasser'
+ *       404:
+ *         description: Offre non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/:id/passed-process", IsAuthenticatedCandidat, getPassedProcess);
 
 
 module.exports = router;

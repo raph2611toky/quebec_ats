@@ -457,6 +457,34 @@ exports.updateRemarquePostulation = async (req, res)=> {
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
+    
+    
+}
 
+exports.getDetailsPostulation = async (req, res)=>{
+    try {
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                processus_passer: true,
+                remarques: {
+                    include: {
+                        admin: true
+                    }
+                }
+            }
+        })
 
+        if(!postulation){
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+
+        return res.status(200).json(postulation)
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
 }
