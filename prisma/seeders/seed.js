@@ -2,6 +2,7 @@ const seedUsers = require("./seedUsers");
 const seedOrganisations = require("./seedOrganisations");
 const seedOffres = require("./seedOffres"); 
 const seedProcessus = require("./seedProcessus"); 
+const seedCandidatsPostulations = require("./seedCandidatsPostulations");
 
 async function main() {
     try {
@@ -16,8 +17,11 @@ async function main() {
         // Exécution du seeder des offres
         await seedOffres();
         
-        // Exécution du seeder des offres
+        // Exécution du seeder des processus
         await seedProcessus();
+
+        //Exécution du seeder des candidats avec postulation
+        await seedCandidatsPostulations();
 
         console.log("Les seeders ont été exécutés avec succès !");
     } catch (error) {

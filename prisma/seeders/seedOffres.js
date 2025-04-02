@@ -1,3 +1,4 @@
+const { TypeTemps } = require("@prisma/client");
 const prisma = require("../../src/config/prisma.config");
 const Offre = require("../../src/models/offre.model");
 
@@ -32,6 +33,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDD",
+                type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "60000",
                 devise: "EURO",
                 horaire_ouverture: "08:00:00",
@@ -48,6 +50,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDI",
+                type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "50000",
                 devise: "EURO",
                 horaire_ouverture: "08:00:00",
@@ -64,6 +67,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDD",
+                type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "40000",
                 devise: "EURO",
                 horaire_ouverture: "08:00:00",
@@ -80,6 +84,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDI",
+                type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "90000",
                 devise: "EURO",
                 horaire_ouverture: "08:00:00",

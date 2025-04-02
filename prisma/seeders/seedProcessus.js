@@ -1,4 +1,4 @@
-const { TypeProcessus, StatutProcessus } = require("@prisma/client");
+const { TypeProcessus, StatutProcessus, Status } = require("@prisma/client");
 const prisma = require("../../src/config/prisma.config");
 
 async function seedProcessus() {
@@ -90,6 +90,17 @@ async function seedProcessus() {
                     offre_id: offre.id,
                 },
             });
+ 
+            // publish offre 
+            await prisma.offre.update({
+                where: {
+                    id: offre.id,
+                },
+                data: {
+                    status: Status.OUVERT
+                }
+            })
+            
         }
 
         console.log("✅ Processus ajoutés avec succès !");
