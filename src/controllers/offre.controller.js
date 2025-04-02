@@ -62,6 +62,34 @@ exports.createOffre = async (req, res) => {
 };
 
 exports.updateOffre = async (req, res) => {
+    const allowedFields = [
+        "titre",
+        "user_id",
+        "organisation_id",
+        "image_url",
+        "description",
+        "date_limite",
+        "status",
+        "nombre_requis",
+        "lieu",
+        "pays",
+        "type_emploi",
+        "type_temps",
+        "salaire",
+        "devise",
+        "horaire_ouverture",
+        "horaire_fermeture",
+    ];
+    
+    function filterAllowedFields(data) {
+        return Object.keys(data)
+            .filter(key => allowedFields.includes(key))
+            .reduce((obj, key) => {
+                obj[key] = data[key];
+                return obj;
+            }, {});
+    }
+    
     try {
         const userId = parseInt(req.user.id);
         const offreId = parseInt(req.params.id);
@@ -95,6 +123,7 @@ exports.updateOffre = async (req, res) => {
         }
 
         let { id, ...updateData } = req.body;
+        updateData = filterAllowedFields(updateData)
 
         if (req.file) {
             const subDir = "offres";
