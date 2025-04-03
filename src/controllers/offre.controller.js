@@ -7,6 +7,7 @@ const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
 const { count } = require("console");
 const prisma = new PrismaClient();
+const shareJobOnLinkedIn = require("../services/linkedin/linkedin.services.js")
 
 exports.createOffre = async (req, res) => {
     try {
@@ -317,7 +318,9 @@ exports.publishOffre = async (req, res) => {
         await prisma.offre.update({
             where: { id: offreId },
             data: { status: Status.OUVERT }
-        });
+        })
+
+        await shareJobOnLinkedIn(offre.titre, offre.description, "7W9BCC_46N", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler`, offre.id);
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
     } catch (error) {
