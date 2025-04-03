@@ -569,17 +569,17 @@ exports.submitQuizz = async (req, res) => {
             return res.status(400).json({ error: "Candidature à l'offre introuvable." });
         }
 
-        const processusPasserExist = await prisma.processusPasser.findFirst({
-            where: {
-                postulation_id: postulation.id,
-                processus_id: processus.id
-            }
-        })
+        // const processusPasserExist = await prisma.processusPasser.findFirst({
+        //     where: {
+        //         postulation_id: postulation.id,
+        //         processus_id: processus.id
+        //     }
+        // })
         
 
-        if(processusPasserExist){
-            return res.status(400).json({ error: "Vous avez déjà fait ce quizz." });
-        }
+        // if(processusPasserExist){
+        //     return res.status(400).json({ error: "Vous avez déjà fait ce quizz." });
+        // }
         
         if(processus.type != TypeProcessus.QUESTIONNAIRE){
             return res.status(400).json({ error: "Le processus doit être de type questionnaire." });
@@ -598,15 +598,15 @@ exports.submitQuizz = async (req, res) => {
         const nombre_total_question = processus.questions.length
         let score = 0
 
-        for (const { questionId, reponseId } of reponses) {
-            const question = processus.questions.find(q => q.id === questionId);
-            if (question) {
-                const bonneReponse = question.reponses.find(r => r.is_true);
-                if (bonneReponse && bonneReponse.id === reponseId) {
+        for (const { question, reponse } of reponses) {    
+            const questionObj = processus.questions.find(q => q.id === question);
+            if (questionObj) {
+                const bonneReponse = questionObj.reponses.find(r => r.is_true);
+                if (bonneReponse && bonneReponse.id === reponse) {
                     score++;
                 }
             }
-        }
+        }        
 
         await prisma.processusPasser.create({
             data: {

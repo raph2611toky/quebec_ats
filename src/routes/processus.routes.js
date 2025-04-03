@@ -1291,6 +1291,6 @@ router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProc
  *                   type: string
  *                   example: "Erreur interne du serveur."
  */
-router.get("/:id/is-passed",processusController.isPassedProcessus)
+router.get("/:id/is-passed",IsAuthenticatedCandidat, processusController.isPassedProcessus)
 
 module.exports = router;
