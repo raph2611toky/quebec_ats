@@ -15,9 +15,17 @@ const Remarque = require("../models/remarque.model");
 
 exports.createPostulation = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.body.offre_id));
+        base_url = req.base_url
+        
+        // console.log(req.body);
+        const offreId = parseInt(req.body.offre_id)
+        // console.log(offreId);
+        if(isNaN(offreId)){
+            return res.status(400).json({ error: "Offre Id non valide" });
+        }
+        const offre = await Offre.getById(offreId, base_url);
         if (!offre) {
-            return res.status(404).json({ error: "Offre non trouvée" });
+            return res.status(400).json({ error: "Offre non trouvée" });
         }
         let candidat = await Candidat.findByEmail(req.body.email, base_url);
         if (!candidat) {
