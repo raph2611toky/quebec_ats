@@ -156,7 +156,7 @@ model Offre {
   organisation      Organisation  @relation("OrganisationOffres", fields: [organisation_id], references: [id], onDelete: Cascade)
   organisation_id   Int
   image_url         String        @default("")
-  description       String
+  description       String        @default("")
   date_limite       DateTime
   status            Status
   nombre_requis     Int           @default(1)
@@ -252,7 +252,7 @@ model Processus {
   id               Int               @id @default(autoincrement())
   titre            String
   type             TypeProcessus     @default(VISIO_CONFERENCE)
-  description      String
+  description      String             @default("")
   statut           StatutProcessus   @default(A_VENIR)
   offre            Offre             @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id         Int

@@ -1047,13 +1047,13 @@ exports.updateUserRole = async (req, res) => {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        const firstAdmin = await prisma.user.findFirst({
-            where: { role: Role.ADMINISTRATEUR },
-            orderBy: { id: 'asc' }
-        });
-        if (firstAdmin && firstAdmin.id === targetUserId) {
-            return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
-        }
+        // const firstAdmin = await prisma.user.findFirst({
+        //     where: { role: Role.ADMINISTRATEUR },
+        //     orderBy: { id: 'asc' }
+        // });
+        // if (firstAdmin && firstAdmin.id === targetUserId) {
+        //     return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
+        // }
 
         const newRole = req.body.role;
         if (!newRole || ![Role.ADMINISTRATEUR, Role.MODERATEUR].includes(newRole)) {

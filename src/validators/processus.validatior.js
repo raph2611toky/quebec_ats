@@ -17,8 +17,8 @@ const createProcessusValidator = [
         .withMessage("Le titre doit contenir entre 3 et 100 caractères"),
     
     body("description")
+        .optional()
         .trim()
-        .notEmpty()
         .withMessage("La description est requise")
         .isString()
         .withMessage("La description doit être une chaîne de caractères")
