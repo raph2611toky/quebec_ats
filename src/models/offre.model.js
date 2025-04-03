@@ -34,7 +34,7 @@ class Offre {
         this.titre = titre;
         this.user_id = user_id;
         this.organisation_id = organisation_id;
-        this.image_url = getFullImageUrl(image_url, base_url);
+        this.image_url = image_url;
         this.description = description;
         this.date_limite = date_limite;
         this.status = status;

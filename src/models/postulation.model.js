@@ -25,8 +25,8 @@ class Postulation {
         this.offre_id = offre_id;
         this.date_soumission = date_soumission;
         this.etape_actuelle = etape_actuelle;
-        this.cv = getFullUrl(cv, base_url);
-        this.lettre_motivation = getFullUrl(lettre_motivation, base_url);
+        this.cv = cv;
+        this.lettre_motivation = lettre_motivation;
         this.source_site = source_site;
         this.note = note || 0;
         this.created_at = created_at;
