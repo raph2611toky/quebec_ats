@@ -563,7 +563,8 @@ exports.submitQuizz = async (req, res) => {
             return res.status(400).json({ error: "Le processus n'est pas en cours." });
         }
 
-        const reponses = req.body 
+        const reponses = req.body.submit 
+        
         if (!Array.isArray(reponses) || reponses.length === 0) {
             return res.status(400).json({ error: "Aucune réponse fournie." });
         }
@@ -583,11 +584,13 @@ exports.submitQuizz = async (req, res) => {
         
         const postulation = await prisma.postulation.findUnique({
             where: {
-                offre_id: processus.offre_id,
-                candidat_id: req.candidat.id
+                candidat_id_offre_id: {
+                    candidat_id: req.candidat.id, 
+                    offre_id: processus.offre_id,  
+                }
             }
         })
-        
+                
         if(!postulation){
             return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
         }

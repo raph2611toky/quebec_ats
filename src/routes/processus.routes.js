@@ -840,6 +840,8 @@ router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
  *   post:
  *     summary: Soumettre un quiz pour un processus donné
  *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -852,18 +854,23 @@ router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
  *       content:
  *         application/json:
  *           schema:
- *             type: array
- *             items:
- *               type: object
- *               properties:
- *                 question:
- *                   type: integer
- *                   description: ID de la question
- *                   example: 2
- *                 reponse:
- *                   type: integer
- *                   description: ID de la réponse sélectionnée
- *                   example: 4
+ *             type: object
+ *             properties:
+ *               submit:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     question:
+ *                       type: integer
+ *                       description: ID de la question
+ *                       example: 2
+ *                     reponse:
+ *                       type: integer
+ *                       description: ID de la réponse sélectionnée
+ *                       example: 1
+ *             required:
+ *               - submit
  *     responses:
  *       200:
  *         description: Quiz soumis avec succès
