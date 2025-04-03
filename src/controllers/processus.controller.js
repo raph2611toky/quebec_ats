@@ -720,7 +720,7 @@ exports.startVision = async (req, res)=>{
             return res.status(400).json({ error: "Le processus n'est pas en cours." });
         }
 
-        const { candidats, start_time, start_date } = req.body;
+        const { users, candidats, start_time, start_date } = req.body;
 
         const duration = processus.duree
 
