@@ -916,16 +916,18 @@ router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.subm
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               fichier:
  *                 type: string
- *                 description: Url aws Fichier de preuve (optionnel)
+ *                 description: URL AWS du fichier de preuve (optionnel)
+ *                 example: "https://example.com/fichier.pdf"
  *               lien:
  *                 type: string
  *                 description: Lien vers le travail effectué (optionnel)
+ *                 example: "https://example.com/travail"
  *     responses:
  *       200:
  *         description: Tâche soumise avec succès
