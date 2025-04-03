@@ -93,10 +93,8 @@ const upload = createUpload("postcarriere");
  *               organisation_id:
  *                 type: integer
  *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
+ *                 type: string
+ *                 description: url image sur aws
  *             required:
  *               - titre
  *               - contenu
@@ -111,7 +109,7 @@ const upload = createUpload("postcarriere");
  *       400:
  *         description: Erreur lors de la création du post carrière
  */
-router.post("/", upload.array("images", 5), postCarriereController.createPostCarriere);
+router.post("/", postCarriereController.createPostCarriere);
 
 /**
  * @swagger

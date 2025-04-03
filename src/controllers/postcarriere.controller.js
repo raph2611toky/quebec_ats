@@ -6,28 +6,7 @@ const crypto = require("crypto");
 exports.createPostCarriere = async (req, res) => {
     try {
         const images = [];
-
-        if (req.files && req.files.length > 0) {
-            const subDir = "postcarriere";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-
-            for (const file of req.files) {
-                const originalName = file.originalname;
-                const tempPath = path.join(uploadDir, file.filename);
-                const ext = path.extname(originalName);
-                const baseName = path.basename(originalName, ext);
-
-                const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
-                const randomSuffix = crypto.randomBytes(4).toString("hex");
-                const uniqueName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
-                const finalPath = path.join(uploadDir, uniqueName);
-
-                await fs.rename(tempPath, finalPath);
-
-                images.push(`/uploads/${subDir}/${uniqueName}`);
-            }
-        }
-
+        
         const newPost = await PostCarriere.create({
             titre: req.body.titre,
             contenu: req.body.contenu,
