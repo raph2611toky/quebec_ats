@@ -111,7 +111,8 @@ exports.getProcessus = async (req, res) => {
                     include: {
                         reponses: true
                     }
-                }
+                },
+                processus_passer: true
             }
         });
         
@@ -939,49 +940,32 @@ exports.cancelProcessus = async (req, res)=>{
     }
 }
 
-exports.isPassedProcessus = async (req, res)=>{
+exports.isPassedProcessus = async (req, res) => {
     try {
-        const processus = await prisma.processus.findUnique({
-            where: {
-                id: parseInt(req.params.id)
-            },
-            include: {
-                offre: true
-            }
-        })
-
-        if(!processus){
-            return res.status(400).json({ error: "Processus introuvable ." });
+        const processusId = parseInt(req.params.id);
+        if (isNaN(processusId)) {
+            return res.status(400).json({ error: "ID du processus invalide." });
         }
 
-        const postulation = await prisma.postulation.findFirst({
-            where: {
-                offre_id: processus.offre_id,
-                candidat_id: req.candidat.id
-            }
-        })
-        
-        if(!postulation){
-            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
+        if (!req.candidat || !req.candidat.id) {
+            return res.status(401).json({ error: "Candidat non authentifié." });
         }
 
         const processusPasserExist = await prisma.processusPasser.findFirst({
             where: {
-                postulation_id: postulation.id,
-                processus_id: processus.id
-            }
-        })
-        
+                processus: { id: processusId },
+                postulation: { 
+                    candidat_id: req.candidat.id
+                }
+            },
+            select: { id: true }
+        });
 
-        if(processusPasserExist){
-            return res.status(200).json({ passed: true });
-        }
-        return res.status(200).json({ passed: false });
-        
+        return res.status(200).json({ passed: !!processusPasserExist });
 
     } catch (error) {
-        console.log(error);
+        console.error("Erreur serveur :", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
+};
 
