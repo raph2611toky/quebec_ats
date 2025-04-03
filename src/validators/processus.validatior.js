@@ -19,7 +19,6 @@ const createProcessusValidator = [
     body("description")
         .optional()
         .trim()
-        .withMessage("La description est requise")
         .isString()
         .withMessage("La description doit être une chaîne de caractères")
         .isLength({ min: 10, max: 255 })

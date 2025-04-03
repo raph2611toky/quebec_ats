@@ -9,9 +9,7 @@ const createOffreValidationRules = [
         .isLength({ min: 2, max: 100 })
         .withMessage("Le titre doit être entre 2 et 100 caractères"),
     body("description")
-        .optional()
-        .notEmpty()
-        .withMessage("La description est requise"),
+        .optional(),
     body("date_limite")
         .notEmpty()
         .withMessage("La date limite est requise")
