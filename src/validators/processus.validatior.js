@@ -20,9 +20,7 @@ const createProcessusValidator = [
         .optional()
         .trim()
         .isString()
-        .withMessage("La description doit être une chaîne de caractères")
-        .isLength({ min: 10, max: 255 })
-        .withMessage("La description doit contenir entre 10 et 500 caractères"),
+        .withMessage("La description doit être une chaîne de caractères"),
     
     body("type")
         .optional()
@@ -60,9 +58,7 @@ const updateProcessusValidator = [
         .optional()
         .trim()
         .isString()
-        .withMessage("La description doit être une chaîne de caractères")
-        .isLength({ min: 10, max: 255 })
-        .withMessage("La description doit contenir entre 10 et 500 caractères"),
+        .withMessage("La description doit être une chaîne de caractères"),
     
     body("type")
         .optional()

@@ -547,16 +547,42 @@ exports.submitQuizz = async (req, res) => {
                     include: {
                         reponses: true
                     }
-                }
+                },
+                processus_passer: true
             }
         })
         
         if(!processus){
-            return res.status(404).json({ error: "Processus non trouver." });
+            return res.status(404).json({ error: "Processus non trouvé." });
+        }
+
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                candidat_id_offre_id: {
+                    candidat_id: req.candidat.id, 
+                    offre_id: processus.offre_id,  
+                }
+            }
+        })
+                
+        if(!postulation){
+            return res.status(400).json({ error: "Candidature à l'offre introuvable." });
+        }
+
+        const processusPasserExist = await prisma.processusPasser.findFirst({
+            where: {
+                postulation_id: postulation.id,
+                processus_id: processus.id
+            }
+        })
+        
+
+        if(processusPasserExist){
+            return res.status(400).json({ error: "Vous avez déjà fait ce quizz." });
         }
         
         if(processus.type != TypeProcessus.QUESTIONNAIRE){
-            return res.status(400).json({ error: "Le processus doit être type questionnaire." });
+            return res.status(400).json({ error: "Le processus doit être de type questionnaire." });
         }
         
         if(processus.statut != StatutProcessus.EN_COURS){
@@ -581,43 +607,26 @@ exports.submitQuizz = async (req, res) => {
                 }
             }
         }
-        
-        const postulation = await prisma.postulation.findUnique({
-            where: {
-                candidat_id_offre_id: {
-                    candidat_id: req.candidat.id, 
-                    offre_id: processus.offre_id,  
-                }
+
+        await prisma.processusPasser.create({
+            data: {
+                processus_id : processus.id,
+                postulation_id : postulation.id,
+                statut: StatutProcessusPasser.TERMINER,
+                score,
+                lien_web: null,
+                lien_fichier: null, 
+                lien_vision: null
             }
         })
-                
-        if(!postulation){
-            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
-        }
 
-
-        // create processus passer 
-        await prisma.processusPasser.create(
-            {
-                data: 
-                {
-                    processus_id : processus.id,
-                    postulation_id : postulation.id,
-                    statut: StatutProcessusPasser.TERMINER,
-                    score,
-                    lien_web: null,
-                    lien_fichier: null, 
-                    lien_vision: null
-                }
-            }
-        )
-
+        const currentNote = postulation.note || 0;
         await prisma.postulation.update({
             where: {
                 id: postulation.id
             },
             data: {
-                note: postulation.note + score 
+                note: currentNote + score 
             }
         })
 
@@ -923,6 +932,52 @@ exports.cancelProcessus = async (req, res)=>{
         })
         
         return res.status(200).json({message: "Processus annulé. Ce processus de recrutement ne sera plus prise en compte."})        
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
+exports.isPassedProcessus = async (req, res)=>{
+    try {
+        const processus = await prisma.processus.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                offre: true
+            }
+        })
+
+        if(!processus){
+            return res.status(400).json({ error: "Processus introuvable ." });
+        }
+
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                offre_id: processus.offre_id,
+                candidat_id: req.candidat.id
+            }
+        })
+        
+        if(!postulation){
+            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
+        }
+
+        const processusPasserExist = await prisma.processusPasser.findFirst({
+            where: {
+                postulation_id: postulation.id,
+                processus_id: processus.id
+            }
+        })
+        
+
+        if(processusPasserExist){
+            return res.status(200).json({ passed: true });
+        }
+        return res.status(200).json({ passed: false });
+        
 
     } catch (error) {
         console.log(error);

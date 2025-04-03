@@ -1219,4 +1219,64 @@ router.post("/:id/terminate", IsAuthenticatedAdmin, processusController.terminat
 router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProcessus)
 
 
+/**
+ * @swagger
+ * /api/processus/{id}/is-passed:
+ *   get:
+ *     summary: Vérifier si un utilisateur a déjà passé un processus
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Permet de vérifier si un utilisateur a déjà passé un processus de recrutement.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à vérifier.
+ *     responses:
+ *       200:
+ *         description: Résultat de la vérification du processus passé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 passed:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Candidature à l'offre introuvable ou processus non trouvé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Candidature à l'offre introuvable."
+ *       404:
+ *         description: Processus ou candidature non trouvé(e).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus introuvable."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+ */
+router.get("/:id/is-passed",processusController.isPassedProcessus)
+
 module.exports = router;
