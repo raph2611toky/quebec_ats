@@ -1606,7 +1606,7 @@ router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
  *                 error:
  *                   type: string
  *             example:
- *               error: "Erreur interne du serveur"
+ *               error: "Erreur inteinvrne du serveur"
  */
 router.put("/:id/change/role", IsAuthenticatedAdmin, updateUserRole);
 

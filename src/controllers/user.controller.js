@@ -363,11 +363,18 @@ exports.sendInvitation = async (req, res) => {
         let { invitee_email, organisation_id, role } = req.body;
         const inviter_id = req.user.id;
     
-        const inviter = await User.getById(inviter_id)
+        const inviter = await prisma.user.findUnique({
+            where: {
+                id: inviter_id
+            },
+            include: {
+                organisations: true
+            }
+        })
         const inviter_organisation_ids = inviter.organisations.map(org => org.id)
-        // if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
-        //     return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
-        // }    
+        if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
+        }    
         let validatedOrganisationId = null;
         role = inviter.role === Role.MODERATEUR ? Role.MODERATEUR : role
         if (role === Role.MODERATEUR) {
