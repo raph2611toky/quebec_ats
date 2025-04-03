@@ -648,23 +648,7 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({ error: "Le processus n'est pas en cours." });
         }
         
-        let lien_fichier=null;
-        if (req.file?.path) {
-            try {
-                await fs.access(req.file.path);
-                const result = await cloudinary.uploader.upload(req.file.path, {
-                    folder: "taches",
-                    use_filename: true,
-                    unique_filename: false
-                });
-                lien_fichier = result.secure_url;
-            } catch (error) {
-                console.error("Le fichier n'a pas été correctement transféré:", error);
-                return res.status(400).json({ error: "Erreur lors du transfert du fichier de validation tâche" });
-            }
-
-        } 
-
+        let lien_fichier=req.body?.fichier || null;
 
         let lien_web = req.body?.lien || null 
 

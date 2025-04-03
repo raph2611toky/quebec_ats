@@ -15,39 +15,6 @@ const Remarque = require("../models/remarque.model");
 
 exports.createPostulation = async (req, res) => {
     try {
-        if (!req.files || !req.files.cv) {
-            return res.status(400).json({ error: "Un fichier CV est requis pour postuler" });
-        }
-
-        const subDir = "candidats";
-        const uploadDir = path.join(__dirname, "../uploads", subDir);
-        const base_url = req.base_url;
-
-        const cvFile = req.files.cv[0];
-        const cvOriginalName = cvFile.originalname;
-        const cvTempPath = path.join(uploadDir, cvFile.filename);
-        const cvFinalPath = path.join(uploadDir, cvOriginalName);
-        if (await fs.stat(cvFinalPath).catch(() => false)) {
-            // await fs.unlink(cvTempPath);
-        } else {
-            await fs.rename(cvTempPath, cvFinalPath);
-        }
-        const cvRelativeUrl = `/uploads/candidats/${cvOriginalName}`;
-
-        let lettreRelativeUrl = null;
-        if (req.files && req.files.lettre_motivation) {
-            const lettreFile = req.files.lettre_motivation[0];
-            const lettreOriginalName = lettreFile.originalname;
-            const lettreTempPath = path.join(uploadDir, lettreFile.filename);
-            const lettreFinalPath = path.join(uploadDir, lettreOriginalName);
-            if (await fs.stat(lettreFinalPath).catch(() => false)) {
-                console.log("Fichier existant, suppression du temporaire...");
-                // await fs.unlink(lettreTempPath);
-            } else {
-                await fs.rename(lettreTempPath, lettreFinalPath);
-            }
-            lettreRelativeUrl = `/uploads/candidats/${lettreOriginalName}`;
-        }
         const offre = await Offre.getById(parseInt(req.body.offre_id), base_url);
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
@@ -101,8 +68,8 @@ exports.createPostulation = async (req, res) => {
         const postulationData = {
             candidat_id: candidat.id,
             offre_id: parseInt(req.body.offre_id),
-            cv: cvRelativeUrl,
-            lettre_motivation: lettreRelativeUrl,
+            cv: req.body.cv,
+            lettre_motivation: req.body.lettre_motivation,
             telephone: req.body.telephone || null,
             source_site: req.body.source_site
         };

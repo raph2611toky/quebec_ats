@@ -245,7 +245,7 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *                 type: string
  *               profile:
  *                 type: string
- *                 format: binary
+ *                 description: url aws image profile
  *               role:
  *                 type: string
  *                 enum: [MODERATEUR, ADMINISTRATEUR] 
@@ -272,7 +272,7 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/register", upload.single("profile"), registerAdmin);
+router.post("/register", registerAdmin);
 
 /**
  * @swagger
@@ -579,8 +579,7 @@ router.post("/login", loginAdmin);
  *                 example: "+261341234567"
  *               profile:
  *                 type: string
- *                 format: binary
- *                 description: Nouvelle image de profil (optionnel)
+ *                 description: Nouvelle url aws image de profil (optionnel)
  *               role:
  *                 type: string
  *                 enum: [MODERATEUR, ADMINISTRATEUR]
@@ -614,7 +613,7 @@ router.post("/login", loginAdmin);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.put("/me", IsAuthenticated, upload.single("profile"), updateUserValidationRules, validateHandler, updateAdminProfile);
+router.put("/me", IsAuthenticated, validateHandler, updateAdminProfile);
 
 /**
  * @swagger

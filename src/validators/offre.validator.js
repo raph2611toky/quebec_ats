@@ -52,7 +52,11 @@ const createOffreValidationRules = [
         .notEmpty()
         .withMessage("L'heure de fermeture est requise")
         .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)")
+        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)"),
+    body("image_url")
+        .optional()
+        .isString()
+        .withMessage("Image url doit être en chaine de caractère.")    
 ];
 
 const updateOffreValidationRules = [
@@ -95,27 +99,25 @@ const updateOffreValidationRules = [
     body("horaire_fermeture")
         .optional()
         .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)")
+        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)"),
+    body("image_url")
+        .optional()
+        .isString()
+        .withMessage("Image url doit être en chaine de caractère.")    
 ];
 
 const postulerOffreValidationRules = [
     param("id").isInt().withMessage("L'ID de l'offre doit être un entier valide."),
     
     body("cv")
-      .custom((value, { req }) => {
-        if (!req.files || !req.files.cv) {
-          throw new Error("Le CV est requis.");
-        }
-        return true;
-      }),
-  
+    .isString()
+    .notEmpty()
+    .withMessage("L'url cv requis"),
+    
     body("lettre_motivation")
-      .custom((value, { req }) => {
-        if (!req.files || !req.files.lettre_motivation) {
-          throw new Error("La lettre de motivation est requise.");
-        }
-        return true;
-      }),
+    .isString()
+    .notEmpty()
+    .withMessage("L'url lettre_motivation requis"),
   
     body("nom")
       .isString()

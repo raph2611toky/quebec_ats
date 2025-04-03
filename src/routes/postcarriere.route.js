@@ -141,14 +141,14 @@ router.post("/", postCarriereController.createPostCarriere);
  *                 type: array
  *                 items:
  *                   type: string
- *                   format: binary
+ *                   description: tableaus url images sur aws
  *     responses:
  *       200:
  *         description: Post carrière mis à jour avec succès
  *       404:
  *         description: Post carrière non trouvé
  */
-router.put("/:id", upload.array("images", 5), postCarriereController.updatePostCarriere);
+router.put("/:id", postCarriereController.updatePostCarriere);
 
 /**
  * @swagger

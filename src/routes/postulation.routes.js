@@ -120,12 +120,10 @@ const upload = createUpload("candidats");
  *             properties:
  *               cv:
  *                 type: string
- *                 format: binary
- *                 description: Fichier CV (obligatoire)
+ *                 description: Url aws Fichier CV (obligatoire)
  *               lettre_motivation:
  *                 type: string
- *                 format: binary
- *                 description: Fichier lettre de motivation (optionnel)
+ *                 description: Url aws Fichier lettre de motivation (optionnel)
  *               email:
  *                 type: string
  *                 description: Email du candidat
@@ -170,7 +168,7 @@ const upload = createUpload("candidats");
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/", upload.fields([{ name: "cv", maxCount: 1 }, { name: "lettre_motivation", maxCount: 1 }]), createPostulation);
+router.post("/", createPostulation);
 
 /**
  * @swagger

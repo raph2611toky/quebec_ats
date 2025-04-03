@@ -910,8 +910,7 @@ router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.subm
  *             properties:
  *               fichier:
  *                 type: string
- *                 format: binary
- *                 description: Fichier de preuve (optionnel)
+ *                 description: Url aws Fichier de preuve (optionnel)
  *               lien:
  *                 type: string
  *                 description: Lien vers le travail effectué (optionnel)
@@ -957,7 +956,7 @@ router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.subm
  *                   type: string
  *                   example: "Erreur interne du serveur."
  */
-router.post("/:id/submit/tache", IsAuthenticatedCandidat, createUpload("Taches").single("fichier"), processusController.submitTache);
+router.post("/:id/submit/tache", IsAuthenticatedCandidat, processusController.submitTache);
 
 /**
  * @swagger

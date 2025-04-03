@@ -28,23 +28,11 @@ exports.createOffre = async (req, res) => {
             return res.status(403).json({ error: "Vous n'êtes pas autorisé à créer une offre pour cette organisation." });
         }
 
-        let relativeImageUrl = "";
-        if (req.file) {
-            const subDir = "offres";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-            const originalName = req.file.originalname;
-            const tempPath = path.join(uploadDir, req.file.filename);
-            const finalPath = path.join(uploadDir, originalName);
-
-            await fs.rename(tempPath, finalPath);
-            relativeImageUrl = `/uploads/offres/${originalName}`;
-        }
-
         const offreData = {
             ...req.body,
             user_id: userId,
             organisation_id: organisationId,
-            image_url: relativeImageUrl,
+            image_url: req.body.image_url,
             salaire: parseFloat(req.body.salaire),
             status: Status.CREE,
             nombre_requis: parseInt(req.body.nombre_requis || 1),
@@ -124,43 +112,6 @@ exports.updateOffre = async (req, res) => {
 
         let { id, ...updateData } = req.body;
         updateData = filterAllowedFields(updateData)
-
-        if (req.file) {
-            const subDir = "offres";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-            const originalName = req.file.originalname;
-            const ext = path.extname(originalName);
-            const baseName = path.basename(originalName, ext);
-            const tempPath = path.join(uploadDir, req.file.filename);
-            const finalPath = path.join(uploadDir, originalName);
-
-            if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
-                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
-                await fs.unlink(oldImagePath).catch(() => {});
-            }
-
-            if (await fs.stat(finalPath).catch(() => false)) {
-                const tempBuffer = await fs.readFile(tempPath);
-                const tempHash = crypto.createHash("md5").update(tempBuffer).digest("hex");
-                const existingBuffer = await fs.readFile(finalPath);
-                const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
-
-                if (tempHash === existingHash) {
-                    await fs.unlink(tempPath);
-                    updateData.image_url = `/uploads/offres/${originalName}`;
-                } else {
-                    const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
-                    const randomSuffix = Math.round(Math.random() * 1e9);
-                    const newName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
-                    const newPath = path.join(uploadDir, newName);
-                    await fs.rename(tempPath, newPath);
-                    updateData.image_url = `/uploads/offres/${newName}`;
-                }
-            } else {
-                await fs.rename(tempPath, finalPath);
-                updateData.image_url = `/uploads/offres/${originalName}`;
-            }
-        }
 
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
@@ -410,33 +361,13 @@ exports.postulerOffre = async (req, res) => {
             return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
         }
 
-        let cvUrl;
-        let lettreMotivationUrl;
-
-        if (req.files?.cv?.[0]?.path && req.files?.lettre_motivation?.[0]?.path) {
-            try {
-                await fs.access(req.files.cv[0].path);
-                await fs.access(req.files.lettre_motivation[0].path);
-            } catch (error) {
-                console.error("Les fichiers n'ont pas été correctement transférés:", error);
-                return res.status(400).json({ error: "Erreur lors du transfert des fichiers" });
-            }
-
-            const cvPath = req.files.cv[0].path;
-            const lettreMotivationPath = req.files.lettre_motivation[0].path;
-
-            cvUrl = `/uploads/cv/${req.files.cv[0].filename}`;
-            lettreMotivationUrl = `/uploads/lettre_motivation/${req.files.lettre_motivation[0].filename}`;
-        } else {
-            return res.status(400).json({ error: "Les CV et lettre de motivation sont requis pour postuler." });
-        }
 
         const postulation = await prisma.postulation.create({
             data: {
                 candidat: { connect: { id: candidat.id } },
                 offre: { connect: { id: offre.id } },
-                cv: cvUrl,
-                lettre_motivation: lettreMotivationUrl,
+                cv: data.cv,
+                lettre_motivation: data.lettre_motivation,
                 source_site: data.source_site
             }
         });

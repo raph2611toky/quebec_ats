@@ -622,8 +622,7 @@ router.get("/:id", getOffre);
  *                 example: "17:00:00"
  *               image_url:
  *                 type: string
- *                 format: binary
- *                 description: Image de l'offre (optionnel, image par défaut si non fournie)
+ *                 description: Url image sur aws
  *     responses:
  *       201:
  *         description: Offre créée avec succès
@@ -642,7 +641,7 @@ router.get("/:id", getOffre);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidationRules, validateHandler, createOffre);
+router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, createOffre);
 
 /**
  * @swagger
@@ -722,8 +721,7 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                 example: "16:00:00"
  *               image_url:
  *                 type: string
- *                 format: binary
- *                 description: Nouvelle image (optionnel)
+ *                 description: url image sur aws (optionnel)
  *     responses:
  *       200:
  *         description: Offre mise à jour avec succès
@@ -752,7 +750,7 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.put("/:id", IsAuthenticated, upload.single("image_url"), updateOffreValidationRules, validateHandler, updateOffre);
+router.put("/:id", IsAuthenticated, updateOffreValidationRules, validateHandler, updateOffre);
 
 /**
  * @swagger
@@ -926,7 +924,7 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
+router.post("/:id/postuler",postulerOffreValidationRules, errorHandler, postulerOffre);
 
 // /**
 //  * @swagger
