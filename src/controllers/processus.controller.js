@@ -248,7 +248,7 @@ exports.startProcessus = async (req, res) => {
             for (const candidat of candidats) {
                 const token = generateToken({
                     candidat_id: candidat.id,
-                    processus_id: encryptAES(processus.id)
+                    processus_id: encryptAES(String(processus.id))
                 });
                 
                 const finalUrl = data.url ? `${data.url}${token}` : undefined;
