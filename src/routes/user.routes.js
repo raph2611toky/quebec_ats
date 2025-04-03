@@ -231,7 +231,7 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -245,10 +245,10 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *                 type: string
  *               profile:
  *                 type: string
- *                 description: url aws image profile
+ *                 description: URL AWS de l'image de profil (optionnel)
  *               role:
  *                 type: string
- *                 enum: [MODERATEUR, ADMINISTRATEUR] 
+ *                 enum: [MODERATEUR, ADMINISTRATEUR]
  *             required:
  *               - name
  *               - email
@@ -556,7 +556,7 @@ router.post("/login", loginAdmin);
  *     requestBody:
  *       required: false
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -579,7 +579,7 @@ router.post("/login", loginAdmin);
  *                 example: "+261341234567"
  *               profile:
  *                 type: string
- *                 description: Nouvelle url aws image de profil (optionnel)
+ *                 description: Nouvelle url AWS de l'image de profil (optionnel)
  *               role:
  *                 type: string
  *                 enum: [MODERATEUR, ADMINISTRATEUR]

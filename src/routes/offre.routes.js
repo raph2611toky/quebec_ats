@@ -549,7 +549,7 @@ router.get("/:id", getOffre);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -569,7 +569,7 @@ router.get("/:id", getOffre);
  *               organisation_id:
  *                 type: integer
  *                 description: ID de l'organisation
- *                 example: "1"
+ *                 example: 1
  *               titre:
  *                 type: string
  *                 description: Titre de l'offre
@@ -601,7 +601,7 @@ router.get("/:id", getOffre);
  *                 enum: [CDD, CDI, STAGE]
  *               type_temps:
  *                 type: string
- *                 description: Type de temps d'occupationtype_temps
+ *                 description: Type de temps d'occupation
  *                 enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *               salaire:
  *                 type: string
@@ -622,7 +622,8 @@ router.get("/:id", getOffre);
  *                 example: "17:00:00"
  *               image_url:
  *                 type: string
- *                 description: Url image sur aws
+ *                 description: URL de l'image sur AWS
+ *                 example: "https://example.com/image.png"
  *     responses:
  *       201:
  *         description: Offre créée avec succès
@@ -643,6 +644,7 @@ router.get("/:id", getOffre);
  */
 router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, createOffre);
 
+
 /**
  * @swagger
  * /api/offres/{id}:
@@ -661,14 +663,14 @@ router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, c
  *     requestBody:
  *       required: false
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               organisation_id:
  *                 type: integer
  *                 description: ID de l'organisation
- *                 example: "2"
+ *                 example: 2
  *               titre:
  *                 type: string
  *                 description: Nouveau titre
@@ -721,7 +723,8 @@ router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, c
  *                 example: "16:00:00"
  *               image_url:
  *                 type: string
- *                 description: url image sur aws (optionnel)
+ *                 description: URL image sur AWS (optionnel)
+ *                 example: "https://example.com/image.png"
  *     responses:
  *       200:
  *         description: Offre mise à jour avec succès
@@ -866,7 +869,7 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -879,28 +882,28 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *             properties:
  *               cv:
  *                 type: string
- *                 format: binary
- *                 description: CV candidat 
+ *                 description: URL AWS du fichier CV (obligatoire)
+ *                 example: "https://example.com/cv.pdf"
  *               lettre_motivation:
  *                 type: string
- *                 format: binary
- *                 description: Lettre de Motivation du candidat 
+ *                 description: URL AWS du fichier lettre de motivation (obligatoire)
+ *                 example: "https://example.com/lettre_motivation.pdf"
  *               nom:
  *                 type: string
- *                 description: nom du candidat
+ *                 description: Nom du candidat
  *                 example: "Jack"
  *               email:
  *                 type: string
- *                 description: email du candidat
- *                 example: "a.angelo.mada@gmail.com" 
+ *                 description: Email du candidat
+ *                 example: "a.angelo.mada@gmail.com"
  *               telephone:
  *                 type: string
- *                 description: numéro du candidat
+ *                 description: Numéro du candidat
  *                 example: "+263567890948"
  *               source_site:
  *                 type: string
- *                 enum: [LINKEDIN, INDEED, JOOBLE,MESSAGER,WHATSAPP,INSTAGRAM,TELEGRAM,QUEBEC_SITE] 
- *                 description: "site de redirection (optionnel : défaut LINKEDIN)"
+ *                 enum: [LINKEDIN, INDEED, JOOBLE, MESSAGER, WHATSAPP, INSTAGRAM, TELEGRAM, QUEBEC_SITE]
+ *                 description: "Site de redirection (optionnel : défaut LINKEDIN)"
  *                 example: "LINKEDIN"
  *     responses:
  *       200:
