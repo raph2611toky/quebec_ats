@@ -71,6 +71,11 @@ const  createUpload  = require("../config/multer.config")
  *           type: integer
  *           description: ordre dans le processus de recrutement 
  *           example: 60
+ *         start_at: 
+ *           type: string
+ *           format: date-time
+ *           description: Date de commencement
+ *           example: "2025-03-18T10:00:00.000Z" 
  *         created_at:
  *           type: string
  *           format: date-time
@@ -973,6 +978,13 @@ router.post("/:id/submit/tache", IsAuthenticatedCandidat, processusController.su
  *     tags: [Processus]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:

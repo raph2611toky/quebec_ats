@@ -3,7 +3,11 @@ const prisma = require("../../src/config/prisma.config");
 
 async function seedProcessus() {
     try {
-        const offres = await prisma.offre.findMany({ select: { id: true } });
+        const offres = await prisma.offre.findMany({ 
+            select: { 
+                id: true ,
+                date_limite: true
+            } });
         if (offres.length === 0) {
             console.error("❌ Aucune offre trouvée. Exécutez d'abord seedOffres.");
             return;
@@ -22,6 +26,7 @@ async function seedProcessus() {
                     duree: 3600,
                     ordre: 1,
                     offre_id: offre.id,
+                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
                 },
             });
             
@@ -35,6 +40,7 @@ async function seedProcessus() {
                     duree: 120,
                     ordre: 2,
                     offre_id: offre.id,
+                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
                 },
             });
             
@@ -88,6 +94,7 @@ async function seedProcessus() {
                     duree: 30,
                     ordre: 3,
                     offre_id: offre.id,
+                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
                 },
             });
  

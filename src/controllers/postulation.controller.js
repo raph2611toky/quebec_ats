@@ -15,7 +15,7 @@ const Remarque = require("../models/remarque.model");
 
 exports.createPostulation = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.body.offre_id), base_url);
+        const offre = await Offre.getById(parseInt(req.body.offre_id));
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
