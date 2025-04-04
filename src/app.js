@@ -6,17 +6,18 @@ const cors = require('cors');
 const path = require("path");
 // const passport = require('./config/passeport.config');
 
-const userRoutes = require("./routes/user.routes")
+const userRoutes = require("./routes/user.routes");
 const offreRoutes = require("./routes/offre.routes");
-const candidats = require("./routes/candidat.routes")
-const postulations = require("./routes/postulation.routes")
-const referents = require("./routes/referent.routes")
-const notifications = require("./routes/notification.routes")
-const processusRoute = require("./routes/processus.routes")
-const questionRoute = require("./routes/question.route")
-const reponseRoute = require("./routes/reponse.routes")
-const organisation = require("./routes/organisation.routes")
-const postcarriere = require("./routes/postcarriere.route")
+const candidats = require("./routes/candidat.routes");
+const postulations = require("./routes/postulation.routes");
+const referents = require("./routes/referent.routes");
+const notifications = require("./routes/notification.routes");
+const processusRoute = require("./routes/processus.routes");
+const questionRoute = require("./routes/question.route");
+const reponseRoute = require("./routes/reponse.routes");
+const organisation = require("./routes/organisation.routes");
+const postcarriere = require("./routes/postcarriere.route");
+const support = require("./routes/support.routes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/referents", referents)
 app.use("/api/notifications", notifications)
 app.use("/api/organisations", organisation)
 app.use("/api/postcarrieres", postcarriere)
+app.use("/api/supports", support);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

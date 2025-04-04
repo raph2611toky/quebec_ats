@@ -90,6 +90,13 @@ enum TypeTemps {
   TEMPS_PARTIEL
 }
 
+enum SupportRequestStatus {
+  EN_ATTENTE
+  EN_COURS
+  RESOLU
+  REJETE
+}
+
 model User {
   id               Int                           @id @default(autoincrement())
   name             String
@@ -307,4 +314,16 @@ model ProcessusPasser {
   lien_vision    String?
   created_at     DateTime        @default(now())
   updated_at     DateTime        @updatedAt
+}
+
+model SupportSiteRequest {
+  id            Int                  @id @default(autoincrement())
+  sujet         String
+  contenu       String               
+  emailSource   String           
+  statut        SupportRequestStatus @default(EN_ATTENTE)
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@map("support_requests")
 }

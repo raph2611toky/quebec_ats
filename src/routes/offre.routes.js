@@ -697,10 +697,12 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                 example: "France"
  *               type_emploi:
  *                 type: string
+ *                 enum: [CDD, CDI, STAGE]
  *                 description: Nouveau type d'emploi
  *                 example: "CDD"
  *               type_temps:
  *                 type: string
+ *                 enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *                 description: Type d'emploi
  *                 example: "PLEIN_TEMPS"
  *               salaire:

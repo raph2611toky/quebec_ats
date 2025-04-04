@@ -161,6 +161,8 @@ exports.updateOffre = async (req, res) => {
                 updateData.image_url = `/uploads/offres/${originalName}`;
             }
         }
+        console.log("ready to update offre..");
+        
 
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);

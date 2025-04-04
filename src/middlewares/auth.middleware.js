@@ -33,6 +33,7 @@ module.exports.IsAuthenticated = async (req, res, next) => {
             return res.status(401).json({ message: 'Token non autorisé.' });
         }
         req.user = await User.getById(decoded.id);
+        
         next();
     } catch (err) {
         return res.status(401).json({ message: 'Token invalide.' });

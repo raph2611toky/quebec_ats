@@ -266,6 +266,62 @@ const templates = {
             </div>
         </div>
     `,
+
+    supportClientToAdmin: (type, sujet, contenu, emailSource) => `
+    <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
+        <div style="background: linear-gradient(135deg, #6b7280, #9ca3af); padding: 40px 20px; text-align: center;">
+            <img src="https://via.placeholder.com/50/6b7280/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
+            <p style="color: #e5e7eb; font-size: 16px; margin: 8px 0 0;">Demande de Support</p>
+        </div>
+        <div style="padding: 40px 30px; background-color: #ffffff;">
+            <h2 style="color: #1a2b49; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Nouvelle Demande de Support</h2>
+            <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">Bonjour,</p>
+            <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">
+                Une nouvelle demande de support a été soumise par <strong style="color: #6b7280;">${emailSource}</strong>.
+            </p>
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Type :</strong> ${type === 'CANDIDAT' ? 'Candidat' : 'Responsable'}</p>
+                <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Sujet :</strong> ${sujet}</p>
+                <p style="color: #1a2b49; font-size: 16px; margin: 0;"><strong>Contenu :</strong> ${contenu}</p>
+            </div>
+            <p style="color: #4a5b76; font-size: 14px; line-height: 1.6; margin: 0;">
+                Répondez directement à <a href="mailto:${emailSource}" style="color: #6b7280; text-decoration: none;">${emailSource}</a>.
+            </p>
+        </div>
+        <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0;">L’équipe ATS Québec</p>
+            <p style="margin: 8px 0 0;"><a href="mailto:support@atsquebec.com" style="color: #6b7280; text-decoration: none;">support@atsquebec.com</a></p>
+        </div>
+    </div>
+  `,
+
+  supportToTechnical: (sujet, contenu, emailSource) => `
+    <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
+        <div style="background: linear-gradient(135deg, #ef4444, #f87171); padding: 40px 20px; text-align: center;">
+            <img src="https://via.placeholder.com/50/ef4444/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
+            <p style="color: #fee2e2; font-size: 16px; margin: 8px 0 0;">Demande au Support Technique</p>
+        </div>
+        <div style="padding: 40px 30px; background-color: #ffffff;">
+            <h2 style="color: #1a2b49; font-size: 24px; font-weight: 600; margin-bottom: 20px;">Demande de Support Technique</h2>
+            <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">Bonjour Équipe Technique,</p>
+            <p style="color: #4a5b76; font-size: 16px; line-height: 1.7; margin: 0 0 20px;">
+                Une demande a été soumise par <strong style="color: #ef4444;">${emailSource}</strong>.
+            </p>
+            <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Sujet :</strong> ${sujet}</p>
+                <p style="color: #1a2b49; font-size: 16px; margin: 0;"><strong>Contenu :</strong> ${contenu}</p>
+            </div>
+            <p style="color: #4a5b76; font-size: 14px; line-height: 1.6; margin: 0;">
+                Répondez directement à <a href="mailto:${emailSource}" style="color: #ef4444; text-decoration: none;">${emailSource}</a>.
+            </p>
+        </div>
+        <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0;">L’équipe ATS Québec</p>
+        </div>
+    </div>
+  `,
 };
 
 const existingType = {
@@ -278,7 +334,9 @@ const existingType = {
     meeting: "meeting",
     existingUserInvitation: "existingUserInvitation",
     newUserInvitation: "newUserInvitation",
-    recruitmentProcess: "recruitmentProcess"
+    recruitmentProcess: "recruitmentProcess",
+    supportClientToAdmin: "supportClientToAdmin",
+    supportToTechnical: "supportToTechnical",
 }
 
 async function sendEmail({ to, subject, type, data, saveToNotifications = false }) {
@@ -348,6 +406,16 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
                 contenu: `Le processus de recrutement "${data.processType}" pour l'offre "${data.offreTitre}" a démarré pour ${data.candidatName}.`
             };
             break;
+        case existingType.supportClientToAdmin:
+            htmlContent = templates.supportClientToAdmin(data.type, data.sujet, data.contenu, data.emailSource);
+            notificationData = {
+                titre: `Nouvelle demande de support - ${data.sujet}`,
+                contenu: `Une demande de support de type "${data.type}" a été soumise par ${data.emailSource}.`,
+            };
+            break;
+        case existingType.supportToTechnical:
+            htmlContent = templates.supportToTechnical(data.sujet, data.contenu, data.emailSource);
+            break;
         default:
             throw new Error("Type d'email non reconnu");
     }
@@ -361,7 +429,7 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
 
     await transporter.sendMail(mailOptions);
 
-    if (saveToNotifications && notificationData) {
+    if (saveToNotifications && notificationData && notificationData) {
         await Notification.create(notificationData);
     }
 }
