@@ -488,14 +488,17 @@ exports.getDetailsPostulationCandidat = async (req, res)=>{
 
         const havePostuled = await prisma.postulation.findUnique({
             where: {
-                candidat_id: parseInt(req.candidat.id),
-                offre_id: postulation.offre.id
+                candidat_id_offre_id: {
+                    candidat_id: parseInt(req.candidat.id),
+                    offre_id: postulation.offre.id
+                }
             }
-        })
-
-        if(!havePostuled){
-            return res.status(400).json({ error: "Vous n'avez pas postuler trouvée." });
+        });
+        
+        if (!havePostuled) {
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
         }
+        
 
         return res.status(200).json(postulation)
 
