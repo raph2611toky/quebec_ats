@@ -166,8 +166,6 @@ model Offre {
   type_temps        TypeTemps     @default(PLEIN_TEMPS)
   salaire           Decimal
   devise            Devise
-  horaire_ouverture String
-  horaire_fermeture String
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
   postulations      Postulation[] @relation("OffrePostulations")

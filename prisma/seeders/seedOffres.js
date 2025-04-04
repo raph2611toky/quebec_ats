@@ -36,8 +36,6 @@ async function seedOffres() {
                 type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "60000",
                 devise: "EURO",
-                horaire_ouverture: "08:00:00",
-                horaire_fermeture: "18:00:00",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
                 organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
                 status: "CREE"
@@ -53,8 +51,6 @@ async function seedOffres() {
                 type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "50000",
                 devise: "EURO",
-                horaire_ouverture: "08:00:00",
-                horaire_fermeture: "18:00:00",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
                 organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
                 status: "CREE"
@@ -70,8 +66,6 @@ async function seedOffres() {
                 type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "40000",
                 devise: "EURO",
-                horaire_ouverture: "08:00:00",
-                horaire_fermeture: "18:00:00",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
                 organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
                 status: "CREE"
@@ -87,8 +81,6 @@ async function seedOffres() {
                 type_temps: TypeTemps.PLEIN_TEMPS,
                 salaire: "90000",
                 devise: "EURO",
-                horaire_ouverture: "08:00:00",
-                horaire_fermeture: "18:00:00",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
                 organisation_id: organisationIds[Math.floor(Math.random() * organisationIds.length)],
                 status: "CREE"

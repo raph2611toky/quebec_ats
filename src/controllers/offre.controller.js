@@ -38,12 +38,10 @@ exports.createOffre = async (req, res) => {
             status: Status.CREE,
             nombre_requis: parseInt(req.body.nombre_requis || 1),
             date_limite: new Date(req.body.date_limite),
-            horaire_ouverture: req.body.horaire_ouverture,
-            horaire_fermeture: req.body.horaire_fermeture
         };
 
         const newOffre = await Offre.create(offreData);
-        return res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
+        return res.status(201).json(newOffre);
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
