@@ -8,7 +8,8 @@ const {
     logout, deleteAdmin, 
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
-    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting, updateUserRole
+    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting, updateUserRole,
+    contactSupportDev,
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1609,4 +1610,6 @@ router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
  */
 router.put("/:id/change/role", IsAuthenticatedAdmin, updateUserRole);
 
+
+// router.post("/contact/support", IsAuthenticatedAdmin, contactSupportDev);
 module.exports = router;

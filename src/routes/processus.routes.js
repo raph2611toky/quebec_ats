@@ -237,7 +237,7 @@ router.get('/', processusController.getAllProcessus);
  * @swagger
  * /api/processus/{id}:
  *   get:
- *     summary: Récupérer un processus par ID avec ses questions et réponses
+ *     summary: Récupérer un processus par ID avec ses questions, réponses et statut de passage
  *     tags: [Processus]
  *     parameters:
  *       - in: path
@@ -308,6 +308,24 @@ router.get('/', processusController.getAllProcessus);
  *                             is_true:
  *                               type: boolean
  *                               example: true
+ *                 processus_passer:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 200
+ *                       candidat_id:
+ *                         type: integer
+ *                         example: 5
+ *                       processus_id:
+ *                         type: integer
+ *                         example: 1
+ *                       date_passage:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-03T14:30:00Z"
  *       404:
  *         description: Processus non trouvé
  *         content:
@@ -1291,6 +1309,6 @@ router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProc
  *                   type: string
  *                   example: "Erreur interne du serveur."
  */
-router.get("/:id/is-passed",processusController.isPassedProcessus)
+router.get("/:id/is-passed",IsAuthenticatedCandidat, processusController.isPassedProcessus)
 
 module.exports = router;

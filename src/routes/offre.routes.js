@@ -120,12 +120,6 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *           type: string
  *           enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *           description: Devise du salaire
- *         horaire_ouverture:
- *           type: string
- *           description: Heure d'ouverture (format HH:mm:ss)
- *         horaire_fermeture:
- *           type: string
- *           description: Heure de fermeture (format HH:mm:ss)
  *         created_at:
  *           type: string
  *           format: date-time
@@ -249,12 +243,6 @@ router.get("/", getAllOffres);
  *           type: string
  *           enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *           description: Devise du salaire
- *         horaire_ouverture:
- *           type: string
- *           description: Heure d'ouverture (format HH:mm:ss)
- *         horaire_fermeture:
- *           type: string
- *           description: Heure de fermeture (format HH:mm:ss)
  *         created_at:
  *           type: string
  *           format: date-time
@@ -314,7 +302,7 @@ router.get("/available", getAvalaibleOffres);
 
 /**
  * @swagger
- * /api/offres/filter:
+ * /api/offres/available/filter:
  *   get:
  *     summary: Filtrer les offres
  *     tags: [Offres] 
@@ -357,7 +345,7 @@ router.get("/available", getAvalaibleOffres);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get('/filter', filterOffres);
+router.get('/available/filter', filterOffres);
 
 /**
  * @swagger
@@ -612,14 +600,6 @@ router.get("/:id", getOffre);
  *                 enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                 description: Devise du salaire
  *                 example: "EURO"
- *               horaire_ouverture:
- *                 type: string
- *                 description: Heure d'ouverture (format HH:mm:ss)
- *                 example: "09:00:00"
- *               horaire_fermeture:
- *                 type: string
- *                 description: Heure de fermeture (format HH:mm:ss)
- *                 example: "17:00:00"
  *               image_url:
  *                 type: string
  *                 description: URL de l'image sur AWS
@@ -698,10 +678,12 @@ router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, c
  *                 example: "France"
  *               type_emploi:
  *                 type: string
+ *                 enum: [CDD, CDI, STAGE]
  *                 description: Nouveau type d'emploi
  *                 example: "CDD"
  *               type_temps:
  *                 type: string
+ *                 enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *                 description: Type d'emploi
  *                 example: "PLEIN_TEMPS"
  *               salaire:
@@ -713,14 +695,6 @@ router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, c
  *                 enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                 description: Nouvelle devise
  *                 example: "EURO"
- *               horaire_ouverture:
- *                 type: string
- *                 description: Nouvelle heure d'ouverture (format HH:mm:ss)
- *                 example: "08:00:00"
- *               horaire_fermeture:
- *                 type: string
- *                 description: Nouvelle heure de fermeture (format HH:mm:ss)
- *                 example: "16:00:00"
  *               image_url:
  *                 type: string
  *                 description: URL image sur AWS (optionnel)
@@ -1135,12 +1109,6 @@ router.put("/:id/fermer", IsAuthenticated, fermerOffre);
  *                   type: string
  *                   enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                   description: Devise du salaire
- *                 horaire_ouverture:
- *                   type: string
- *                   description: Heure d'ouverture
- *                 horaire_fermeture:
- *                   type: string
- *                   description: Heure de fermeture
  *                 created_at:
  *                   type: string
  *                   format: date-time

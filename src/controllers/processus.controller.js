@@ -111,7 +111,8 @@ exports.getProcessus = async (req, res) => {
                     include: {
                         reponses: true
                     }
-                }
+                },
+                processus_passer: true
             }
         });
         
@@ -598,15 +599,15 @@ exports.submitQuizz = async (req, res) => {
         const nombre_total_question = processus.questions.length
         let score = 0
 
-        for (const { questionId, reponseId } of reponses) {
-            const question = processus.questions.find(q => q.id === questionId);
-            if (question) {
-                const bonneReponse = question.reponses.find(r => r.is_true);
-                if (bonneReponse && bonneReponse.id === reponseId) {
+        for (const { question, reponse } of reponses) {    
+            const questionObj = processus.questions.find(q => q.id === question);
+            if (questionObj) {
+                const bonneReponse = questionObj.reponses.find(r => r.is_true);
+                if (bonneReponse && bonneReponse.id === reponse) {
                     score++;
                 }
             }
-        }
+        }        
 
         await prisma.processusPasser.create({
             data: {
@@ -660,6 +661,8 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({ error: "Le processus n'est pas en cours." });
         }
         
+        console.log(req.body);
+         
         let lien_fichier=req.body?.fichier || null;
 
         let lien_web = req.body?.lien || null 
@@ -668,7 +671,7 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({message: "fichier ou lien est requis pour envoyer votre travaille sur la tâche : "+ processus.titre})
         }
 
-        const postulation = await prisma.postulation.findUnique({
+        const postulation = await prisma.postulation.findFirst({
             where: {
                 offre_id: processus.offre_id,
                 candidat_id: req.candidat.id
@@ -877,19 +880,19 @@ exports.terminateProcessus = async (req, res )=>{
             return res.status(400).json({ message: "Processus n'a pas encore commencer" });
         }
         
-        if(processus.processus_passer.length == 0){
-            return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
-        }
+        // if(processus.processus_passer.length == 0){
+        //     return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
+        // }
         
-        const lengthScoreZero = await prisma.processusPasser.count({
-            where: {
-                score: 0
-            }
-        })
+        // const lengthScoreZero = await prisma.processusPasser.count({
+        //     where: {
+        //         score: 0
+        //     }
+        // })
         
-        if(lengthScoreZero == processus.processus_passer.length){
-            return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
-        }
+        // if(lengthScoreZero == processus.processus_passer.length){
+        //     return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
+        // }
         
         await prisma.processus.update({
             where: {
@@ -939,49 +942,32 @@ exports.cancelProcessus = async (req, res)=>{
     }
 }
 
-exports.isPassedProcessus = async (req, res)=>{
+exports.isPassedProcessus = async (req, res) => {
     try {
-        const processus = await prisma.processus.findUnique({
-            where: {
-                id: parseInt(req.params.id)
-            },
-            include: {
-                offre: true
-            }
-        })
-
-        if(!processus){
-            return res.status(400).json({ error: "Processus introuvable ." });
+        const processusId = parseInt(req.params.id);
+        if (isNaN(processusId)) {
+            return res.status(400).json({ error: "ID du processus invalide." });
         }
 
-        const postulation = await prisma.postulation.findUnique({
-            where: {
-                offre_id: processus.offre_id,
-                candidat_id: req.candidat.id
-            }
-        })
-        
-        if(!postulation){
-            return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
+        if (!req.candidat || !req.candidat.id) {
+            return res.status(401).json({ error: "Candidat non authentifié." });
         }
 
         const processusPasserExist = await prisma.processusPasser.findFirst({
             where: {
-                postulation_id: postulation.id,
-                processus_id: processus.id
-            }
-        })
-        
+                processus: { id: processusId },
+                postulation: { 
+                    candidat_id: req.candidat.id
+                }
+            },
+            select: { id: true }
+        });
 
-        if(processusPasserExist){
-            return res.status(200).json({ passed: true });
-        }
-        return res.status(200).json({ passed: false });
-        
+        return res.status(200).json({ passed: !!processusPasserExist });
 
     } catch (error) {
-        console.log(error);
+        console.error("Erreur serveur :", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
+};
 

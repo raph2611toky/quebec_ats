@@ -43,16 +43,6 @@ const createOffreValidationRules = [
         .withMessage("La devise est requise")
         .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
         .withMessage("Devise invalide"),
-    body("horaire_ouverture")
-        .notEmpty()
-        .withMessage("L'heure d'ouverture est requise")
-        .matches(timeRegex)
-        .withMessage("L'heure d'ouverture doit être au format HH:mm:ss (ex: 09:00:00)"),
-    body("horaire_fermeture")
-        .notEmpty()
-        .withMessage("L'heure de fermeture est requise")
-        .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)"),
     body("image_url")
         .optional()
         .isString()
@@ -92,14 +82,6 @@ const updateOffreValidationRules = [
         .optional()
         .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
         .withMessage("Devise invalide"),
-    body("horaire_ouverture")
-        .optional()
-        .matches(timeRegex)
-        .withMessage("L'heure d'ouverture doit être au format HH:mm:ss (ex: 09:00:00)"),
-    body("horaire_fermeture")
-        .optional()
-        .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)"),
     body("image_url")
         .optional()
         .isString()

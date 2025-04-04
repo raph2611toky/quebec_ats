@@ -463,3 +463,54 @@ exports.getDetailsPostulation = async (req, res)=>{
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
+
+
+exports.getDetailsPostulationCandidat = async (req, res) => {
+    try {
+        // Récupération de la postulation par ID
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                processus_passer: {
+                    include: {
+                        processus: true
+                    }
+                },
+            }
+        });
+
+        if (!postulation) {
+            return res.status(404).json({ error: "Postulation non trouvée." });
+        }
+
+        // Vérifier si le candidat a postulé à cette offre
+        const havePostuled = await prisma.postulation.findUnique({
+            where: {
+                candidat_id_offre_id: {
+                    candidat_id: parseInt(req.candidat.id),
+                    offre_id: postulation.offre_id
+                }
+            }
+        });
+
+        if (!havePostuled) {
+            return res.status(403).json({ error: "Vous n'avez pas postulé à cette offre." });
+        }
+
+        // Transformation des résultats de processus passé
+        const results = postulation.processus_passer.map(passedProcess => ({
+            "statut": passedProcess.statut,
+            "type_processus": passedProcess.processus.type
+        }));
+
+        return res.status(200).json(results);
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+

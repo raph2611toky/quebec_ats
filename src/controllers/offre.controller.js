@@ -38,12 +38,10 @@ exports.createOffre = async (req, res) => {
             status: Status.CREE,
             nombre_requis: parseInt(req.body.nombre_requis || 1),
             date_limite: new Date(req.body.date_limite),
-            horaire_ouverture: req.body.horaire_ouverture,
-            horaire_fermeture: req.body.horaire_fermeture
         };
 
         const newOffre = await Offre.create(offreData);
-        return res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
+        return res.status(201).json(newOffre);
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
@@ -113,6 +111,43 @@ exports.updateOffre = async (req, res) => {
 
         let { id, ...updateData } = req.body;
         updateData = filterAllowedFields(updateData)
+
+        if (req.file) {
+            const subDir = "offres";
+            const uploadDir = path.join(__dirname, "../uploads", subDir);
+            const originalName = req.file.originalname;
+            const ext = path.extname(originalName);
+            const baseName = path.basename(originalName, ext);
+            const tempPath = path.join(uploadDir, req.file.filename);
+            const finalPath = path.join(uploadDir, originalName);
+
+            if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
+                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
+                await fs.unlink(oldImagePath).catch(() => {});
+            }
+
+            if (await fs.stat(finalPath).catch(() => false)) {
+                const tempBuffer = await fs.readFile(tempPath);
+                const tempHash = crypto.createHash("md5").update(tempBuffer).digest("hex");
+                const existingBuffer = await fs.readFile(finalPath);
+                const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
+
+                if (tempHash === existingHash) {
+                    await fs.unlink(tempPath);
+                    updateData.image_url = `/uploads/offres/${originalName}`;
+                } else {
+                    const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+                    const randomSuffix = Math.round(Math.random() * 1e9);
+                    const newName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
+                    const newPath = path.join(uploadDir, newName);
+                    await fs.rename(tempPath, newPath);
+                    updateData.image_url = `/uploads/offres/${newName}`;
+                }
+            } else {
+                await fs.rename(tempPath, finalPath);
+                updateData.image_url = `/uploads/offres/${originalName}`;
+            }
+        }
 
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
