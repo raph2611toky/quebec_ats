@@ -463,3 +463,45 @@ exports.getDetailsPostulation = async (req, res)=>{
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
+
+
+exports.getDetailsPostulationCandidat = async (req, res)=>{
+    try {
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                processus_passer: true,
+                offre: {
+                    include: {
+                        processus: true
+                    }
+                }
+
+            }
+        })
+
+        if(!postulation){
+            return res.status(400).json({ error: "Aucune postulation trouvée." });
+        }
+
+        const havePostuled = await prisma.postulation.findUnique({
+            where: {
+                candidat_id: parseInt(req.candidat.id),
+                offre_id: postulation.offre.id
+            }
+        })
+
+        if(!havePostuled){
+            return res.status(400).json({ error: "Vous n'avez pas postuler trouvée." });
+        }
+
+        return res.status(200).json(postulation)
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+

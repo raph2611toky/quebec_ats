@@ -1006,7 +1006,7 @@ exports.updateUserRole = async (req, res) => {
         if (!targetUser) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-
+        
         // const firstAdmin = await prisma.user.findFirst({
         //     where: { role: Role.ADMINISTRATEUR },
         //     orderBy: { id: 'asc' }
@@ -1053,6 +1053,27 @@ exports.updateUserRole = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.contactSupportDev = async (req, res)=>{
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+        })
+        
+        if(!user){
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+
+
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
 
 
 

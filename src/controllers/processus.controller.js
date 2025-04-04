@@ -661,6 +661,8 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({ error: "Le processus n'est pas en cours." });
         }
         
+        console.log(req.body);
+         
         let lien_fichier=req.body?.fichier || null;
 
         let lien_web = req.body?.lien || null 
@@ -669,7 +671,7 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({message: "fichier ou lien est requis pour envoyer votre travaille sur la tâche : "+ processus.titre})
         }
 
-        const postulation = await prisma.postulation.findUnique({
+        const postulation = await prisma.postulation.findFirst({
             where: {
                 offre_id: processus.offre_id,
                 candidat_id: req.candidat.id

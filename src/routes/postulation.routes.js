@@ -10,9 +10,10 @@ const {
     rejectPostulation,
     addRemarquePostulation,
     removeRemarquePostulation,
-    getDetailsPostulation
+    getDetailsPostulation,
+    getDetailsPostulationCandidat
 } = require("../controllers/postulation.controller");
-const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
 const { validateRemarque } = require("../validators/postulation.validator");
 const errorHandler = require("../middlewares/error.handler");
@@ -577,6 +578,29 @@ router.put("/:id/update-my-remarque", IsAuthenticatedAdmin,  removeRemarquePostu
  */
 router.get("/:id/details", IsAuthenticatedAdmin, getDetailsPostulation);
 
+
+/**
+ * @swagger
+ * /api/postulations/{id}/details/me:
+ *   get:
+ *     summary: Details une postulation par ID (processus_passer, offres, offres.processus)
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation cible
+ *     responses:
+ *       200:
+ *         description: Details retourné 
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/:id/details/me", IsAuthenticatedCandidat, getDetailsPostulationCandidat);
 
 
 module.exports = router;
