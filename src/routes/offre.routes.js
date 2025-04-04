@@ -302,7 +302,7 @@ router.get("/available", getAvalaibleOffres);
 
 /**
  * @swagger
- * /api/offres/filter:
+ * /api/offres/available/filter:
  *   get:
  *     summary: Filtrer les offres
  *     tags: [Offres] 
@@ -345,7 +345,7 @@ router.get("/available", getAvalaibleOffres);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get('/filter', filterOffres);
+router.get('/available/filter', filterOffres);
 
 /**
  * @swagger

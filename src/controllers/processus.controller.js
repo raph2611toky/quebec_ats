@@ -880,19 +880,19 @@ exports.terminateProcessus = async (req, res )=>{
             return res.status(400).json({ message: "Processus n'a pas encore commencer" });
         }
         
-        if(processus.processus_passer.length == 0){
-            return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
-        }
+        // if(processus.processus_passer.length == 0){
+        //     return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
+        // }
         
-        const lengthScoreZero = await prisma.processusPasser.count({
-            where: {
-                score: 0
-            }
-        })
+        // const lengthScoreZero = await prisma.processusPasser.count({
+        //     where: {
+        //         score: 0
+        //     }
+        // })
         
-        if(lengthScoreZero == processus.processus_passer.length){
-            return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
-        }
+        // if(lengthScoreZero == processus.processus_passer.length){
+        //     return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
+        // }
         
         await prisma.processus.update({
             where: {
