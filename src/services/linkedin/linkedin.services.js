@@ -4,7 +4,7 @@ const path = require("path");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-let LINKEDIN_ACCESS_TOKEN = "AQWEbuMjicdh9Fhe7ioGVbCLto08HbHAEKGSI5Gc9VO2NHz3QL5ziGsNigjTQx1VZSpAB4VwJHlX8HHdSDeNEQwB9DD0aWtv28XBPLYJanICwi42JNzDalBg6kXzmoQPYbNQwd1EWw5nHq5NAXDnLxKM59fk3gjTpg93mi0nUCF4wFHePo55M07S6ToqC1kMUJepJi_pMxROY2mWIPCVyd-VwiuUrrjAPhYQ7Y0LkSkFDs5Jf3-JOydUfrmBmkhqUgXaYr7clTMQB2XlpMIFUZg7MvmTlxLNLW3fRU1Rg5FoooSyteB7VWsYriGFD2l43YbJVPXQr3lt8_RODD-aPv3vfkaY0Q"  
+let LINKEDIN_ACCESS_TOKEN = "AQUpklSv5B9UyjtgrnZoKwJ_MwRa1xNL8NeeoayaRh2JsZP4pcfOm-hf0KTVjpK8V6HD420VvgXaAZGdoSr47VHHS0HmLUVim9lUFX07n8LAYyNVp8D1ihUKR3-UIMKCiV3H84gnUVFTXptSCxtJngyl4hvq29kHoT7XQSsxZAhPvZJZ6wbekWRXtnWOkkAyN8Md9sIfFaij7gEJ-j0UZs3CXab-5yh6D89jsJ0rK_Xk9bnWUBwWZyls-yoYBU6xcKswK-_ly5Dgq1sDDpZ5ySFvcFPs4HhXFEzr91uU2ruZjXY5UrKLUMe34oK2v5gSHDpydTbKVanG6lvl-s8YU11wyYpPgw"  
 
 
 async function getOfferImageAndUploadToLinkedIn(offerId, personId) {
@@ -130,6 +130,6 @@ async function shareJobOnLinkedIn(title, description, personId, applyUrl, offerI
     }
 }
 
-//shareJobOnLinkedIn("TESTE API Linkedin ", "TESTE API POST Linkedin", "7W9BCC_46N", "https://example.com/apply", 4);
+//shareJobOnLinkedIn("TESTE API Linkedin ", "TESTE API POST Linkedin", "epsnvBD8Ud", "https://example.com/apply", 13);
 
 module.exports = shareJobOnLinkedIn;

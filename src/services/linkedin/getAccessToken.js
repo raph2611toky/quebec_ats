@@ -5,8 +5,8 @@ import readline from 'readline';
 
 dotenv.config();
 
-const LINKEDIN_CLIENT_ID = "776zkki11lijn5";
-const LINKEDIN_CLIENT_SECRET = "WPL_AP1.VSjbN0M2hQVXhX3J.fEbwKA==";
+const LINKEDIN_CLIENT_ID = "86xf53gsv6ajz5";
+const LINKEDIN_CLIENT_SECRET = "WPL_AP1.FzY7XWsqI9hx97Uv.8u05Sw==";
 const LINKEDIN_REDIRECT_URI = "http://localhost:5000/send-code/change-token";
 let LINKEDIN_ACCESS_TOKEN;
 
