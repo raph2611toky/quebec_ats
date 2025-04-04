@@ -320,7 +320,7 @@ exports.publishOffre = async (req, res) => {
             data: { status: Status.OUVERT }
         })
 
-        await shareJobOnLinkedIn(offre.titre, offre.description, "7W9BCC_46N", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
+        await shareJobOnLinkedIn(offre.titre, offre.description, "epsnvBD8Ud", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
     } catch (error) {
