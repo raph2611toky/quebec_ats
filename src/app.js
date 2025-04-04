@@ -4,6 +4,7 @@ const { swaggerUi, swaggerSpec } = require("./docs/swagger");
 const morgan = require('morgan');
 const cors = require('cors');
 const path = require("path");
+const jobs = require("../src/jobs/job")
 // const passport = require('./config/passeport.config');
 
 const userRoutes = require("./routes/user.routes");

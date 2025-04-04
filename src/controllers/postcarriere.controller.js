@@ -6,28 +6,7 @@ const crypto = require("crypto");
 exports.createPostCarriere = async (req, res) => {
     try {
         const images = [];
-
-        if (req.files && req.files.length > 0) {
-            const subDir = "postcarriere";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-
-            for (const file of req.files) {
-                const originalName = file.originalname;
-                const tempPath = path.join(uploadDir, file.filename);
-                const ext = path.extname(originalName);
-                const baseName = path.basename(originalName, ext);
-
-                const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
-                const randomSuffix = crypto.randomBytes(4).toString("hex");
-                const uniqueName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
-                const finalPath = path.join(uploadDir, uniqueName);
-
-                await fs.rename(tempPath, finalPath);
-
-                images.push(`/uploads/${subDir}/${uniqueName}`);
-            }
-        }
-
+        
         const newPost = await PostCarriere.create({
             titre: req.body.titre,
             contenu: req.body.contenu,
@@ -53,49 +32,6 @@ exports.updatePostCarriere = async (req, res) => {
         }
 
         let updateData = { ...req.body };
-        if (req.files && req.files.length > 0) {
-            const subDir = "postcariere";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-            let newImages = [];
-
-            if (existingPostCarriere.images && existingPostCarriere.images.length > 0) {
-                for (const image of existingPostCarriere.images) {
-                    const imagePath = path.join(__dirname, "../", image);
-                    await fs.unlink(imagePath).catch(() => {});
-                }
-            }
-
-            for (const file of req.files) {
-                const originalName = file.originalname;
-                const tempPath = path.join(uploadDir, file.filename);
-                const finalPath = path.join(uploadDir, originalName);
-
-                if (await fs.stat(finalPath).catch(() => false)) {
-                    const tempBuffer = await fs.readFile(tempPath);
-                    const tempHash = crypto.createHash("md5").update(tempBuffer).digest("hex");
-                    const existingBuffer = await fs.readFile(finalPath);
-                    const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
-
-                    if (tempHash === existingHash) {
-                        await fs.unlink(tempPath);
-                        newImages.push(`/uploads/postcariere/${originalName}`);
-                    } else {
-                        const ext = path.extname(originalName);
-                        const baseName = path.basename(originalName, ext);
-                        const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
-                        const randomSuffix = Math.round(Math.random() * 1e9);
-                        const newName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
-                        const newPath = path.join(uploadDir, newName);
-                        await fs.rename(tempPath, newPath);
-                        newImages.push(`/uploads/postcariere/${newName}`);
-                    }
-                } else {
-                    await fs.rename(tempPath, finalPath);
-                    newImages.push(`/uploads/postcariere/${originalName}`);
-                }
-            }
-            updateData.images = newImages;
-        }
 
         if (updateData.organisation_id) {
             updateData.organisation_id = parseInt(updateData.organisation_id);

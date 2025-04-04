@@ -19,7 +19,7 @@ class PostCarriere {
         this.id = id;
         this.titre = titre;
         this.contenu = contenu;
-        this.images = images.map(image_url => getFullImageUrl(image_url, base_url));
+        this.images = images;
         this.organisation_id = organisation_id;
         this.created_at = created_at;
         this.updated_at = updated_at;

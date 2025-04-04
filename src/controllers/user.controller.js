@@ -26,32 +26,12 @@ exports.registerAdmin = async (req, res) => {
             return res.status(401).json({ error: "Cet administrateur s'est déjà enregistré" });
         }
 
-        let profileUrl;
-        if (req.file) {
-            try {
-                await fs.access(req.file.path);
-            } catch (error) {
-                console.error("Le fichier n'a pas été correctement transféré:", error);
-                return res.status(400).json({ error: "Erreur lors du transfert de l'image" });
-            }
-
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: "admin_profiles",
-                use_filename: true,
-                unique_filename: false
-            });
-            profileUrl = result.secure_url;
-        } else {
-            profileUrl = await uploadDefaultProfileImage();
-        }
-
         const allOrganisations = await prisma.organisation.findMany({
             select: { id: true }
         });
 
         const adminData = {
             ...req.body,
-            profile: profileUrl,
             is_active: false,
             role: Role.ADMINISTRATEUR,
             organisations: {
@@ -294,33 +274,6 @@ exports.updateAdminProfile = async (req, res) => {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        if (req.file) {
-            try {
-                await fs.access(req.file.path);
-            } catch (error) {
-                console.error("Le fichier n'a pas été correctement transféré:", error);
-                return res.status(400).json({ error: "Erreur lors du transfert de l'image" });
-            }
-
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: "admin_profiles",
-                use_filename: true,
-                unique_filename: false
-            });
-
-            if (!result.secure_url) {
-                throw new Error("Échec de l'upload sur Cloudinary");
-            }
-
-            if (existingUser.profile && !existingUser.profile.includes("default_profile")) {
-                await deleteImageFromCloudinary(existingUser.profile);
-            }
-
-            updateData.profile = result.secure_url;
-        } else if (!existingUser.profile) {
-            updateData.profile = await uploadDefaultProfileImage();
-        }
-
         if(updateData.role && updateData.role !== user.role){
             return res.status(403).json({"erreur":"Vous ne pouvez pas "});
         }
@@ -363,11 +316,18 @@ exports.sendInvitation = async (req, res) => {
         let { invitee_email, organisation_id, role } = req.body;
         const inviter_id = req.user.id;
     
-        const inviter = await User.getById(inviter_id)
+        const inviter = await prisma.user.findUnique({
+            where: {
+                id: inviter_id
+            },
+            include: {
+                organisations: true
+            }
+        })
         const inviter_organisation_ids = inviter.organisations.map(org => org.id)
-        // if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
-        //     return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
-        // }    
+        if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
+            return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
+        }    
         let validatedOrganisationId = null;
         role = inviter.role === Role.MODERATEUR ? Role.MODERATEUR : role
         if (role === Role.MODERATEUR) {
@@ -410,7 +370,7 @@ exports.sendInvitation = async (req, res) => {
             },
         });
     
-        const baseUrl = process.env.FRONTEND_URL_DEV;
+        const baseUrl = process.env.FRONTEND_URL;
         let invitationLink;
         let emailType;
         let emailData;
@@ -1046,14 +1006,14 @@ exports.updateUserRole = async (req, res) => {
         if (!targetUser) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-
-        const firstAdmin = await prisma.user.findFirst({
-            where: { role: Role.ADMINISTRATEUR },
-            orderBy: { id: 'asc' }
-        });
-        if (firstAdmin && firstAdmin.id === targetUserId) {
-            return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
-        }
+        
+        // const firstAdmin = await prisma.user.findFirst({
+        //     where: { role: Role.ADMINISTRATEUR },
+        //     orderBy: { id: 'asc' }
+        // });
+        // if (firstAdmin && firstAdmin.id === targetUserId) {
+        //     return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
+        // }
 
         const newRole = req.body.role;
         if (!newRole || ![Role.ADMINISTRATEUR, Role.MODERATEUR].includes(newRole)) {
@@ -1093,6 +1053,27 @@ exports.updateUserRole = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.contactSupportDev = async (req, res)=>{
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+        })
+        
+        if(!user){
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+
+
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
 
 
 

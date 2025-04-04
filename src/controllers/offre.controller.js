@@ -7,6 +7,7 @@ const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
 const { count } = require("console");
 const prisma = new PrismaClient();
+const shareJobOnLinkedIn = require("../services/linkedin/linkedin.services.js")
 
 exports.createOffre = async (req, res) => {
     try {
@@ -28,33 +29,19 @@ exports.createOffre = async (req, res) => {
             return res.status(403).json({ error: "Vous n'êtes pas autorisé à créer une offre pour cette organisation." });
         }
 
-        let relativeImageUrl = "";
-        if (req.file) {
-            const subDir = "offres";
-            const uploadDir = path.join(__dirname, "../uploads", subDir);
-            const originalName = req.file.originalname;
-            const tempPath = path.join(uploadDir, req.file.filename);
-            const finalPath = path.join(uploadDir, originalName);
-
-            await fs.rename(tempPath, finalPath);
-            relativeImageUrl = `/uploads/offres/${originalName}`;
-        }
-
         const offreData = {
             ...req.body,
             user_id: userId,
             organisation_id: organisationId,
-            image_url: relativeImageUrl,
+            image_url: req.body.image_url,
             salaire: parseFloat(req.body.salaire),
             status: Status.CREE,
             nombre_requis: parseInt(req.body.nombre_requis || 1),
             date_limite: new Date(req.body.date_limite),
-            horaire_ouverture: req.body.horaire_ouverture,
-            horaire_fermeture: req.body.horaire_fermeture
         };
 
         const newOffre = await Offre.create(offreData);
-        return res.status(201).json(Offre.fromPrisma(newOffre, req.base_url));
+        return res.status(201).json(newOffre);
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
@@ -368,7 +355,9 @@ exports.publishOffre = async (req, res) => {
         await prisma.offre.update({
             where: { id: offreId },
             data: { status: Status.OUVERT }
-        });
+        })
+
+        await shareJobOnLinkedIn(offre.titre, offre.description, "7W9BCC_46N", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
     } catch (error) {
@@ -412,33 +401,13 @@ exports.postulerOffre = async (req, res) => {
             return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
         }
 
-        let cvUrl;
-        let lettreMotivationUrl;
-
-        if (req.files?.cv?.[0]?.path && req.files?.lettre_motivation?.[0]?.path) {
-            try {
-                await fs.access(req.files.cv[0].path);
-                await fs.access(req.files.lettre_motivation[0].path);
-            } catch (error) {
-                console.error("Les fichiers n'ont pas été correctement transférés:", error);
-                return res.status(400).json({ error: "Erreur lors du transfert des fichiers" });
-            }
-
-            const cvPath = req.files.cv[0].path;
-            const lettreMotivationPath = req.files.lettre_motivation[0].path;
-
-            cvUrl = `/uploads/cv/${req.files.cv[0].filename}`;
-            lettreMotivationUrl = `/uploads/lettre_motivation/${req.files.lettre_motivation[0].filename}`;
-        } else {
-            return res.status(400).json({ error: "Les CV et lettre de motivation sont requis pour postuler." });
-        }
 
         const postulation = await prisma.postulation.create({
             data: {
                 candidat: { connect: { id: candidat.id } },
                 offre: { connect: { id: offre.id } },
-                cv: cvUrl,
-                lettre_motivation: lettreMotivationUrl,
+                cv: data.cv,
+                lettre_motivation: data.lettre_motivation,
                 source_site: data.source_site
             }
         });

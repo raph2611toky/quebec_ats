@@ -8,7 +8,8 @@ const {
     logout, deleteAdmin, 
     getAllUsers, confirmRegistration, forgotPassword, resetPassword,
     resendOtp, sendInvitation, confirmInvitation, acceptInvitation, removeFromOrganisation,
-    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting, updateUserRole
+    listInvitationQueue, cancelInvitation, getDashboardStats, scheduleMeeting, updateUserRole,
+    contactSupportDev,
 } = require("../controllers/user.controller");
 const { createUserValidationRules, updateUserValidationRules } = require("../validators/user.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -231,7 +232,7 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -245,10 +246,10 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *                 type: string
  *               profile:
  *                 type: string
- *                 format: binary
+ *                 description: URL AWS de l'image de profil (optionnel)
  *               role:
  *                 type: string
- *                 enum: [MODERATEUR, ADMINISTRATEUR] 
+ *                 enum: [MODERATEUR, ADMINISTRATEUR]
  *             required:
  *               - name
  *               - email
@@ -272,7 +273,7 @@ router.get("/:id/profile", IsAuthenticatedAdmin, getAdminProfile);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/register", upload.single("profile"), registerAdmin);
+router.post("/register", registerAdmin);
 
 /**
  * @swagger
@@ -556,7 +557,7 @@ router.post("/login", loginAdmin);
  *     requestBody:
  *       required: false
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -579,8 +580,7 @@ router.post("/login", loginAdmin);
  *                 example: "+261341234567"
  *               profile:
  *                 type: string
- *                 format: binary
- *                 description: Nouvelle image de profil (optionnel)
+ *                 description: Nouvelle url AWS de l'image de profil (optionnel)
  *               role:
  *                 type: string
  *                 enum: [MODERATEUR, ADMINISTRATEUR]
@@ -614,7 +614,7 @@ router.post("/login", loginAdmin);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.put("/me", IsAuthenticated, upload.single("profile"), updateUserValidationRules, validateHandler, updateAdminProfile);
+router.put("/me", IsAuthenticated, validateHandler, updateAdminProfile);
 
 /**
  * @swagger
@@ -1606,8 +1606,10 @@ router.delete("/delete/:id", IsAuthenticatedAdmin, deleteAdmin);
  *                 error:
  *                   type: string
  *             example:
- *               error: "Erreur interne du serveur"
+ *               error: "Erreur inteinvrne du serveur"
  */
 router.put("/:id/change/role", IsAuthenticatedAdmin, updateUserRole);
 
+
+// router.post("/contact/support", IsAuthenticatedAdmin, contactSupportDev);
 module.exports = router;

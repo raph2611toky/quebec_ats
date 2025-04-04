@@ -173,8 +173,6 @@ model Offre {
   type_temps        TypeTemps     @default(PLEIN_TEMPS)
   salaire           Decimal
   devise            Devise
-  horaire_ouverture String
-  horaire_fermeture String
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
   postulations      Postulation[] @relation("OffrePostulations")
@@ -264,7 +262,8 @@ model Processus {
   offre            Offre             @relation("OffreProcessus", fields: [offre_id], references: [id], onDelete: Cascade)
   offre_id         Int
   duree            Int
-  ordre            Int                @default(0)
+  ordre            Int               @default(0)
+  start_at         DateTime
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   questions        Question[]        @relation("ProcessusQuestion")
@@ -302,18 +301,18 @@ model Remarque {
 }
 
 model ProcessusPasser {
-  id             Int             @id @default(autoincrement())
-  processus      Processus       @relation("ProcessusPasserProcess", fields: [processus_id], references: [id], onDelete: Cascade)
+  id             Int                   @id @default(autoincrement())
+  processus      Processus             @relation("ProcessusPasserProcess", fields: [processus_id], references: [id], onDelete: Cascade)
   processus_id   Int
-  postulation    Postulation     @relation("ProcessusPasserPostulation", fields: [postulation_id], references: [id], onDelete: Cascade)
+  postulation    Postulation           @relation("ProcessusPasserPostulation", fields: [postulation_id], references: [id], onDelete: Cascade)
   postulation_id Int
   statut         StatutProcessusPasser @default(EN_COURS)
-  score          Int             @default(0)
+  score          Int                   @default(0)
   lien_web       String?
   lien_fichier   String?
   lien_vision    String?
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt
+  created_at     DateTime              @default(now())
+  updated_at     DateTime              @updatedAt
 }
 
 model SupportSiteRequest {

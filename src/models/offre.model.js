@@ -24,8 +24,6 @@ class Offre {
         type_temps = "PLEIN_TEMPS",
         salaire,
         devise,
-        horaire_ouverture,
-        horaire_fermeture,
         created_at = null,
         updated_at = null,
         base_url = ""
@@ -34,7 +32,7 @@ class Offre {
         this.titre = titre;
         this.user_id = user_id;
         this.organisation_id = organisation_id;
-        this.image_url = getFullImageUrl(image_url, base_url);
+        this.image_url = image_url;
         this.description = description;
         this.date_limite = date_limite;
         this.status = status;
@@ -45,8 +43,6 @@ class Offre {
         this.type_temps = type_temps;
         this.salaire = salaire;
         this.devise = devise;
-        this.horaire_ouverture = horaire_ouverture;
-        this.horaire_fermeture = horaire_fermeture;
         this.created_at = created_at;
         this.updated_at = updated_at;
     }
@@ -68,8 +64,6 @@ class Offre {
             offre.type_temps,
             offre.salaire.toString(),
             offre.devise,
-            offre.horaire_ouverture,
-            offre.horaire_fermeture,
             offre.created_at,
             offre.updated_at,
             base_url

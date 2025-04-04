@@ -71,6 +71,11 @@ const  createUpload  = require("../config/multer.config")
  *           type: integer
  *           description: ordre dans le processus de recrutement 
  *           example: 60
+ *         start_at: 
+ *           type: string
+ *           format: date-time
+ *           description: Date de commencement
+ *           example: "2025-03-18T10:00:00.000Z" 
  *         created_at:
  *           type: string
  *           format: date-time
@@ -232,21 +237,115 @@ router.get('/', processusController.getAllProcessus);
  * @swagger
  * /api/processus/{id}:
  *   get:
- *     summary: Récupérer un processus par ID
+ *     summary: Récupérer un processus par ID avec ses questions, réponses et statut de passage
  *     tags: [Processus]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
- *         description: Processus créé avec succès
+ *         description: Processus récupéré avec succès
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Processus'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 titre:
+ *                   type: string
+ *                   example: "Processus de recrutement"
+ *                 type:
+ *                   type: string
+ *                   enum:
+ *                     - TACHE
+ *                     - VISIO_CONFERENCE
+ *                     - QUESTIONNAIRE
+ *                   example: "QUESTIONNAIRE"
+ *                 description:
+ *                   type: string
+ *                   example: "Ce processus permet d'évaluer les candidats pour le poste."
+ *                 statut:
+ *                   type: string
+ *                   enum:
+ *                     - A_VENIR
+ *                     - EN_COURS
+ *                     - TERMINER
+ *                     - ANNULER
+ *                   example: "A_VENIR"
+ *                 duree:
+ *                   type: integer
+ *                   example: 60
+ *                 ordre:
+ *                   type: integer
+ *                   example: 1
+ *                 questions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 10
+ *                       label:
+ *                         type: string
+ *                         example: "Quelle est votre expérience ?"
+ *                       reponses:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 100
+ *                             label:
+ *                               type: string
+ *                               example: "J'ai 5 ans d'expérience."
+ *                             is_true:
+ *                               type: boolean
+ *                               example: true
+ *                 processus_passer:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 200
+ *                       candidat_id:
+ *                         type: integer
+ *                         example: 5
+ *                       processus_id:
+ *                         type: integer
+ *                         example: 1
+ *                       date_passage:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-03T14:30:00Z"
+ *       404:
+ *         description: Processus non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
 router.get('/:id', processusController.getProcessus);
 
@@ -764,6 +863,8 @@ router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
  *   post:
  *     summary: Soumettre un quiz pour un processus donné
  *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -776,16 +877,23 @@ router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
  *       content:
  *         application/json:
  *           schema:
- *             type: array
- *             items:
- *               type: object
- *               properties:
- *                 question:
- *                   type: string
- *                   description: ID de la question
- *                 reponse:
- *                   type: string
- *                   description: ID de la réponse sélectionnée
+ *             type: object
+ *             properties:
+ *               submit:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     question:
+ *                       type: integer
+ *                       description: ID de la question
+ *                       example: 2
+ *                     reponse:
+ *                       type: integer
+ *                       description: ID de la réponse sélectionnée
+ *                       example: 1
+ *             required:
+ *               - submit
  *     responses:
  *       200:
  *         description: Quiz soumis avec succès
@@ -826,17 +934,18 @@ router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.subm
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               fichier:
  *                 type: string
- *                 format: binary
- *                 description: Fichier de preuve (optionnel)
+ *                 description: URL AWS du fichier de preuve (optionnel)
+ *                 example: "https://example.com/fichier.pdf"
  *               lien:
  *                 type: string
  *                 description: Lien vers le travail effectué (optionnel)
+ *                 example: "https://example.com/travail"
  *     responses:
  *       200:
  *         description: Tâche soumise avec succès
@@ -879,7 +988,7 @@ router.post("/:id/submit/quizz",IsAuthenticatedCandidat,processusController.subm
  *                   type: string
  *                   example: "Erreur interne du serveur."
  */
-router.post("/:id/submit/tache", IsAuthenticatedCandidat, createUpload("Taches").single("fichier"), processusController.submitTache);
+router.post("/:id/submit/tache", IsAuthenticatedCandidat, processusController.submitTache);
 
 /**
  * @swagger
@@ -889,6 +998,13 @@ router.post("/:id/submit/tache", IsAuthenticatedCandidat, createUpload("Taches")
  *     tags: [Processus]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID du processus
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -1134,5 +1250,65 @@ router.post("/:id/terminate", IsAuthenticatedAdmin, processusController.terminat
 */
 router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProcessus)
 
+
+/**
+ * @swagger
+ * /api/processus/{id}/is-passed:
+ *   get:
+ *     summary: Vérifier si un utilisateur a déjà passé un processus
+ *     tags: [Processus]
+ *     security:
+ *       - BearerAuth: []
+ *     description: Permet de vérifier si un utilisateur a déjà passé un processus de recrutement.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du processus à vérifier.
+ *     responses:
+ *       200:
+ *         description: Résultat de la vérification du processus passé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 passed:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Candidature à l'offre introuvable ou processus non trouvé.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Candidature à l'offre introuvable."
+ *       404:
+ *         description: Processus ou candidature non trouvé(e).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Processus introuvable."
+ *       500:
+ *         description: Erreur interne du serveur.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur."
+ */
+router.get("/:id/is-passed",IsAuthenticatedCandidat, processusController.isPassedProcessus)
 
 module.exports = router;

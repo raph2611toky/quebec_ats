@@ -120,12 +120,6 @@ const uploadDocuments = (folder) => createUpload(folder).fields([
  *           type: string
  *           enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *           description: Devise du salaire
- *         horaire_ouverture:
- *           type: string
- *           description: Heure d'ouverture (format HH:mm:ss)
- *         horaire_fermeture:
- *           type: string
- *           description: Heure de fermeture (format HH:mm:ss)
  *         created_at:
  *           type: string
  *           format: date-time
@@ -249,12 +243,6 @@ router.get("/", getAllOffres);
  *           type: string
  *           enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *           description: Devise du salaire
- *         horaire_ouverture:
- *           type: string
- *           description: Heure d'ouverture (format HH:mm:ss)
- *         horaire_fermeture:
- *           type: string
- *           description: Heure de fermeture (format HH:mm:ss)
  *         created_at:
  *           type: string
  *           format: date-time
@@ -314,7 +302,7 @@ router.get("/available", getAvalaibleOffres);
 
 /**
  * @swagger
- * /api/offres/filter:
+ * /api/offres/available/filter:
  *   get:
  *     summary: Filtrer les offres
  *     tags: [Offres] 
@@ -357,7 +345,7 @@ router.get("/available", getAvalaibleOffres);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get('/filter', filterOffres);
+router.get('/available/filter', filterOffres);
 
 /**
  * @swagger
@@ -549,7 +537,7 @@ router.get("/:id", getOffre);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -569,7 +557,7 @@ router.get("/:id", getOffre);
  *               organisation_id:
  *                 type: integer
  *                 description: ID de l'organisation
- *                 example: "1"
+ *                 example: 1
  *               titre:
  *                 type: string
  *                 description: Titre de l'offre
@@ -601,7 +589,7 @@ router.get("/:id", getOffre);
  *                 enum: [CDD, CDI, STAGE]
  *               type_temps:
  *                 type: string
- *                 description: Type de temps d'occupationtype_temps
+ *                 description: Type de temps d'occupation
  *                 enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
  *               salaire:
  *                 type: string
@@ -612,18 +600,10 @@ router.get("/:id", getOffre);
  *                 enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                 description: Devise du salaire
  *                 example: "EURO"
- *               horaire_ouverture:
- *                 type: string
- *                 description: Heure d'ouverture (format HH:mm:ss)
- *                 example: "09:00:00"
- *               horaire_fermeture:
- *                 type: string
- *                 description: Heure de fermeture (format HH:mm:ss)
- *                 example: "17:00:00"
  *               image_url:
  *                 type: string
- *                 format: binary
- *                 description: Image de l'offre (optionnel, image par défaut si non fournie)
+ *                 description: URL de l'image sur AWS
+ *                 example: "https://example.com/image.png"
  *     responses:
  *       201:
  *         description: Offre créée avec succès
@@ -642,7 +622,8 @@ router.get("/:id", getOffre);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidationRules, validateHandler, createOffre);
+router.post("/", IsAuthenticated, createOffreValidationRules, validateHandler, createOffre);
+
 
 /**
  * @swagger
@@ -662,14 +643,14 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *     requestBody:
  *       required: false
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               organisation_id:
  *                 type: integer
  *                 description: ID de l'organisation
- *                 example: "2"
+ *                 example: 2
  *               titre:
  *                 type: string
  *                 description: Nouveau titre
@@ -714,18 +695,10 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                 enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                 description: Nouvelle devise
  *                 example: "EURO"
- *               horaire_ouverture:
- *                 type: string
- *                 description: Nouvelle heure d'ouverture (format HH:mm:ss)
- *                 example: "08:00:00"
- *               horaire_fermeture:
- *                 type: string
- *                 description: Nouvelle heure de fermeture (format HH:mm:ss)
- *                 example: "16:00:00"
  *               image_url:
  *                 type: string
- *                 format: binary
- *                 description: Nouvelle image (optionnel)
+ *                 description: URL image sur AWS (optionnel)
+ *                 example: "https://example.com/image.png"
  *     responses:
  *       200:
  *         description: Offre mise à jour avec succès
@@ -754,7 +727,7 @@ router.post("/", IsAuthenticated, upload.single("image_url"), createOffreValidat
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.put("/:id", IsAuthenticated, upload.single("image_url"), updateOffreValidationRules, validateHandler, updateOffre);
+router.put("/:id", IsAuthenticated, updateOffreValidationRules, validateHandler, updateOffre);
 
 /**
  * @swagger
@@ -870,7 +843,7 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -883,28 +856,28 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *             properties:
  *               cv:
  *                 type: string
- *                 format: binary
- *                 description: CV candidat 
+ *                 description: URL AWS du fichier CV (obligatoire)
+ *                 example: "https://example.com/cv.pdf"
  *               lettre_motivation:
  *                 type: string
- *                 format: binary
- *                 description: Lettre de Motivation du candidat 
+ *                 description: URL AWS du fichier lettre de motivation (obligatoire)
+ *                 example: "https://example.com/lettre_motivation.pdf"
  *               nom:
  *                 type: string
- *                 description: nom du candidat
+ *                 description: Nom du candidat
  *                 example: "Jack"
  *               email:
  *                 type: string
- *                 description: email du candidat
- *                 example: "a.angelo.mada@gmail.com" 
+ *                 description: Email du candidat
+ *                 example: "a.angelo.mada@gmail.com"
  *               telephone:
  *                 type: string
- *                 description: numéro du candidat
+ *                 description: Numéro du candidat
  *                 example: "+263567890948"
  *               source_site:
  *                 type: string
- *                 enum: [LINKEDIN, INDEED, JOOBLE,MESSAGER,WHATSAPP,INSTAGRAM,TELEGRAM,QUEBEC_SITE] 
- *                 description: "site de redirection (optionnel : défaut LINKEDIN)"
+ *                 enum: [LINKEDIN, INDEED, JOOBLE, MESSAGER, WHATSAPP, INSTAGRAM, TELEGRAM, QUEBEC_SITE]
+ *                 description: "Site de redirection (optionnel : défaut LINKEDIN)"
  *                 example: "LINKEDIN"
  *     responses:
  *       200:
@@ -928,7 +901,7 @@ router.delete("/force/:id", IsAuthenticated, deleteOffreForce);
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.post("/:id/postuler", uploadDocuments("documents"),postulerOffreValidationRules, errorHandler, postulerOffre);
+router.post("/:id/postuler",postulerOffreValidationRules, errorHandler, postulerOffre);
 
 // /**
 //  * @swagger
@@ -1136,12 +1109,6 @@ router.put("/:id/fermer", IsAuthenticated, fermerOffre);
  *                   type: string
  *                   enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
  *                   description: Devise du salaire
- *                 horaire_ouverture:
- *                   type: string
- *                   description: Heure d'ouverture
- *                 horaire_fermeture:
- *                   type: string
- *                   description: Heure de fermeture
  *                 created_at:
  *                   type: string
  *                   format: date-time

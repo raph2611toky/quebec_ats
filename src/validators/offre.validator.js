@@ -9,8 +9,7 @@ const createOffreValidationRules = [
         .isLength({ min: 2, max: 100 })
         .withMessage("Le titre doit être entre 2 et 100 caractères"),
     body("description")
-        .notEmpty()
-        .withMessage("La description est requise"),
+        .optional(),
     body("date_limite")
         .notEmpty()
         .withMessage("La date limite est requise")
@@ -44,16 +43,10 @@ const createOffreValidationRules = [
         .withMessage("La devise est requise")
         .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
         .withMessage("Devise invalide"),
-    body("horaire_ouverture")
-        .notEmpty()
-        .withMessage("L'heure d'ouverture est requise")
-        .matches(timeRegex)
-        .withMessage("L'heure d'ouverture doit être au format HH:mm:ss (ex: 09:00:00)"),
-    body("horaire_fermeture")
-        .notEmpty()
-        .withMessage("L'heure de fermeture est requise")
-        .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)")
+    body("image_url")
+        .optional()
+        .isString()
+        .withMessage("Image url doit être en chaine de caractère.")    
 ];
 
 const updateOffreValidationRules = [
@@ -89,34 +82,24 @@ const updateOffreValidationRules = [
         .optional()
         .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
         .withMessage("Devise invalide"),
-    body("horaire_ouverture")
+    body("image_url")
         .optional()
-        .matches(timeRegex)
-        .withMessage("L'heure d'ouverture doit être au format HH:mm:ss (ex: 09:00:00)"),
-    body("horaire_fermeture")
-        .optional()
-        .matches(timeRegex)
-        .withMessage("L'heure de fermeture doit être au format HH:mm:ss (ex: 17:00:00)")
+        .isString()
+        .withMessage("Image url doit être en chaine de caractère.")    
 ];
 
 const postulerOffreValidationRules = [
     param("id").isInt().withMessage("L'ID de l'offre doit être un entier valide."),
     
     body("cv")
-      .custom((value, { req }) => {
-        if (!req.files || !req.files.cv) {
-          throw new Error("Le CV est requis.");
-        }
-        return true;
-      }),
-  
+    .isString()
+    .notEmpty()
+    .withMessage("L'url cv requis"),
+    
     body("lettre_motivation")
-      .custom((value, { req }) => {
-        if (!req.files || !req.files.lettre_motivation) {
-          throw new Error("La lettre de motivation est requise.");
-        }
-        return true;
-      }),
+    .isString()
+    .notEmpty()
+    .withMessage("L'url lettre_motivation requis"),
   
     body("nom")
       .isString()

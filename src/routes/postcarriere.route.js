@@ -82,21 +82,28 @@ const upload = createUpload("postcarriere");
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               titre:
  *                 type: string
+ *                 description: Titre du post carrière
+ *                 example: "Recrutement Développeur Full Stack"
  *               contenu:
  *                 type: string
+ *                 description: Contenu du post carrière
+ *                 example: "Nous recherchons un développeur Full Stack expérimenté pour rejoindre notre équipe."
  *               organisation_id:
  *                 type: integer
+ *                 description: ID de l'organisation
+ *                 example: 1
  *               images:
  *                 type: array
  *                 items:
  *                   type: string
- *                   format: binary
+ *                 description: Liste des URL des images sur AWS
+ *                 example: ["https://example.com/image1.jpg", "https://example.com/image2.jpg"]
  *             required:
  *               - titre
  *               - contenu
@@ -111,7 +118,7 @@ const upload = createUpload("postcarriere");
  *       400:
  *         description: Erreur lors de la création du post carrière
  */
-router.post("/", upload.array("images", 5), postCarriereController.createPostCarriere);
+router.post("/", postCarriereController.createPostCarriere);
 
 /**
  * @swagger
@@ -129,28 +136,57 @@ router.post("/", upload.array("images", 5), postCarriereController.createPostCar
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               titre:
  *                 type: string
+ *                 description: Nouveau titre du post carrière
+ *                 example: "Recrutement Développeur Senior"
  *               contenu:
  *                 type: string
+ *                 description: Nouveau contenu du post carrière
+ *                 example: "Nous recherchons un développeur senior pour un poste clé."
  *               organisation_id:
  *                 type: integer
+ *                 description: ID de l'organisation
+ *                 example: 2
  *               images:
  *                 type: array
  *                 items:
  *                   type: string
- *                   format: binary
+ *                 description: Liste des URL des images sur AWS
+ *                 example: ["https://example.com/image1.jpg", "https://example.com/image2.jpg"]
  *     responses:
  *       200:
  *         description: Post carrière mis à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PostCarriere'
  *       404:
  *         description: Post carrière non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Post carrière non trouvé"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
  */
-router.put("/:id", upload.array("images", 5), postCarriereController.updatePostCarriere);
+router.put("/:id", postCarriereController.updatePostCarriere);
 
 /**
  * @swagger

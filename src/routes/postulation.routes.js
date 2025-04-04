@@ -10,9 +10,10 @@ const {
     rejectPostulation,
     addRemarquePostulation,
     removeRemarquePostulation,
-    getDetailsPostulation
+    getDetailsPostulation,
+    getDetailsPostulationCandidat
 } = require("../controllers/postulation.controller");
-const { IsAuthenticated, IsAuthenticatedAdmin } = require("../middlewares/auth.middleware");
+const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 const createUpload = require("../config/multer.config");
 const { validateRemarque } = require("../validators/postulation.validator");
 const errorHandler = require("../middlewares/error.handler");
@@ -105,6 +106,7 @@ const upload = createUpload("candidats");
  *         updated_at: "2025-03-18T10:00:00Z"
  */
 
+
 /**
  * @swagger
  * /api/postulations:
@@ -114,42 +116,49 @@ const upload = createUpload("candidats");
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               cv:
  *                 type: string
- *                 format: binary
- *                 description: Fichier CV (obligatoire)
+ *                 description: URL AWS du fichier CV (obligatoire)
+ *                 default: "https://example.com/cv.pdf"
  *               lettre_motivation:
  *                 type: string
- *                 format: binary
- *                 description: Fichier lettre de motivation (optionnel)
+ *                 description: URL AWS du fichier lettre de motivation (optionnel)
+ *                 default: "https://example.com/lettre_motivation.pdf"
  *               email:
  *                 type: string
  *                 description: Email du candidat
+ *                 default: "candidat@example.com"
  *               nom:
  *                 type: string
  *                 description: Nom du candidat
+ *                 default: "Jean Dupont"
  *               telephone:
  *                 type: string
  *                 description: Téléphone du candidat (optionnel)
+ *                 default: "0123456789"
  *               offre_id:
  *                 type: integer
  *                 description: ID de l'offre
+ *                 default: 123
  *               source_site:
  *                 type: string
  *                 enum: [LINKEDIN, INDEED, JOOBLE, FRANCETRAVAIL, MESSAGER, WHATSAPP, INSTAGRAM, TELEGRAM, TWITTER, QUEBEC_SITE]
  *                 description: Source de la postulation
+ *                 default: "LINKEDIN"
  *               hasReferent:
  *                 type: string
  *                 enum: ["true", "false"]
  *                 description: Indique si des référents sont inclus
+ *                 default: "false"
  *               referents:
  *                 type: string
  *                 description: Tableau JSON de référents
  *                 example: '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]'
+ *                 default: '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]'
  *             required:
  *               - cv
  *               - email
@@ -164,13 +173,13 @@ const upload = createUpload("candidats");
  *             schema:
  *               $ref: '#/components/schemas/Postulation'
  *       400:
- *         description: Fichier CV manquant
+ *         description: URL CV manquante
  *       404:
  *         description: Offre non trouvée
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post("/", upload.fields([{ name: "cv", maxCount: 1 }, { name: "lettre_motivation", maxCount: 1 }]), createPostulation);
+router.post("/", createPostulation);
 
 /**
  * @swagger
@@ -569,6 +578,29 @@ router.put("/:id/update-my-remarque", IsAuthenticatedAdmin,  removeRemarquePostu
  */
 router.get("/:id/details", IsAuthenticatedAdmin, getDetailsPostulation);
 
+
+/**
+ * @swagger
+ * /api/postulations/{id}/details/me:
+ *   get:
+ *     summary: Details une postulation par ID (processus_passer, offres, offres.processus)
+ *     tags: [Postulations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la postulation cible
+ *     responses:
+ *       200:
+ *         description: Details retourné 
+ *       500:
+ *         description: Erreur interne du serveur
+ */
+router.get("/:id/details/me", IsAuthenticatedCandidat, getDetailsPostulationCandidat);
 
 
 module.exports = router;
