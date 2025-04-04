@@ -514,4 +514,3 @@ exports.getDetailsPostulationCandidat = async (req, res) => {
 };
 
 
-

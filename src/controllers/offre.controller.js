@@ -112,6 +112,43 @@ exports.updateOffre = async (req, res) => {
         let { id, ...updateData } = req.body;
         updateData = filterAllowedFields(updateData)
 
+        if (req.file) {
+            const subDir = "offres";
+            const uploadDir = path.join(__dirname, "../uploads", subDir);
+            const originalName = req.file.originalname;
+            const ext = path.extname(originalName);
+            const baseName = path.basename(originalName, ext);
+            const tempPath = path.join(uploadDir, req.file.filename);
+            const finalPath = path.join(uploadDir, originalName);
+
+            if (existingOffre.image_url && !existingOffre.image_url.includes("default-offre.png")) {
+                const oldImagePath = path.join(__dirname, "../", existingOffre.image_url.replace(req.base_url, ""));
+                await fs.unlink(oldImagePath).catch(() => {});
+            }
+
+            if (await fs.stat(finalPath).catch(() => false)) {
+                const tempBuffer = await fs.readFile(tempPath);
+                const tempHash = crypto.createHash("md5").update(tempBuffer).digest("hex");
+                const existingBuffer = await fs.readFile(finalPath);
+                const existingHash = crypto.createHash("md5").update(existingBuffer).digest("hex");
+
+                if (tempHash === existingHash) {
+                    await fs.unlink(tempPath);
+                    updateData.image_url = `/uploads/offres/${originalName}`;
+                } else {
+                    const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+                    const randomSuffix = Math.round(Math.random() * 1e9);
+                    const newName = `${baseName}-${timestamp}-${randomSuffix}${ext}`;
+                    const newPath = path.join(uploadDir, newName);
+                    await fs.rename(tempPath, newPath);
+                    updateData.image_url = `/uploads/offres/${newName}`;
+                }
+            } else {
+                await fs.rename(tempPath, finalPath);
+                updateData.image_url = `/uploads/offres/${originalName}`;
+            }
+        }
+
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
         if (updateData.date_limite) updateData.date_limite = new Date(updateData.date_limite);
@@ -218,7 +255,7 @@ exports.filterOffres = async (req, res) => {
         if (minNombreRequis) filterConditions.nombre_requis = { gte: parseInt(minNombreRequis) };
         if (lieu) filterConditions.lieu = { contains: lieu, mode: "insensitive" };
         if (pays) filterConditions.pays = { contains: pays, mode: "insensitive" };
-        if (type_emploi) filterConditions.type_emploi = type_emploi.toUpperCase();        
+        if (type_emploi) filterConditions.type_emploi = { contains: type_emploi, mode: "insensitive" };        
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
         if (devise) filterConditions.devise = devise;
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
