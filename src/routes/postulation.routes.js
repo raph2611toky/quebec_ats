@@ -155,10 +155,48 @@ const upload = createUpload("candidats");
  *                 description: Indique si des référents sont inclus
  *                 default: "false"
  *               referents:
- *                 type: string
- *                 description: Tableau JSON de référents
- *                 example: '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]'
- *                 default: '[{"email": "ref@example.com", "nom": "Paul", "telephone": "123", "recommendation": "Great", "statut": "Manager"}]'
+ *                 type: array
+ *                 description: Liste des référents (obligatoire si `hasReferent` est "true")
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                       description: Email du référent
+ *                     nom:
+ *                       type: string
+ *                       description: Nom du référent
+ *                     telephone:
+ *                       type: string
+ *                       description: Téléphone du référent
+ *                 example:
+ *                   - email: "ref@example.com"
+ *                     nom: "Paul"
+ *                     telephone: "123"
+ *               preselections:
+ *                 type: array
+ *                 description: Liste des réponses de présélection (questions ou tâches)
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     processus_id:
+ *                       type: integer
+ *                       description: ID du processus lié
+ *                     question_id:
+ *                       type: integer
+ *                       description: ID de la question (si type QUESTIONNAIRE)
+ *                     reponse_id:
+ *                       type: integer
+ *                       description: ID de la réponse choisie (si type QUESTIONNAIRE)
+ *                     url:
+ *                       type: string
+ *                       description: URL du fichier ou de la tâche (si type TACHE)
+ *                 example:
+ *                   - processus_id: 1
+ *                     question_id: 10
+ *                     reponse_id: 45
+ *                   - processus_id: 2
+ *                     url: "https://example.com/taches/ma-tache.pdf"
  *             required:
  *               - cv
  *               - email
@@ -173,7 +211,7 @@ const upload = createUpload("candidats");
  *             schema:
  *               $ref: '#/components/schemas/Postulation'
  *       400:
- *         description: URL CV manquante
+ *         description: Requête invalide (par ex. champ obligatoire manquant)
  *       404:
  *         description: Offre non trouvée
  *       500:

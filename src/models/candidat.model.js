@@ -12,7 +12,7 @@ class Candidat {
         this.nom = nom;
         this.is_email_active = is_email_active;
         this.telephone = telephone || null;
-        this.image = image;
+        this.image = getFullImageUrl(image,"");
         this.created_at = created_at;
         this.updated_at = updated_at;
     }

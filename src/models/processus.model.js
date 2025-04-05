@@ -8,7 +8,6 @@ class Processus {
         titre,
         type = "VISIO_CONFERENCE",
         description,
-        statut = "A_VENIR",
         duree,
         ordre,
         start_at,
@@ -20,7 +19,6 @@ class Processus {
         this.titre = titre;
         this.type = type;
         this.description = description;
-        this.statut = statut;
         this.duree = duree;
         this.ordre = ordre;
         this.start_at = start_at;
@@ -35,7 +33,6 @@ class Processus {
             processus.titre,
             processus.type,
             processus.description,
-            processus.statut,
             processus.duree,
             processus.ordre,
             processus.start_at,
