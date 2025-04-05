@@ -62,14 +62,12 @@ async function seedProcessus() {
                 },
             ];
 
-            let ordre = 1; // Initialisation du compteur d'ordre pour les questions
 
             for (const { question, reponses } of questionsData) {
                 const createdQuestion = await prisma.question.create({
                     data: {
                         label: question,
                         processus_id: questionnaire.id,
-                        ordre,
                     },
                 });
                 
@@ -81,7 +79,6 @@ async function seedProcessus() {
                     })),
                 });
                 
-                ordre++; // Incrémente l'ordre pour la prochaine question
             }
             
             // Processus 3 : Visio-conférence
