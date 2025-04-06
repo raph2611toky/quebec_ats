@@ -39,7 +39,10 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "twilio": "^5.5.0",
-    "z-schema": "^6.0.2"
+    "z-schema": "^6.0.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.5.0"
   },
   "devDependencies": {
     "morgan": "^1.10.0",
