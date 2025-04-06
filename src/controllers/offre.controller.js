@@ -436,7 +436,6 @@ exports.getDetailsOffres = async (req, res)=>{
                 postulations: {
                     include: {
                         candidat: true,
-                        processus_passer: true, 
                         remarques: {
                             include: {
                                 admin: true
@@ -534,8 +533,7 @@ exports.getOfferDetails = async (req, res) => {
                         select: { id: true, name: true },
                     },
                     },
-                },
-                processus_passer: true
+                }
                 },
             },
             },
@@ -587,5 +585,45 @@ exports.getActiveProcess = async (req, res)=>{
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 }
+
+
+exports.bestMatchs = async (req, res)=>{
+    try {
+        const offreId = parseInt(req.params.id)
+
+        const offre = await prisma.offre.findUnique({
+            where: { id: offreId },
+            select: { nombre_requis: true },
+        });
+
+        if (!offre) {
+            throw new Error('Offre non trouvée');
+        }
+
+        const nombreRequis = offre.nombre_requis;
+
+        const topPostulations = await prisma.postulation.findMany({
+            where: {
+                offre_id: offreId, 
+            },
+            orderBy: {
+                note: 'desc',  
+            },
+            take: nombreRequis,  
+            include: {
+                candidat: true,
+                remarques: true,
+                reponse_preselection: true  
+            },
+        });
+
+        return topPostulations;
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+}
+
 
 module.exports = exports;

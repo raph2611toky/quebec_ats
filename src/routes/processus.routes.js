@@ -63,19 +63,6 @@ const  createUpload  = require("../config/multer.config")
  *           enum: [A_VENIR, EN_COURS, TERMINE, ANNULE]
  *           description: Statut actuel du processus
  *           example: "A_VENIR"
- *         duree:
- *           type: integer
- *           description: Durée en minutes
- *           example: 60
- *         ordre:
- *           type: integer
- *           description: ordre dans le processus de recrutement 
- *           example: 60
- *         start_at: 
- *           type: string
- *           format: date-time
- *           description: Date de commencement
- *           example: "2025-03-18T10:00:00.000Z" 
  *         created_at:
  *           type: string
  *           format: date-time
@@ -90,8 +77,6 @@ const  createUpload  = require("../config/multer.config")
  *         - id
  *         - titre
  *         - description
- *         - duree
- *         - ordre
  */
 
 /**

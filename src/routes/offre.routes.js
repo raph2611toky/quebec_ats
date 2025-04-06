@@ -15,7 +15,8 @@ const {
     deleteOffreForce,
     getDetailsOffres,
     fermerOffre, getOfferDetails,
-    getActiveProcess
+    getActiveProcess,
+    bestMatchs
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1165,38 +1166,6 @@ router.put("/:id/fermer", IsAuthenticated, fermerOffre);
  *                             nullable: true
  *                           image:
  *                             type: string
- *                       processus_passer:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             id:
- *                               type: integer
- *                             processus_id:
- *                               type: integer
- *                             postulation_id:
- *                               type: integer
- *                             statut:
- *                               type: string
- *                               enum: [EN_COURS, TERMINE, ANNULE]
- *                             score:
- *                               type: integer
- *                             lien_web:
- *                               type: string
- *                               nullable: true
- *                             lien_fichier:
- *                               type: string
- *                               nullable: true
- *                             lien_vision:
- *                               type: string
- *                               nullable: true
- *                             created_at:
- *                               type: string
- *                               format: date-time
- *                             updated_at:
- *                               type: string
- *                               format: date-time
- *                   description: Liste des postulations avec leurs processus passés
  */
 router.get("/:id/details", IsAuthenticated, getOfferDetails);
 
@@ -1245,5 +1214,263 @@ router.get("/:id/details", IsAuthenticated, getOfferDetails);
  *                   example: "Erreur interne du serveur"
  */
 router.get("/:id/get-active-process", IsAuthenticated, getActiveProcess);
+
+/**
+ * @swagger
+ * /api/offres/{id}/full-info:
+ *   get:
+ *     summary: Récupérer les détails complets d'une offre
+ *     tags: [Offres]
+ *     description: Retourne toutes les informations d'une offre, y compris les processus de recrutement, les postulations, les candidats et les remarques associées.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre à récupérer
+ *     responses:
+ *       200:
+ *         description: Détails complets de l'offre
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   description: ID unique de l'offre
+ *                 titre:
+ *                   type: string
+ *                   description: Titre de l'offre
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                   description: Informations sur l'utilisateur créateur
+ *                 organisation:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     nom:
+ *                       type: string
+ *                     adresse:
+ *                       type: string
+ *                     ville:
+ *                       type: string
+ *                   description: Informations sur l'organisation
+ *                 image_url:
+ *                   type: string
+ *                   description: URL de l'image de l'offre
+ *                 description:
+ *                   type: string
+ *                   description: Description de l'offre
+ *                 date_limite:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date limite de l'offre
+ *                 status:
+ *                   type: string
+ *                   enum: [CREE, OUVERT, FERME]
+ *                   description: Statut de l'offre
+ *                 nombre_requis:
+ *                   type: integer
+ *                   description: Nombre de candidats requis
+ *                 lieu:
+ *                   type: string
+ *                   description: Lieu de l'emploi
+ *                 pays:
+ *                   type: string
+ *                   description: Pays de l'emploi
+ *                 type_emploi:
+ *                   type: string
+ *                   enum: [CDD, CDI, STAGE]
+ *                   description: Type d'emploi
+ *                 type_temps:
+ *                   type: string
+ *                   enum: [PLEIN_TEMPS, TEMPS_PARTIEL]
+ *                   description: Type de temps d'occupation de travail
+ *                 salaire:
+ *                   type: string
+ *                   description: Salaire (stocké comme Decimal)
+ *                 devise:
+ *                   type: string
+ *                   enum: [EURO, DOLLAR, DOLLAR_CANADIAN, LIVRE, YEN, ROUPIE, ARIARY]
+ *                   description: Devise du salaire
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date de création
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Date de mise à jour
+ *                 processus:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       titre:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                         enum: [TACHE, VISIO_CONFERENCE, QUESTIONNAIRE]
+ *                       description:
+ *                         type: string
+ *                       statut:
+ *                         type: string
+ *                         enum: [A_VENIR, EN_COURS, TERMINER, ANNULER]
+ *                       offre_id:
+ *                         type: integer
+ *                       duree:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                 postulations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       candidat:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           nom:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           telephone:
+ *                             type: string
+ *                             nullable: true
+ *                           image:
+ *                             type: string
+ */
+router.get("/:id/full-info",getDetailsOffres)
+
+
+/**
+ * @swagger
+ * /api/offres/{id}/best-matchs:
+ *   get:
+ *     summary: Récupérer les meilleures postulations pour une offre donnée
+ *     tags: [Offres]
+ *     description: Retourne les meilleures postulations triées par note pour l'offre spécifiée.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'offre pour laquelle récupérer les meilleures postulations
+ *     responses:
+ *       200:
+ *         description: Liste des meilleures postulations triées par note
+ *         content: 
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   candidat_id:
+ *                     type: integer
+ *                   offre_id:
+ *                     type: integer
+ *                   note:
+ *                     type: integer
+ *                   date_soumission:
+ *                     type: string
+ *                     format: date-time
+ *                   etape_actuelle:
+ *                     type: string
+ *                   cv:
+ *                     type: string
+ *                   lettre_motivation:
+ *                     type: string
+ *                   source_site:
+ *                     type: string
+ *                   candidat:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       nom:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       image:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                   remarques:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         text:
+ *                           type: string
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                   reponse_preselection:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         processus_id:
+ *                           type: integer
+ *                         question_id:
+ *                           type: integer
+ *                         reponse_id:
+ *                           type: integer
+ *                         url:
+ *                           type: string
+ *       404:
+ *         description: Offre non trouvée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Offre non trouvée"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/:id/best-matchs",bestMatchs)
 
 module.exports = router;

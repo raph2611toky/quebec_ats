@@ -9,8 +9,6 @@ class Processus {
         type = "VISIO_CONFERENCE",
         description,
         duree,
-        ordre,
-        start_at,
         created_at = null,
         updated_at = null
     ) {
@@ -20,8 +18,6 @@ class Processus {
         this.type = type;
         this.description = description;
         this.duree = duree;
-        this.ordre = ordre;
-        this.start_at = start_at;
         this.created_at = created_at;
         this.updated_at = updated_at;
     }
@@ -34,8 +30,6 @@ class Processus {
             processus.type,
             processus.description,
             processus.duree,
-            processus.ordre,
-            processus.start_at,
             processus.created_at,
             processus.updated_at
         );
