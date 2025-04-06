@@ -52,7 +52,7 @@ module.exports.createAdminSupportRequest = async (req, res) => {
 };
   
   module.exports.createTechnicalSupportRequest = async (req, res) => {
-    const { sujet, contenu, emailSource } = req.body;
+    const { sujet, contenu, emailSource=req.user.email } = req.body;
   
     try {
       if (!sujet || !contenu || !emailSource) {
