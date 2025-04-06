@@ -28,12 +28,6 @@ const createProcessusValidator = [
         .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
     
-    body("duree")
-        .notEmpty()
-        .withMessage("La durée est requise")
-        .isInt({ min: 1 })
-        .withMessage("La durée doit être un nombre entier positif en minutes"),
-    
 ];
 
 const updateProcessusValidator = [
@@ -61,11 +55,6 @@ const updateProcessusValidator = [
         .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
         .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
-    
-    body("duree")
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage("La durée doit être un nombre entier positif en minutes"),
     
     body("lien_visio")
         .optional({ nullable: true })

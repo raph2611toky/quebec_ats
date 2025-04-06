@@ -17,7 +17,6 @@ exports.createProcessus = async (req, res) => {
         const processusData = {
             ...req.body,
             offre_id : parseInt(req.body.offre_id),
-            duree: parseInt(req.body.duree)
         };
   
         const offre = await Offre.getById(processusData.offre_id)
@@ -53,16 +52,13 @@ exports.updateProcessus = async (req, res) => {
         }
 
         // Récupérer uniquement les champs valides présents dans la requête
-        const { titre, type, description, duree } = req.body;
+        const { titre, type, description} = req.body;
         let updateData = {};
 
         if (titre !== undefined) updateData.titre = titre;
         if (type !== undefined) updateData.type = type;
         if (description !== undefined) updateData.description = description;
-        if (duree !== undefined) {
-            const parsedDuree = parseInt(duree);
-            if (!isNaN(parsedDuree)) updateData.duree = parsedDuree;
-        }
+        
 
         // Si aucun champ valide n'est fourni
         if (Object.keys(updateData).length === 0) {
@@ -263,7 +259,6 @@ exports.startProcessus = async (req, res) => {
                         processType: processType,
                         description: data.description,
                         url: finalUrl,
-                        duree: processus.duree
                     },
                     saveToNotifications: false
                 });
@@ -371,7 +366,6 @@ exports.startProcessusInacheve = async (req, res) => {
                         processType: processType,
                         description: data.description,
                         url: finalUrl,
-                        duree: processus.duree
                     },
                     saveToNotifications: false
                 });
@@ -489,7 +483,6 @@ exports.startProcessusForCandidats = async (req, res) => {
                         processType: processType,
                         description: data.description,
                         url: finalUrl,
-                        duree: processus.duree
                     },
                     saveToNotifications: false
                 });
@@ -723,10 +716,9 @@ exports.startVision = async (req, res)=>{
 
         const { users, candidats, start_time, start_date } = req.body;
 
-        const duration = processus.duree
 
         if (!Array.isArray(users) || !Array.isArray(candidats) || !start_time || !start_date ) {
-            return res.status(400).json({ error: "Tous les champs sont requis : users, candidats, start_time, start_date, duration" });
+            return res.status(400).json({ error: "Tous les champs sont requis : users, candidats, start_time, start_date" });
         }
         if (!/^\d{2}:\d{2}$/.test(start_time)) {
             return res.status(400).json({ error: "start_time doit être au format HH:mm" });
@@ -756,7 +748,6 @@ exports.startVision = async (req, res)=>{
 
         const summary = `Réunion planifiée par ${req.user.name}`;
         const description = `Réunion avec ${users.length} utilisateurs et ${candidats.length} candidats`;
-        const meetLink = await createGoogleMeet(startDateTime.toISOString(), duration, summary, description);
 
         if (!meetLink) {
             return res.status(500).json({ error: "Échec de la création du Google Meet" });
