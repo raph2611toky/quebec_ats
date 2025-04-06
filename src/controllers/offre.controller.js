@@ -557,12 +557,15 @@ exports.getOfferDetailsGuest = async (req, res) => {
         const offre = await prisma.offre.findUnique({
             where: { id: offreId },
             include: {
-            organisation: {
-                select: { id: true, nom: true, adresse: true, ville: true },
-                include: {
-                    postcarieres: true
-                }
-            },
+                organisation: {
+                    select: {
+                      id: true,
+                      nom: true,
+                      adresse: true,
+                      ville: true,
+                      postcarieres: true, 
+                    }
+                  },
             processus: {
                 include: {
                 questions: {

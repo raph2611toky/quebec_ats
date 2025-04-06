@@ -9,6 +9,7 @@ const { TypeProcessus } = require("@prisma/client")
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { setupGoogleAuth } = require('../services/google/authentication');
 const Offre = require("../models/offre.model");
+const AdminAudit = require("../models/adminaudit.model");
 
 setupGoogleAuth();
 
@@ -344,6 +345,7 @@ exports.deleteCandidat = async (req, res) => {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
 
+        await AdminAudit.create(req.user.id,"suppresion_candidat","Suppression Candidat '"+ candidat.nom +"' - '"+ candidat.email +"' par "+ req.user.name)
         await Candidat.delete(candidat.id);
         return res.status(200).json({ message: "Candidat supprimé avec succès" });
     } catch (error) {
@@ -376,6 +378,7 @@ exports.removeReferent = async (req, res) => {
         }
 
         const referentId = parseInt(req.body.referent_id);
+        await AdminAudit.create(req.user.id,"suppresion_referent","Suppression d'un referent candidat '"+ candidat.nom +"' - '"+ candidat.email +"' par "+ req.user.name)
         await Candidat.removeReferent(candidat.id, referentId);
         return res.status(200).json({ message: "Référent supprimé avec succès" });
     } catch (error) {
