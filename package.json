@@ -9,7 +9,7 @@
     "start": "node ./src/app.js",
     "build": "prisma generate",
     "vercel-build": "prisma migrate deploy && prisma generate",
-    "postinstall": "prisma generate",
+    "postinstall": "if [ -f prisma/schema.prisma ]; then prisma generate; fi",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "node prisma/seeders/seed.js"
