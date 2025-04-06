@@ -2,7 +2,7 @@ const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
-const { Status, TypeProcessus, StatutProcessus } = require("@prisma/client");
+const { Status, TypeProcessus } = require("@prisma/client");
 const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
 const { count } = require("console");
@@ -64,8 +64,6 @@ exports.updateOffre = async (req, res) => {
         "type_temps",
         "salaire",
         "devise",
-        "horaire_ouverture",
-        "horaire_fermeture",
     ];
     
     function filterAllowedFields(data) {
@@ -333,9 +331,6 @@ exports.publishOffre = async (req, res) => {
             return res.status(400).json({ error: "Interdit. Offre déjà fermée." });
         }
 
-        if (offre.processus.length === 0) {
-            return res.status(400).json({ error: "Il faut au moins ajouter un processus de recrutement avant de publier une offre." });
-        }
 
         for (const processus of offre.processus) {
             if (processus.type === "QUESTIONNAIRE") {
@@ -357,7 +352,7 @@ exports.publishOffre = async (req, res) => {
             data: { status: Status.OUVERT }
         })
 
-        await shareJobOnLinkedIn(offre.titre, offre.description, "7W9BCC_46N", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
+        await shareJobOnLinkedIn(offre.titre, offre.description, "epsnvBD8Ud", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
 
         return res.status(200).json({ message: "Offre publiée avec succès." });
     } catch (error) {
@@ -438,7 +433,6 @@ exports.getDetailsOffres = async (req, res)=>{
                 postulations: {
                     include: {
                         candidat: true,
-                        processus_passer: true, 
                         remarques: {
                             include: {
                                 admin: true
@@ -537,7 +531,13 @@ exports.getOfferDetails = async (req, res) => {
                     },
                     },
                 },
-                processus_passer: true
+                reponse_preselection: {
+                    include: {
+                        question: true,
+                        reponse: true,
+                        processus: true,
+                    }
+                }
                 },
             },
             },
@@ -554,35 +554,77 @@ exports.getOfferDetails = async (req, res) => {
     }
 };
 
-exports.getActiveProcess = async (req, res)=>{
+exports.getOfferDetailsGuest = async (req, res) => {
     try {
+        const offreId = parseInt(req.params.id);
+    
         const offre = await prisma.offre.findUnique({
-            where:{id: parseInt(req.params.id)}
-        })
-        
-        if(!offre){
+            where: { id: offreId },
+            include: {
+                organisation: {
+                    select: {
+                      id: true,
+                      nom: true,
+                      adresse: true,
+                      ville: true,
+                      postcarieres: true, 
+                    }
+                  },
+            processus: {
+                include: {
+                questions: {
+                    include: {
+                    reponses: true,
+                    },
+                },
+                },
+            },
+            },
+        });
+    
+        if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
         
-        const activeProcess = await prisma.processus.findUnique({
-            where:{
-                offre_id: offre.id,
-                statut: StatutProcessus.EN_COURS
-            },
-            include: {
-                questions: {
-                    include: {
-                        reponses: true
-                    }
-                },                
-            }
-        })
-        
-        if(!activeProcess){
-            return res.status(404).json({ error: "Aucun processu en cours pour l'offre" });
+        return res.status(200).json(offre);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails de l'offre:", error);
+      return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+
+exports.bestMatchs = async (req, res)=>{
+    try {
+        const offreId = parseInt(req.params.id)
+
+        const offre = await prisma.offre.findUnique({
+            where: { id: offreId },
+            select: { nombre_requis: true },
+        });
+
+        if (!offre) {
+            throw new Error('Offre non trouvée');
         }
 
-        return res.status(200).json(activeProcess)
+        const nombreRequis = offre.nombre_requis;
+
+        const topPostulations = await prisma.postulation.findMany({
+            where: {
+                offre_id: offreId, 
+            },
+            orderBy: {
+                note: 'desc',  
+            },
+            take: nombreRequis,  
+            include: {
+                candidat: true,
+                remarques: true,
+                reponse_preselection: true  
+            },
+        });
+
+        return res.status(200).json(topPostulations);
 
     } catch (error) {
         console.log(error);
@@ -590,4 +632,4 @@ exports.getActiveProcess = async (req, res)=>{
     }
 }
 
-module.exports = exports;
+

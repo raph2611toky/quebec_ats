@@ -1,5 +1,5 @@
 const { body } = require("express-validator");
-const { TypeProcessus, StatutProcessus } = require("@prisma/client");
+const { TypeProcessus } = require("@prisma/client");
 
 const createProcessusValidator = [
     body("offre_id")
@@ -27,16 +27,6 @@ const createProcessusValidator = [
         .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
         .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
-    body("statut")
-        .optional()
-        .isIn([StatutProcessus.A_VENIR, StatutProcessus.EN_COURS, StatutProcessus.TERMINER, StatutProcessus.ANNULER])
-        .withMessage("Le statut doit être A_VENIR, EN_COURS, TERMINE ou ANNULE"),
-    
-    body("duree")
-        .notEmpty()
-        .withMessage("La durée est requise")
-        .isInt({ min: 1 })
-        .withMessage("La durée doit être un nombre entier positif en minutes"),
     
 ];
 
@@ -65,15 +55,6 @@ const updateProcessusValidator = [
         .isIn([TypeProcessus.QUESTIONNAIRE,TypeProcessus.TACHE,TypeProcessus.VISIO_CONFERENCE])
         .withMessage("Le type doit être VISIO_CONFERENCE, TACHE ou QUESTIONNAIRE"),
     
-    body("statut")
-        .optional()
-        .isIn([StatutProcessus.A_VENIR, StatutProcessus.EN_COURS, StatutProcessus.TERMINER, StatutProcessus.ANNULER])
-        .withMessage("Le statut doit être A_VENIR, EN_COURS, TERMINE ou ANNULE"),
-    
-    body("duree")
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage("La durée doit être un nombre entier positif en minutes"),
     
     body("lien_visio")
         .optional({ nullable: true })

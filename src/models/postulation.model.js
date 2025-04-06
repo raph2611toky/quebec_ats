@@ -58,7 +58,19 @@ class Postulation {
     static async getById(id, base_url) {
         const postulation = await prisma.postulation.findUnique({
             where: { id },
-            include: { candidat: { include: { referents: { include: { referent: true } } } }, offre: true }
+            include: { 
+                candidat: { 
+                    include: { 
+                        referents: { 
+                            include: { 
+                                referent: true 
+                            } 
+                        } 
+                    } 
+                }, 
+                offre: true, 
+                reponse_preselection: true 
+            }
         });
         return postulation ? Postulation.fromPrisma(postulation, base_url) : null;
     }

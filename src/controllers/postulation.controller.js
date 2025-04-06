@@ -10,16 +10,16 @@ const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
 const { sendEmail } = require("../services/notifications/email");
 const prisma = require("../config/prisma.config");
 const { EtapeActuelle, Status } = require("@prisma/client");
-const { count } = require("console");
 const Remarque = require("../models/remarque.model");
+const ReponsePreSelection = require("../models/reponsepreselection.model");
+const Processus = require("../models/processus.model");
+const Reponse = require("../models/reponse.model");
 
 exports.createPostulation = async (req, res) => {
     try {
         base_url = req.base_url
         
-        // console.log(req.body);
         const offreId = parseInt(req.body.offre_id)
-        // console.log(offreId);
         if(isNaN(offreId)){
             return res.status(400).json({ error: "Offre Id non valide" });
         }
@@ -40,39 +40,39 @@ exports.createPostulation = async (req, res) => {
             );
         }
 
-        if (req.body.hasReferent === "true" && req.body.referents) {
-            const referentsData = JSON.parse(req.body.referents);
-            for (const refData of referentsData) {
-                let referent = await Referent.findByEmail(refData.email);
-                if (!referent) {
-                    referent = await Referent.create({
-                        email: refData.email,
-                        nom: refData.nom,
-                        telephone: refData.telephone,
-                        recommendation: null,
-                        statut: "NON_APPROUVE"
-                    });
-                }
-                await Candidat.addReferent(candidat.id, referent.id);
-
-                const token = generateToken({
-                    referent_id: referent.id,
-                    candidat_id: candidat.id
-                });
-
-                const encryptedToken = encryptAES(token);
-
-                const confirmationLink = `${process.env.FRONTEND_URL}/referents/confirm/${encodeURIComponent(encryptedToken)}`;
-
-                await sendEmail({
-                    to: referent.email,
-                    subject: "Confirmation de référence",
-                    type: "referentConfirmation",
-                    data: { candidatName: candidat.nom, offreTitre: offre.titre, confirmationLink },
-                    saveToNotifications: true
+        if (req.body.hasReferent === "true" ) {
+            
+            let referent = await Referent.findByEmail(req.body.email_referent);
+            if (!referent) {
+                referent = await Referent.create({
+                    email: req.body.email_referent,
+                    nom: req.body.nom_referent,
+                    telephone: req.body.telephone_referent,
+                    recommendation: null,
+                    statut: "NON_APPROUVE"
                 });
             }
+            await Candidat.addReferent(candidat.id, referent.id);
+
+            const token = generateToken({
+                referent_id: referent.id,
+                candidat_id: candidat.id
+            });
+
+            const encryptedToken = encryptAES(token);
+
+            const confirmationLink = `${process.env.FRONTEND_URL}/referents/confirm/${encodeURIComponent(encryptedToken)}`;
+
+            await sendEmail({
+                to: referent.email,
+                subject: "Confirmation de référence",
+                type: "referentConfirmation",
+                data: { candidatName: candidat.nom, offreTitre: offre.titre, confirmationLink },
+                saveToNotifications: true
+            });
+            
         }
+
         const postulationData = {
             candidat_id: candidat.id,
             offre_id: parseInt(req.body.offre_id),
@@ -82,7 +82,85 @@ exports.createPostulation = async (req, res) => {
             source_site: req.body.source_site
         };
 
-        const newPostulation = await Postulation.create(postulationData, req.base_url);
+        let newPostulation = await Postulation.create(postulationData, req.base_url);
+
+
+        // Traitement des réponses de présélection
+        const reponses = req.body.preselections || [];
+        let noteTotale = 0;
+
+        for (const item of reponses) {
+            const processusId = parseInt(item.processus_id);
+            if (isNaN(processusId)) continue;
+
+            const processus = await Processus.getById(processusId);
+            if (!processus) continue;
+
+            if (processus.type === "QUESTIONNAIRE") {
+                const questionId = parseInt(item.question_id);
+                const reponseId = parseInt(item.reponse_id);
+                if (isNaN(questionId) || isNaN(reponseId)) {
+                    console.warn("Questionnaire : question_id ou reponse_id manquant");
+                    continue;
+                }
+
+                const exist = await prisma.reponsePreSelection.findUnique({
+                    where: {
+                        postulation_id_processus_id_question_id: {
+                            postulation_id: newPostulation.id,
+                            processus_id: processusId,
+                            question_id: questionId
+                        }
+                    }
+                });
+
+                if (!exist) {
+                    const reponse = await Reponse.getById(reponseId);
+                    const note = reponse && reponse.is_true ? 1 : 0;
+
+                    await ReponsePreSelection.create({
+                        postulation_id: newPostulation.id,
+                        processus_id: processusId,
+                        question_id: questionId,
+                        reponse_id: reponseId
+                    });
+
+                    noteTotale += note;
+                }
+
+            } else if (processus.type === "TACHE") {
+                const url = item.url;
+                if (!url) {
+                    console.warn("Tâche : URL manquante");
+                    continue;
+                }
+
+                const exist = await prisma.reponsePreSelection.findFirst({
+                    where: {
+                        postulation_id: newPostulation.id,
+                        processus_id: processusId
+                    }
+                });
+
+                if (!exist) {
+                    await ReponsePreSelection.create({
+                        postulation_id: newPostulation.id,
+                        processus_id: processusId,
+                        url
+                    });
+                }
+            }
+        }
+
+        if (noteTotale > 0) {
+            newPostulation= await prisma.postulation.update({
+                where: { id: newPostulation.id },
+                data: { note: noteTotale }
+            });
+        }
+
+
+
         await sendEmail({
             to: candidat.email,
             subject: "Accusé de réception de votre postulation",
@@ -91,7 +169,7 @@ exports.createPostulation = async (req, res) => {
             saveToNotifications: true
         });
 
-        return res.status(201).json(Postulation.fromPrisma(newPostulation, base_url));
+        return res.status(201).json(newPostulation);
     } catch (error) {
         console.error("Erreur lors de la création de la postulation:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });

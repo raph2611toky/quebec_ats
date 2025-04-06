@@ -9,6 +9,7 @@ const { TypeProcessus } = require("@prisma/client")
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { setupGoogleAuth } = require('../services/google/authentication');
 const Offre = require("../models/offre.model");
+const AdminAudit = require("../models/adminaudit.model");
 
 setupGoogleAuth();
 
@@ -344,6 +345,7 @@ exports.deleteCandidat = async (req, res) => {
             return res.status(404).json({ error: "Candidat non trouvé" });
         }
 
+        await AdminAudit.create(req.user.id,"suppresion_candidat","Suppression Candidat '"+ candidat.nom +"' - '"+ candidat.email +"' par "+ req.user.name)
         await Candidat.delete(candidat.id);
         return res.status(200).json({ message: "Candidat supprimé avec succès" });
     } catch (error) {
@@ -376,6 +378,7 @@ exports.removeReferent = async (req, res) => {
         }
 
         const referentId = parseInt(req.body.referent_id);
+        await AdminAudit.create(req.user.id,"suppresion_referent","Suppression d'un referent candidat '"+ candidat.nom +"' - '"+ candidat.email +"' par "+ req.user.name)
         await Candidat.removeReferent(candidat.id, referentId);
         return res.status(200).json({ message: "Référent supprimé avec succès" });
     } catch (error) {
@@ -585,19 +588,11 @@ exports.getCandidatProcessus = async(req, res) => {
         if (!postulation) {
             return res.status(404).json({ error: "Vous n'avez pas accès à ce processus" });
         }
-
-        if (processus.statut !== StatutProcessus.EN_COURS) {
-            return res.status(400).json({ 
-                error: "Le processus n'est pas en cours (peut-être à venir, terminé ou annulé)" 
-            });
-        }
         return res.status(200).json({
             id: processus.id,
             titre: processus.titre,
             type: processus.type,
             description: processus.description,
-            statut: processus.statut,
-            duree: processus.duree,
             offre: {
                 id: processus.offre.id,
                 titre: processus.offre.titre
@@ -612,31 +607,3 @@ exports.getCandidatProcessus = async(req, res) => {
 }
 
 
-exports.getPassedProcess = async (req, res)=>{
-    try {
-        const offre = Offre.getById(parseInt(req.params.id))
-        const candidat_id = req.candidat.id 
-
-        if(!offre){
-            return res.status(404).json({ error: "Offre non trouvé" });
-        }
-
-        const postulation = await prisma.postulation.findUnique({
-            where: {
-                candidat_id: candidat_id, 
-                offre_id: offre.id
-            }
-        })
-        const passedProcess = prisma.processusPasser.findUnique({
-            where: {
-               postulation_id:  postulation.id,
-            }
-        })
-
-        return res.status(200).json(passedProcess)
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Erreur interne du serveur" });
-    }
-}

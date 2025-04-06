@@ -212,16 +212,13 @@ exports.getOrganisationDashboard = async(req, res) => {
             ? postulationCounts.reduce((a, b) => a + b, 0) / postulationCounts.length 
             : 0;
 
-        // 4. Statistiques des processus
         const processusStats = await prisma.processus.aggregate({
             where: { offre: { organisation_id: organisationId } },
             _count: { id: true },
-            _avg: { duree: true }
         });
 
         const processusByType = {
             tache: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "TACHE" } }),
-            visioConference: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "VISIO_CONFERENCE" } }),
             questionnaire: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "QUESTIONNAIRE" } })
         };
 
@@ -285,7 +282,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             avgSalary: offreStats._avg.salaire ? Number(offreStats._avg.salaire.toFixed(2)) : 0,
             totalProcessus: processusStats._count.id,
             processusByType,
-            avgProcessusDuree: processusStats._avg.duree ? Number(processusStats._avg.duree.toFixed(2)) : 0,
             postulationsBySource,
             totalInvitations: invitationStats._count.id,
             pendingInvitations,

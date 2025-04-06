@@ -22,11 +22,7 @@ async function seedProcessus() {
                     type: TypeProcessus.TACHE,
                     titre: "Tâche technique",
                     description: "Réaliser une tâche technique pour évaluer vos compétences.",
-                    statut: StatutProcessus.A_VENIR,
-                    duree: 3600,
-                    ordre: 1,
                     offre_id: offre.id,
-                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
                 },
             });
             
@@ -36,11 +32,7 @@ async function seedProcessus() {
                     type: TypeProcessus.QUESTIONNAIRE,
                     titre: "Quizz test",
                     description: "Répondez à ce test pour évaluer vos connaissances.",
-                    statut: StatutProcessus.A_VENIR,
-                    duree: 120,
-                    ordre: 2,
                     offre_id: offre.id,
-                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
                 },
             });
             
@@ -62,14 +54,12 @@ async function seedProcessus() {
                 },
             ];
 
-            let ordre = 1; // Initialisation du compteur d'ordre pour les questions
 
             for (const { question, reponses } of questionsData) {
                 const createdQuestion = await prisma.question.create({
                     data: {
                         label: question,
                         processus_id: questionnaire.id,
-                        ordre,
                     },
                 });
                 
@@ -81,22 +71,8 @@ async function seedProcessus() {
                     })),
                 });
                 
-                ordre++; // Incrémente l'ordre pour la prochaine question
             }
             
-            // Processus 3 : Visio-conférence
-            await prisma.processus.create({
-                data: {
-                    type: TypeProcessus.VISIO_CONFERENCE,
-                    titre: "Visioconférence avec RH",
-                    description: "Entretien en visioconférence avec notre équipe.",
-                    statut: StatutProcessus.A_VENIR,
-                    duree: 30,
-                    ordre: 3,
-                    offre_id: offre.id,
-                    start_at: new Date(new Date(offre.date_limite).getTime() + 24 * 60 * 60 * 1000)
-                },
-            });
  
             // publish offre 
             await prisma.offre.update({
