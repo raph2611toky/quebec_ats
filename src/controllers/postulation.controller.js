@@ -13,6 +13,7 @@ const { EtapeActuelle, Status } = require("@prisma/client");
 const Remarque = require("../models/remarque.model");
 const ReponsePreSelection = require("../models/reponsepreselection.model");
 const Processus = require("../models/processus.model");
+const Reponse = require("../models/reponse.model");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -92,7 +93,7 @@ exports.createPostulation = async (req, res) => {
             const processusId = parseInt(item.processus_id);
             if (isNaN(processusId)) continue;
 
-            const processus = await Processus.findById(processusId);
+            const processus = await Processus.getById(processusId);
             if (!processus) continue;
 
             if (processus.type === "QUESTIONNAIRE") {
@@ -103,7 +104,7 @@ exports.createPostulation = async (req, res) => {
                     continue;
                 }
 
-                const exist = await ReponsePreSelection.findUnique({
+                const exist = await prisma.reponsePreSelection.findUnique({
                     where: {
                         postulation_id_processus_id_question_id: {
                             postulation_id: newPostulation.id,
@@ -114,15 +115,14 @@ exports.createPostulation = async (req, res) => {
                 });
 
                 if (!exist) {
-                    const reponse = await Reponse.findById(reponseId);
+                    const reponse = await Reponse.getById(reponseId);
                     const note = reponse && reponse.is_true ? 1 : 0;
 
                     await ReponsePreSelection.create({
                         postulation_id: newPostulation.id,
                         processus_id: processusId,
                         question_id: questionId,
-                        reponse_id: reponseId,
-                        note
+                        reponse_id: reponseId
                     });
 
                     noteTotale += note;
@@ -135,7 +135,7 @@ exports.createPostulation = async (req, res) => {
                     continue;
                 }
 
-                const exist = await ReponsePreSelection.findFirst({
+                const exist = await prisma.reponsePreSelection.findFirst({
                     where: {
                         postulation_id: newPostulation.id,
                         processus_id: processusId
@@ -153,7 +153,7 @@ exports.createPostulation = async (req, res) => {
         }
 
         if (noteTotale > 0) {
-            newPostulation= await Postulation.update({
+            newPostulation= await prisma.postulation.update({
                 where: { id: newPostulation.id },
                 data: { note: noteTotale }
             });

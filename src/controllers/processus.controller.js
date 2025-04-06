@@ -111,8 +111,7 @@ exports.getProcessus = async (req, res) => {
                     include: {
                         reponses: true
                     }
-                },
-                processus_passer: true
+                }
             }
         });
         
@@ -548,8 +547,7 @@ exports.submitQuizz = async (req, res) => {
                     include: {
                         reponses: true
                     }
-                },
-                processus_passer: true
+                }
             }
         })
         
@@ -869,7 +867,7 @@ exports.giveNotePostulation = async (req, res)=>{
 exports.terminateProcessus = async (req, res )=>{
     try {
         const processus = await prisma.processus.findUnique({
-            where: { id: parseInt(req.params.id) }, include: { processus_passer: true}
+            where: { id: parseInt(req.params.id) }
         });
 
         if (!processus ) {
@@ -880,19 +878,7 @@ exports.terminateProcessus = async (req, res )=>{
             return res.status(400).json({ message: "Processus n'a pas encore commencer" });
         }
         
-        // if(processus.processus_passer.length == 0){
-        //     return res.status(400).json({ message: "Aucun candidat n'a encore passer ce processus" });
-        // }
-        
-        // const lengthScoreZero = await prisma.processusPasser.count({
-        //     where: {
-        //         score: 0
-        //     }
-        // })
-        
-        // if(lengthScoreZero == processus.processus_passer.length){
-        //     return res.status(400).json({ message: "Aucun candidat n'a encore de note à cette processus" });
-        // }
+
         
         await prisma.processus.update({
             where: {
@@ -914,7 +900,7 @@ exports.terminateProcessus = async (req, res )=>{
 exports.cancelProcessus = async (req, res)=>{
     try {
         const processus = await prisma.processus.findUnique({
-            where: { id: parseInt(req.params.id) }, include: { processus_passer: true}
+            where: { id: parseInt(req.params.id) }, 
         });
 
         if (!processus ) {
