@@ -440,7 +440,7 @@ router.put("/:id/accept", acceptPostulation);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.put("/:id/accept", rejectPostulation);
+router.put("/:id/reject", rejectPostulation);
 
 
 /**

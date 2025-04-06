@@ -211,7 +211,25 @@ router.get("/:id", IsAuthenticated, organisationController.getOrganisation);
  *               items:
  *                 $ref: '#/components/schemas/Organisation'
  */
-router.get("/", IsAuthenticated, organisationController.getAllOrganisations);
+router.get("/", organisationController.getAllOrganisations);
+
+/**
+ * @swagger
+ * /api/organisations/filter/me:
+ *   get:
+ *     summary: Récupérer toutes les organisations
+ *     tags: [Organisations]
+ *     responses:
+ *       200:
+ *         description: Liste des organisations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Organisation'
+ */
+router.get("/filter/me", IsAuthenticated, organisationController.getOrganisationsFilter);
 
 /**
  * @swagger

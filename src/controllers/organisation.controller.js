@@ -90,6 +90,15 @@ exports.getOrganisation = async (req, res) => {
 
 exports.getAllOrganisations = async (req, res) => {
     try {
+        return res.status(200).json(Organisation.getAll());
+    } catch (error) {
+        console.error("Erreur lors de la récupération des organisations:", error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+exports.getOrganisationsFilter = async (req, res) => {
+    try {
         const userId = parseInt(req.user.id);
         const user = await User.getById(userId, true);
         return res.status(200).json(user.organisations);
