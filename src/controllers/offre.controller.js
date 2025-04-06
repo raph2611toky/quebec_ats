@@ -550,6 +550,39 @@ exports.getOfferDetails = async (req, res) => {
     }
 };
 
+exports.getOfferDetailsGuest = async (req, res) => {
+    try {
+        const offreId = parseInt(req.params.id);
+    
+        const offre = await prisma.offre.findUnique({
+            where: { id: offreId },
+            include: {
+            organisation: {
+                select: { id: true, nom: true, adresse: true, ville: true },
+            },
+            processus: {
+                include: {
+                questions: {
+                    include: {
+                    reponses: true,
+                    },
+                },
+                },
+            },
+            },
+        });
+    
+        if (!offre) {
+            return res.status(404).json({ error: "Offre non trouvée" });
+        }
+        
+        return res.status(200).json(offre);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails de l'offre:", error);
+      return res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getActiveProcess = async (req, res)=>{
     try {
         const offre = await prisma.offre.findUnique({

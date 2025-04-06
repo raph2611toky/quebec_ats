@@ -16,7 +16,8 @@ const {
     getDetailsOffres,
     fermerOffre, getOfferDetails,
     getActiveProcess,
-    bestMatchs
+    bestMatchs,
+    getOfferDetailsGuest
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -1360,7 +1361,7 @@ router.get("/:id/get-active-process", IsAuthenticated, getActiveProcess);
  *                           image:
  *                             type: string
  */
-router.get("/:id/full-info",getDetailsOffres)
+router.get("/:id/full-info",getOfferDetailsGuest)
 
 
 /**
@@ -1369,6 +1370,8 @@ router.get("/:id/full-info",getDetailsOffres)
  *   get:
  *     summary: Récupérer les meilleures postulations pour une offre donnée
  *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: []
  *     description: Retourne les meilleures postulations triées par note pour l'offre spécifiée.
  *     parameters:
  *       - in: path
@@ -1471,6 +1474,6 @@ router.get("/:id/full-info",getDetailsOffres)
  *                   type: string
  *                   example: "Erreur interne du serveur"
  */
-router.get("/:id/best-matchs",bestMatchs)
+router.get("/:id/best-matchs",IsAuthenticatedAdmin,bestMatchs)
 
 module.exports = router;
