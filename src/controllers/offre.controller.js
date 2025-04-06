@@ -617,7 +617,7 @@ exports.bestMatchs = async (req, res)=>{
             },
         });
 
-        return topPostulations;
+        return res.status(200).json(topPostulations);
 
     } catch (error) {
         console.log(error);
@@ -626,4 +626,3 @@ exports.bestMatchs = async (req, res)=>{
 }
 
 
-module.exports = exports;
