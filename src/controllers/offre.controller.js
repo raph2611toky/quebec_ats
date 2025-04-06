@@ -528,6 +528,13 @@ exports.getOfferDetails = async (req, res) => {
                         select: { id: true, name: true },
                     },
                     },
+                },
+                reponse_preselection: {
+                    include: {
+                        question: true,
+                        reponse: true,
+                        processus: true,
+                    }
                 }
                 },
             },
