@@ -161,12 +161,9 @@ exports.addQuizzJson = async (req, res) => {
                     });
                 }
 
-                const ordre = existingQuestionsCount + i + 1;
-
                 const newQuestion = await prisma.question.create({
                     data: {
                         label: questionData.label,
-                        ordre: ordre,
                         processus: { connect: { id: processusId } },
                         reponses: {
                             create: questionData.reponses.map(reponse => ({
