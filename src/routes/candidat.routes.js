@@ -104,68 +104,6 @@ const { getActiveProcess } = require("../controllers/offre.controller");
  *               statut: "Manager"
  */
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     ProcessusPasser:
- *       type: object
- *       required:
- *         - processus_id
- *         - postulation_id
- *         - statut
- *         - score
- *       properties:
- *         id:
- *           type: integer
- *           description: ID unique du processus passé
- *         processus_id:
- *           type: integer
- *           description: ID du processus associé
- *         postulation_id:
- *           type: integer
- *           description: ID de la postulation associée
- *         statut:
- *           type: string
- *           enum: [EN_COURS, TERMINE, REFUSE]
- *           description: Statut du processus passé
- *         score:
- *           type: integer
- *           description: Score obtenu dans le processus
- *           default: 0
- *         lien_web:
- *           type: string
- *           description: Lien vers une ressource web
- *           nullable: true
- *         lien_fichier:
- *           type: string
- *           description: Lien vers un fichier
- *           nullable: true
- *         lien_vision:
- *           type: string
- *           description: Lien vers une vision spécifique
- *           nullable: true
- *         created_at:
- *           type: string
- *           format: date-time
- *           description: Date de création du processus passé
- *         updated_at:
- *           type: string
- *           format: date-time
- *           description: Date de mise à jour du processus passé
- *       example:
- *         id: 1
- *         processus_id: 10
- *         postulation_id: 5
- *         statut: "EN_COURS"
- *         score: 85
- *         lien_web: "https://exemple.com/test"
- *         lien_fichier: "https://exemple.com/fichier.pdf"
- *         lien_vision: "https://exemple.com/vision.mp4"
- *         created_at: "2025-03-31T12:00:00Z"
- *         updated_at: "2025-03-31T12:30:00Z"
- */
-
 
 /**
  * @swagger
@@ -1046,98 +984,9 @@ router.post("/auth-dev/google/verify", googleCallbackDevLogic);
  */
 router.get("/processus/check", IsAuthenticatedCandidat, getCandidatProcessus);
 
-/**
- * @swagger
- * /api/candidat/{id}/get-active-process:
- *   get:
- *     summary: Récupérer le processus de recrutement en cours d'une offre
- *     tags: [Offres]
- *     security:
- *       - BearerAuth: []
- *     description: Retourne active process d'une offre.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'offre à récupérer
- *     responses:
- *       200:
- *         description: Détails complets de l'offre
- *         content:  
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Processus'
- *       404:
- *         description: Offre non trouvée
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Offre non trouvée"
- *       500:
- *         description: Erreur interne du serveur
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Erreur interne du serveur"
- */
-router.get("/:id/get-active-process", IsAuthenticatedCandidat, getActiveProcess);
 
 
-/**
- * @swagger
- * /api/candidat/{id}/passed-process:
- *   get:
- *     summary: Récupérer les processus de recrutement passé d'une offre
- *     tags: [Candidats]
- *     security:
- *       - BearerAuth: []
- *     description: Retourne les processus passer sur une offre postuler.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'offre cible
- *     responses:
- *       200:
- *         description: Processus passer sur une offre
- *         content:  
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ProcessusPasser'
- *       404:
- *         description: Offre non trouvée
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Offre non trouvée"
- *       500:
- *         description: Erreur interne du serveur
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Erreur interne du serveur"
- */
-router.get("/:id/passed-process", IsAuthenticatedCandidat, getPassedProcess);
+
 
 
 module.exports = router;

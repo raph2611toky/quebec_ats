@@ -1,6 +1,5 @@
 const Question = require("../models/question.model")
 const Processus = require("../models/processus.model")
-const {  StatutProcessus   } = require("@prisma/client")
 
 exports.createQuestion = async (req, res) => {
     try {
@@ -11,11 +10,6 @@ exports.createQuestion = async (req, res) => {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
 
-        if (processus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({
-                error: "Impossible de créer une question : le processus a déjà commencé ou est terminé",
-            });
-        }
 
         const questionData = {
             label: req.body.label,

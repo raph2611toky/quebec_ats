@@ -4,7 +4,6 @@ const processusController = require("../controllers/processus.controller");
 const { IsAuthenticated, IsAuthenticatedAdmin, IsAuthenticatedCandidat } = require("../middlewares/auth.middleware");
 const { createProcessusValidator, updateProcessusValidator } = require('../validators/processus.validatior');
 const errorHandler = require('../middlewares/error.handler');
-const { makeOrderTop, makeOrderBottom, reverseOrder } = require('../controllers/ordreProcees.controller');
 const  createUpload  = require("../config/multer.config")
 
 
@@ -731,115 +730,6 @@ router.post("/:id/start-inacheve", IsAuthenticated, processusController.startPro
  */
 router.post("/:id/start-for-candidat", IsAuthenticated, processusController.startProcessusForCandidats);
 
-/**
- * @swagger
- * /api/processus/{id}/make-top:
- *   put:
- *     summary: Mettre un processus de recrutement en premier
- *     tags: [Processus]
- *     security:
- *       - BearerAuth: []
- *     description: Mettre un processus de recrutement en premier.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du processus à mettre en premier
- *     responses:
- *       200:
- *         description: Succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Processus de recrutement en tête de list"
- *       404:
- *         description: Processus non trouvé
- *       500:
- *         description: Erreur interne du serveur
- */
-router.put("/:id/make-top", IsAuthenticatedAdmin, makeOrderTop);
-
-/**
- * @swagger
- * /api/processus/{id}/make-bottom:
- *   put:
- *     summary: Mettre un processus de recrutement en dernier
- *     tags: [Processus]
- *     security:
- *       - BearerAuth: []
- *     description: Mettre un processus de recrutement en dernier.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du processus à mettre en dernier
- *     responses:
- *       200:
- *         description: Succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Processus de recrutement en tête de list"
- *       404:
- *         description: Processus non trouvé
- *       500:
- *         description: Erreur interne du serveur
- */
-router.put("/:id/make-bottom", IsAuthenticatedAdmin, makeOrderBottom);
-
-/**
- * @swagger
- * /api/processus/{id1}/reverse-order/{id2}:
- *   put:
- *     summary: Inverser l'ordre de deux processus
- *     tags: [Processus]
- *     security:
- *       - BearerAuth: []
- *     description: Inverser l'ordre de deux processus en fonction de leurs IDs.
- *     parameters:
- *       - in: path
- *         name: id1
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du premier processus
- *       - in: path
- *         name: id2
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du deuxième processus
- *     responses:
- *       200:
- *         description: Ordres des processus inversés avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Ordres des processus inversés avec succès"
- *       400:
- *         description: Les processus ne sont pas dans la même offre
- *       404:
- *         description: Un ou les deux processus introuvables
- *       500:
- *         description: Erreur interne du serveur
- */
-router.put("/:id1/reverse-order/:id2", IsAuthenticatedAdmin, reverseOrder);
 
 
 /**
@@ -1235,65 +1125,5 @@ router.post("/:id/terminate", IsAuthenticatedAdmin, processusController.terminat
 */
 router.post("/:id/annuler", IsAuthenticatedAdmin, processusController.cancelProcessus)
 
-
-/**
- * @swagger
- * /api/processus/{id}/is-passed:
- *   get:
- *     summary: Vérifier si un utilisateur a déjà passé un processus
- *     tags: [Processus]
- *     security:
- *       - BearerAuth: []
- *     description: Permet de vérifier si un utilisateur a déjà passé un processus de recrutement.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du processus à vérifier.
- *     responses:
- *       200:
- *         description: Résultat de la vérification du processus passé.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 passed:
- *                   type: boolean
- *                   example: true
- *       400:
- *         description: Candidature à l'offre introuvable ou processus non trouvé.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Candidature à l'offre introuvable."
- *       404:
- *         description: Processus ou candidature non trouvé(e).
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Processus introuvable."
- *       500:
- *         description: Erreur interne du serveur.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Erreur interne du serveur."
- */
-router.get("/:id/is-passed",IsAuthenticatedCandidat, processusController.isPassedProcessus)
 
 module.exports = router;

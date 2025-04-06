@@ -219,7 +219,6 @@ exports.getOrganisationDashboard = async(req, res) => {
 
         const processusByType = {
             tache: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "TACHE" } }),
-            visioConference: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "VISIO_CONFERENCE" } }),
             questionnaire: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "QUESTIONNAIRE" } })
         };
 

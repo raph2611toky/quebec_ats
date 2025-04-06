@@ -1172,52 +1172,6 @@ router.get("/:id/details", IsAuthenticated, getOfferDetails);
 
 /**
  * @swagger
- * /api/offres/{id}/get-active-process:
- *   get:
- *     summary: Récupérer le processus de recrutement en cours d'une offre
- *     tags: [Offres]
- *     security:
- *       - BearerAuth: []
- *     description: Retourne active process d'une offre.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'offre à récupérer
- *     responses:
- *       200:
- *         description: Processus actif
- *         content: 
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Processus'
- *       404:
- *         description: Offre non trouvée
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Offre non trouvée"
- *       500:
- *         description: Erreur interne du serveur
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Erreur interne du serveur"
- */
-router.get("/:id/get-active-process", IsAuthenticated, getActiveProcess);
-
-/**
- * @swagger
  * /api/offres/{id}/full-info:
  *   get:
  *     summary: Récupérer les détails complets d'une offre

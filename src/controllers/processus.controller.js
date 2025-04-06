@@ -1,5 +1,5 @@
 require("dotenv").config()
-const { StatutProcessus, TypeProcessus, Status, StatutProcessusPasser } = require("@prisma/client");
+const { StatutProcessus, TypeProcessus, Status } = require("@prisma/client");
 const Processus = require("../models/processus.model");
 const Question = require("../models/question.model");
 const Offre = require("../models/offre.model");
@@ -47,9 +47,6 @@ exports.updateProcessus = async (req, res) => {
         }
 
 
-        if (existingProcessus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({ error: "Processus qui a déjà commencé, ne peut plus être modifié" });
-        }
 
         // Récupérer uniquement les champs valides présents dans la requête
         const { titre, type, description} = req.body;
@@ -85,9 +82,7 @@ exports.deleteProcessus = async (req, res) => {
             return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
-        if(processus.statut == StatutProcessus.EN_COURS){
-            return res.status(400).json({ error: "Processus en cours, ne peux pas être supprimer" });
-        }
+
         await Processus.delete(parseInt(req.params.id));
         return res.status(200).json({ message: "Processus supprimé avec succès" });
     } catch (error) {
@@ -146,11 +141,6 @@ exports.addQuizzJson = async (req, res) => {
             });
         }
         
-        if (processus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({ 
-                error: "Impossible d'ajouter un quiz : le processus a déjà commencé ou est terminé" 
-            });
-        }
 
         const quizzData = req.body;
         if (!Array.isArray(quizzData) || quizzData.length === 0) {
@@ -218,9 +208,7 @@ exports.startProcessus = async (req, res) => {
             return res.status(400).json({ error: "Offre non encore publiée." });
         }
 
-        if (processus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({ error: "Processus déjà en cours ou terminé." });
-        }
+
 
         const processusEnCours = await prisma.processus.findFirst({
             where: { offre_id: processus.offre.id, statut: StatutProcessus.EN_COURS }
@@ -284,14 +272,6 @@ exports.startProcessus = async (req, res) => {
                 "Processus de Recrutement - Tâche",
                 "Tâche"
             );
-        } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
-            await envoiNotifications(
-                {
-                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
-                },
-                "Processus de Recrutement - Visio-conférence",
-                "Visio-conférence"
-            );
         } else {
             return res.status(500).json({ error: "Type de processus invalide" });
         }
@@ -322,9 +302,6 @@ exports.startProcessusInacheve = async (req, res) => {
             return res.status(400).json({ error: "Offre non encore publiée." });
         }
 
-        if (processus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({ error: "Processus déjà en cours ou terminé." });
-        }
 
         const processusEnCours = await prisma.processus.findFirst({
             where: { offre_id: processus.offre.id, statut: StatutProcessus.EN_COURS }
@@ -391,14 +368,6 @@ exports.startProcessusInacheve = async (req, res) => {
                 "Processus de Recrutement - Tâche",
                 "Tâche"
             );
-        } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
-            await envoiNotifications(
-                {
-                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
-                },
-                "Processus de Recrutement - Visio-conférence",
-                "Visio-conférence"
-            );
         } else {
             return res.status(500).json({ error: "Type de processus invalide" });
         }
@@ -429,9 +398,6 @@ exports.startProcessusForCandidats = async (req, res) => {
             return res.status(400).json({ error: "Offre non encore publiée." });
         }
 
-        if (processus.statut !== StatutProcessus.A_VENIR) {
-            return res.status(400).json({ error: "Processus déjà en cours ou terminé." });
-        }
 
         const processusEnCours = await prisma.processus.findFirst({
             where: { offre_id: processus.offre.id, statut: StatutProcessus.EN_COURS }
@@ -508,14 +474,6 @@ exports.startProcessusForCandidats = async (req, res) => {
                 "Processus de Recrutement - Tâche",
                 "Tâche"
             );
-        } else if (processus.type === TypeProcessus.VISIO_CONFERENCE) {
-            await envoiNotifications(
-                {
-                    description: `${processus.titre} - Préparez-vous pour la visio-conférence`
-                },
-                "Processus de Recrutement - Visio-conférence",
-                "Visio-conférence"
-            );
         } else {
             return res.status(500).json({ error: "Type de processus invalide" });
         }
@@ -561,25 +519,11 @@ exports.submitQuizz = async (req, res) => {
             return res.status(400).json({ error: "Candidature à l'offre introuvable." });
         }
 
-        const processusPasserExist = await prisma.processusPasser.findFirst({
-            where: {
-                postulation_id: postulation.id,
-                processus_id: processus.id
-            }
-        })
-        
-
-        if(processusPasserExist){
-            return res.status(400).json({ error: "Vous avez déjà fait ce quizz." });
-        }
         
         if(processus.type != TypeProcessus.QUESTIONNAIRE){
             return res.status(400).json({ error: "Le processus doit être de type questionnaire." });
         }
         
-        if(processus.statut != StatutProcessus.EN_COURS){
-            return res.status(400).json({ error: "Le processus n'est pas en cours." });
-        }
 
         const reponses = req.body.submit 
         
@@ -599,18 +543,6 @@ exports.submitQuizz = async (req, res) => {
                 }
             }
         }        
-
-        await prisma.processusPasser.create({
-            data: {
-                processus_id : processus.id,
-                postulation_id : postulation.id,
-                statut: StatutProcessusPasser.TERMINER,
-                score,
-                lien_web: null,
-                lien_fichier: null, 
-                lien_vision: null
-            }
-        })
 
         const currentNote = postulation.note || 0;
         await prisma.postulation.update({
@@ -648,11 +580,8 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({ error: "Le processus doit être type tache." });
         }
         
-        if(processus.statut != StatutProcessus.EN_COURS){
-            return res.status(400).json({ error: "Le processus n'est pas en cours." });
-        }
         
-        console.log(req.body);
+        // console.log(req.body);
          
         let lien_fichier=req.body?.fichier || null;
 
@@ -673,19 +602,6 @@ exports.submitTache = async (req, res)=>{
             return res.status(400).json({ error: "Candidature à l'offre introuvable ." });
         }
 
-
-        const processusPasser = await prisma.processusPasser.create({
-            data: {
-                processus_id : processus.id,
-                postulation_id : postulation.id,
-                statut: StatutProcessusPasser.TERMINER,
-                score:0,
-                lien_web,
-                lien_fichier, 
-                lien_vision: null                
-            }    
-        })
-
         return res.status(200).json({message: "Votre tâche est bien reçu ! "})
 
     } catch (error) {
@@ -704,15 +620,7 @@ exports.startVision = async (req, res)=>{
         
         if(!processus){
             return res.status(404).json({ error: "Processus non trouver." });
-        }
-        
-        if(processus.type != TypeProcessus.VISIO_CONFERENCE){
-            return res.status(400).json({ error: "Le processus doit être type vision conference." });
-        }
-        
-        if(processus.statut != StatutProcessus.EN_COURS){
-            return res.status(400).json({ error: "Le processus n'est pas en cours." });
-        }
+        }        
 
         const { users, candidats, start_time, start_date } = req.body;
 
@@ -806,46 +714,12 @@ exports.giveNotePostulation = async (req, res)=>{
             return res.status(404).json({ message: "Processus ou Postulation cible introuvables" });
         }
         
-        if(processus.statut !== StatutProcessus.EN_COURS && processus.statut != StatutProcessus.TERMINER){
-            return res.status(400).json({ message: "Processus cible n'a pas encore commencer." });
-        }
         
         const { note } = req.body 
         if (!note || isNaN(note)) {
             return res.status(400).json({ message: "Note requise et doit être un nombre valide" });
         }
 
-        const processusPasser = await prisma.processusPasser.findUnique({
-            where: {
-                processus_id: processus.id,
-                postulation_id: postulation.id                
-            }
-        })
-        
-        if(!processusPasser){
-            return res.status(404).json({ message: "Le candidat n'a pas encore passer le processus." });
-        }
-
-        await prisma.processusPasser.update({
-            where: {
-                id: processus.id,
-            },
-            data: {
-                score: processusPasser.score + parseInt(note)
-            }
-        })
-
-
-        if(processusPasser.statut !== StatutProcessusPasser.TERMINER){
-            await prisma.processusPasser.update({
-                where:{
-                    id: processusPasser.id,
-                },
-                data: {
-                    statut: StatutProcessusPasser.TERMINER
-                }
-            })            
-        }
 
         return res.status(200).json({message: "Postulation Candidat noté avec succèss"})        
         
@@ -863,12 +737,7 @@ exports.terminateProcessus = async (req, res )=>{
 
         if (!processus ) {
             return res.status(404).json({ message: "Processus cible introuvable" });
-        }
-        
-        if(processus.statut != StatutProcessus.EN_COURS){
-            return res.status(400).json({ message: "Processus n'a pas encore commencer" });
-        }
-        
+        }        
 
         
         await prisma.processus.update({
@@ -898,9 +767,6 @@ exports.cancelProcessus = async (req, res)=>{
             return res.status(404).json({ message: "Processus cible introuvable" });
         }
         
-        if(processus.statut != StatutProcessus.A_VENIR){
-            return res.status(400).json({ message: "Processus a déjà commencer" });
-        }
 
         await prisma.processus.update({
             where: {
@@ -919,32 +785,4 @@ exports.cancelProcessus = async (req, res)=>{
     }
 }
 
-exports.isPassedProcessus = async (req, res) => {
-    try {
-        const processusId = parseInt(req.params.id);
-        if (isNaN(processusId)) {
-            return res.status(400).json({ error: "ID du processus invalide." });
-        }
-
-        if (!req.candidat || !req.candidat.id) {
-            return res.status(401).json({ error: "Candidat non authentifié." });
-        }
-
-        const processusPasserExist = await prisma.processusPasser.findFirst({
-            where: {
-                processus: { id: processusId },
-                postulation: { 
-                    candidat_id: req.candidat.id
-                }
-            },
-            select: { id: true }
-        });
-
-        return res.status(200).json({ passed: !!processusPasserExist });
-
-    } catch (error) {
-        console.error("Erreur serveur :", error);
-        return res.status(500).json({ error: "Erreur interne du serveur" });
-    }
-};
 
