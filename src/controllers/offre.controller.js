@@ -559,6 +559,9 @@ exports.getOfferDetailsGuest = async (req, res) => {
             include: {
             organisation: {
                 select: { id: true, nom: true, adresse: true, ville: true },
+                include: {
+                    postcarieres: true
+                }
             },
             processus: {
                 include: {

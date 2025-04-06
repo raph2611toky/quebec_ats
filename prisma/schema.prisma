@@ -94,6 +94,7 @@ model User {
   remarques        Remarque[]                    @relation("RemarqueAdmin")
   organisations    Organisation[]                @relation("UserOrganisations")
   invitations_sent QueueInvitationOrganisation[] @relation("Inviter")
+  admin_audit      AdminAudit[]                    @relation("AdminAudit")
 }
 
 model Organisation {
@@ -289,3 +290,13 @@ model ReponsePreSelection {
 
   @@unique([postulation_id, processus_id, question_id])
 }
+
+model AdminAudit {
+  id             Int         @id @default(autoincrement())
+  admin    User @relation("AdminAudit", fields: [admin_id], references: [id], onDelete: Cascade)
+  admin_id Int
+  action    String
+  label     String 
+  created_at DateTime @default(now())
+}
+
