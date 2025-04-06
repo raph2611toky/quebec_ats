@@ -2,11 +2,15 @@ require("dotenv").config()
 const nodemailer = require("nodemailer");
 const Notification = require("../../models/notification.model");
 
+const LOGO_ATS = "https://res-console.cloudinary.com/djzflrl1u/thumbnails/v1/image/upload/v1743947921/V2hhdHNBcHBfSW1hZ2VfMjAyNS0wNC0wNl_DoF8xNi41Ni40Ml8yNGJiMDFiZV9tbHBhZWs=/drilldown"
+
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT),
+    secure: true,
     auth: {
-        user: process.env.USER_MAIL_LOGIN,
-        pass: process.env.USER_MAIL_PASSWORD
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
@@ -15,7 +19,7 @@ const templates = {
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <!-- Header -->
             <div style="background: linear-gradient(135deg, #007bff, #00d4ff); padding: 40px 20px; text-align: center; position: relative;">
-                <img src="https://via.placeholder.com/50/007bff/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #d9efff; font-size: 16px; margin: 8px 0 0;">Excellence et Opportunités</p>
             </div>
@@ -42,7 +46,7 @@ const templates = {
     postulationAcknowledgment: (candidatName, offreTitre) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #28a745, #48bb78); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/28a745/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #d4f4dd; font-size: 16px; margin: 8px 0 0;">Votre avenir commence ici</p>
             </div>
@@ -66,7 +70,7 @@ const templates = {
     otpValidation: (otp) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #ff6f61, #ff9f87); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/ff6f61/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #ffe6e6; font-size: 16px; margin: 8px 0 0;">Sécurisez votre compte</p>
             </div>
@@ -89,7 +93,7 @@ const templates = {
     forgotPassword: (resetLink) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #6f42c1, #9f7aea); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/6f42c1/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #e6e6ff; font-size: 16px; margin: 8px 0 0;">Réinitialisation sécurisée</p>
             </div>
@@ -112,7 +116,7 @@ const templates = {
     rejection: (candidatName, offreTitre) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #dc3545, #f87171); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/dc3545/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #fee2e2; font-size: 16px; margin: 8px 0 0;">Mise à jour de votre candidature</p>
             </div>
@@ -133,7 +137,7 @@ const templates = {
     hiring: (candidatName, offreTitre) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #17a2b8, #36d1dc); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/17a2b8/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #d1f5fa; font-size: 16px; margin: 8px 0 0;">Félicitations !</p>
             </div>
@@ -157,7 +161,7 @@ const templates = {
     meeting: (candidatName, offreTitre, date, heure, meetLink) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #ffc107, #ffd54f); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/ffc107/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #fff3d6; font-size: 16px; margin: 8px 0 0;">Votre entretien est planifié</p>
             </div>
@@ -183,7 +187,7 @@ const templates = {
     existingUserInvitation: (inviteeName, organisationName, inviterName, invitationLink, role) => `
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <div style="background: linear-gradient(135deg, #007bff, #00d4ff); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/007bff/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #d9efff; font-size: 16px; margin: 8px 0 0;">Une nouvelle opportunité vous attend</p>
             </div>
@@ -208,7 +212,7 @@ const templates = {
     newUserInvitation: (inviteeEmail, organisationName, inviterName, invitationLink, role) => `
     <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
         <div style="background: linear-gradient(135deg, #28a745, #48bb78); padding: 40px 20px; text-align: center;">
-            <img src="https://via.placeholder.com/50/28a745/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
             <p style="color: #d4f4dd; font-size: 16px; margin: 8px 0 0;">Bienvenue à bord !</p>
         </div>
@@ -234,7 +238,7 @@ const templates = {
         <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
             <!-- Header -->
             <div style="background: linear-gradient(135deg, #007bff, #00d4ff); padding: 40px 20px; text-align: center;">
-                <img src="https://via.placeholder.com/50/007bff/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
                 <p style="color: #d9efff; font-size: 16px; margin: 8px 0 0;">Votre parcours de recrutement</p>
             </div>
@@ -270,7 +274,7 @@ const templates = {
     supportClientToAdmin: ( sujet, contenu, emailSource) => `
     <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
         <div style="background: linear-gradient(135deg, #6b7280, #9ca3af); padding: 40px 20px; text-align: center;">
-            <img src="https://via.placeholder.com/50/6b7280/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
             <p style="color: #e5e7eb; font-size: 16px; margin: 8px 0 0;">Demande de Support</p>
         </div>
@@ -298,7 +302,7 @@ const templates = {
   supportToTechnical: (sujet, contenu, emailSource) => `
     <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
         <div style="background: linear-gradient(135deg, #ef4444, #f87171); padding: 40px 20px; text-align: center;">
-            <img src="https://via.placeholder.com/50/ef4444/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+            <img src="${LOGO_ATS}" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
             <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">ATS Québec</h1>
             <p style="color: #fee2e2; font-size: 16px; margin: 8px 0 0;">Demande au Support Technique</p>
         </div>

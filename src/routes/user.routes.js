@@ -915,7 +915,6 @@ router.post("/invitation/confirm", confirmInvitation);
  *               - token
  *               - name
  *               - password
- *               - phone
  *           example:
  *             token: "jwt_invitation_token"
  *             name: "Jane Doe"

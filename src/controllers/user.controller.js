@@ -459,7 +459,7 @@ exports.confirmInvitation = async (req, res) => {
 
 exports.acceptInvitation = async (req, res) => {
     try {
-        const { token, name, password, phone } = req.body;
+        const { token, name, password, phone="" } = req.body;
 
         const invitation = await prisma.queueInvitationOrganisation.findUnique({
             where: { token },

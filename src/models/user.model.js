@@ -7,7 +7,7 @@ class User {
         name,
         email,
         password,
-        phone,
+        phone="",
         profile = "profile.png",
         role = "MODERATEUR",
         is_active = false,

@@ -398,7 +398,6 @@ exports.rejectPostulation = async (req, res) => {
             return res.status(400).json({ error: "Postulation déjà acceptée." });
         }
         
-        // Mise à jour de la postulation
         const updatedPostulation = await prisma.postulation.update({
             where: { id: postulation.id },
             data: { etape_actuelle: EtapeActuelle.ACCEPTE },
