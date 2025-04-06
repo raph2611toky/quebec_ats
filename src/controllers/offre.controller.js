@@ -5,16 +5,17 @@ const crypto = require("crypto");
 const { Status, TypeProcessus } = require("@prisma/client");
 const Candidat = require("../models/candidat.model");
 const { PrismaClient } = require("@prisma/client");
-const { count } = require("console");
 const prisma = new PrismaClient();
-const shareJobOnLinkedIn = require("../services/linkedin/linkedin.services.js")
+const shareJobOnLinkedIn = require("../services/linkedin/linkedin.services.js");
+const AdminAudit = require("../models/adminaudit.model.js");
+const User = require("../models/user.model.js");
 
 exports.createOffre = async (req, res) => {
     try {
         const userId = parseInt(req.user.id);
         const organisationId = parseInt(req.body.organisation_id);
-
-        const userOrganisation = await prisma.organisation.findFirst({
+        const user = await User.getById(userId);
+        const organisation = await prisma.organisation.findFirst({
             where: {
                 id: organisationId,
                 users: {
@@ -25,7 +26,7 @@ exports.createOffre = async (req, res) => {
             }
         });
 
-        if (!userOrganisation) {
+        if (!organisation) {
             return res.status(403).json({ error: "Vous n'êtes pas autorisé à créer une offre pour cette organisation." });
         }
 
@@ -41,6 +42,7 @@ exports.createOffre = async (req, res) => {
         };
 
         const newOffre = await Offre.create(offreData);
+        await AdminAudit.create(userId, "creation_offre", `${user.name} a créé une offre intitulée "${newOffre.titre}" dans l'organisation "${organisation.nom}"`);
         return res.status(201).json(newOffre);
     } catch (error) {
         console.error("Erreur lors de la création de l'offre:", error);
@@ -78,7 +80,7 @@ exports.updateOffre = async (req, res) => {
     try {
         const userId = parseInt(req.user.id);
         const offreId = parseInt(req.params.id);
-
+        const user = await User.getById(userId);
         const existingOffre = await prisma.offre.findUnique({
             where: { id: offreId },
             include: { organisation: true }
@@ -88,7 +90,7 @@ exports.updateOffre = async (req, res) => {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
 
-        const userOrganisation = await prisma.organisation.findFirst({
+        const organisation = await prisma.organisation.findFirst({
             where: {
                 id: existingOffre.organisation_id,
                 users: {
@@ -99,7 +101,7 @@ exports.updateOffre = async (req, res) => {
             }
         });
 
-        if (!userOrganisation) {
+        if (!organisation) {
             return res.status(403).json({ error: "Vous n'êtes pas autorisé à modifier cette offre." });
         }
 
@@ -108,7 +110,7 @@ exports.updateOffre = async (req, res) => {
         }
 
         let { id, ...updateData } = req.body;
-        updateData = filterAllowedFields(updateData)
+        updateData = filterAllowedFields(updateData);
 
         if (req.file) {
             const subDir = "offres";
@@ -146,8 +148,6 @@ exports.updateOffre = async (req, res) => {
                 updateData.image_url = `/uploads/offres/${originalName}`;
             }
         }
-        console.log("ready to update offre..");
-        
 
         if (updateData.salaire) updateData.salaire = parseFloat(updateData.salaire);
         if (updateData.nombre_requis) updateData.nombre_requis = parseInt(updateData.nombre_requis);
@@ -155,6 +155,7 @@ exports.updateOffre = async (req, res) => {
         if (updateData.organisation_id) updateData.organisation_id = parseInt(updateData.organisation_id);
 
         const updatedOffre = await Offre.update(offreId, updateData);
+        await AdminAudit.create(userId, "modification_offre", `${user.name} a modifié l'offre intitulée "${updatedOffre.titre}" dans l'organisation "${organisation.nom}"`);
         return res.status(200).json(Offre.fromPrisma(updatedOffre, req.base_url));
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'offre:", error);
@@ -164,18 +165,28 @@ exports.updateOffre = async (req, res) => {
 
 exports.deleteOffre = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id), req.base_url);
+        const userId = parseInt(req.user.id);
+        const offreId = parseInt(req.params.id);
+        const user = await User.getById(userId);
+        const offre = await Offre.getById(offreId, req.base_url);
+
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
+
+        const organisation = await prisma.organisation.findUnique({ where: { id: offre.organisation_id } });
+
         if (offre.image_url && !offre.image_url.includes("default-offre.png")) {
             const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.base_url, ""));
             await fs.unlink(imagePath).catch(() => {});
         }
+
         if (offre.status !== Status.CREE) {
             return res.status(401).json({ error: "Offre ne peut pas être supprimée, déjà publiée." });
         }
-        await Offre.delete(parseInt(req.params.id));
+
+        await Offre.delete(offreId);
+        await AdminAudit.create(userId, "suppression_offre", `${user.name} a supprimé l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}"`);
         return res.status(200).json({ message: "Offre supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'offre:", error);
@@ -185,15 +196,24 @@ exports.deleteOffre = async (req, res) => {
 
 exports.deleteOffreForce = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id), req.base_url);
+        const userId = parseInt(req.user.id);
+        const offreId = parseInt(req.params.id);
+        const user = await User.getById(userId);
+        const offre = await Offre.getById(offreId, req.base_url);
+
         if (!offre) {
             return res.status(404).json({ error: "Offre non trouvée" });
         }
+
+        const organisation = await prisma.organisation.findUnique({ where: { id: offre.organisation_id } });
+
         if (offre.image_url && !offre.image_url.includes("default-offre.png")) {
             const imagePath = path.join(__dirname, "../", offre.image_url.replace(req.base_url, ""));
             await fs.unlink(imagePath).catch(() => {});
         }
-        await Offre.delete(parseInt(req.params.id));
+
+        await Offre.delete(offreId);
+        await AdminAudit.create(userId, "suppression_force_offre", `${user.name} a forcé la suppression de l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}"`);
         return res.status(200).json({ message: "Offre supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'offre:", error);
@@ -255,7 +275,7 @@ exports.filterOffres = async (req, res) => {
         if (minNombreRequis) filterConditions.nombre_requis = { gte: parseInt(minNombreRequis) };
         if (lieu) filterConditions.lieu = { contains: lieu, mode: "insensitive" };
         if (pays) filterConditions.pays = { contains: pays, mode: "insensitive" };
-        if (type_emploi) filterConditions.type_emploi = { contains: type_emploi, mode: "insensitive" };        
+        if (type_emploi) filterConditions.type_emploi = { contains: type_emploi, mode: "insensitive" };
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
         if (devise) filterConditions.devise = devise;
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
@@ -296,7 +316,7 @@ exports.searchOffres = async (req, res) => {
 exports.getProcessusByOffre = async (req, res) => {
     try {
         const offreId = parseInt(req.params.offreId);
-        const processus = await Offre.getAllProcessus(offreId);
+        const processus = await Offre.getAllProcess(offreId);
         return res.status(200).json(processus);
     } catch (error) {
         console.error("Erreur lors de la récupération des processus:", error);
@@ -306,8 +326,9 @@ exports.getProcessusByOffre = async (req, res) => {
 
 exports.publishOffre = async (req, res) => {
     try {
+        const userId = parseInt(req.user.id);
         const offreId = parseInt(req.params.id);
-
+        const user = await User.getById(userId);
         const offre = await prisma.offre.findUnique({
             where: { id: offreId },
             include: {
@@ -327,10 +348,11 @@ exports.publishOffre = async (req, res) => {
             return res.status(404).json({ error: "Offre introuvable." });
         }
 
+        const organisation = await prisma.organisation.findUnique({ where: { id: offre.organisation_id } });
+
         if (offre.status === Status.FERME) {
             return res.status(400).json({ error: "Interdit. Offre déjà fermée." });
         }
-
 
         for (const processus of offre.processus) {
             if (processus.type === "QUESTIONNAIRE") {
@@ -350,10 +372,10 @@ exports.publishOffre = async (req, res) => {
         await prisma.offre.update({
             where: { id: offreId },
             data: { status: Status.OUVERT }
-        })
+        });
 
         await shareJobOnLinkedIn(offre.titre, offre.description, "epsnvBD8Ud", `${process.env.FRONTEND_URL}/offres-lists/${offre.id}/postuler?src=linkedin`, offre.id);
-
+        await AdminAudit.create(userId, "publication_offre", `${user.name} a publié l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}"`);
         return res.status(200).json({ message: "Offre publiée avec succès." });
     } catch (error) {
         console.error("Erreur lors de la publication de l'offre:", error);
@@ -396,7 +418,6 @@ exports.postulerOffre = async (req, res) => {
             return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
         }
 
-
         const postulation = await prisma.postulation.create({
             data: {
                 candidat: { connect: { id: candidat.id } },
@@ -414,7 +435,7 @@ exports.postulerOffre = async (req, res) => {
     }
 };
 
-exports.getDetailsOffres = async (req, res)=>{
+exports.getDetailsOffres = async (req, res) => {
     try {
         const offre = await prisma.offre.findUnique({
             where: {
@@ -438,8 +459,7 @@ exports.getDetailsOffres = async (req, res)=>{
                                 admin: true
                             }
                         } 
-                    },
-                    
+                    }
                 }
             }
         });
@@ -453,11 +473,13 @@ exports.getDetailsOffres = async (req, res)=>{
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
+};
 
-exports.fermerOffre = async (req, res)=>{
+exports.fermerOffre = async (req, res) => {
     try {
+        const userId = parseInt(req.user.id);
         const offreId = parseInt(req.params.id);
+        const user = await User.getById(userId);
         const offre = await prisma.offre.findUnique({
             where: {
                 id: offreId
@@ -470,13 +492,15 @@ exports.fermerOffre = async (req, res)=>{
         if (!offre) {
             return res.status(404).json({ message: "Offre introuvable" });
         }
+
+        const organisation = await prisma.organisation.findUnique({ where: { id: offre.organisation_id } });
         
-        if(offre.status != Status.OUVERT){
-            return res.status(404).json({ message: "Seule Offre Ouvert peut être fermer" });
+        if (offre.status != Status.OUVERT) {
+            return res.status(404).json({ message: "Seule une offre ouverte peut être fermée" });
         }
         
-        if(count(offre.postulations)==0){
-            return res.status(400).json({ message: "Aucun postulation n'a été encore reçu sur cette offre." });
+        if (offre.postulations.length === 0) {
+            return res.status(400).json({ message: "Aucune postulation n'a été encore reçue sur cette offre." });
         }
 
         await prisma.offre.update({
@@ -486,16 +510,15 @@ exports.fermerOffre = async (req, res)=>{
             data: {
                 status: Status.FERME
             }
-        })
+        });
         
-        return res.status(200).json({message: "Offre fermé. Aucun candidature ne peuvent plus être reçu !"});
-
+        await AdminAudit.create(userId, "fermeture_offre", `${user.name} a fermé l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}"`);
+        return res.status(200).json({ message: "Offre fermée. Aucun candidature ne peut plus être reçu !" });
     } catch (error) {
         console.log(error);
         return res.status(400).json({ error: "Erreur interne du serveur" });
-        
     }
-}
+};
 
 exports.getOfferDetails = async (req, res) => {
     try {
@@ -504,42 +527,42 @@ exports.getOfferDetails = async (req, res) => {
         const offre = await prisma.offre.findUnique({
             where: { id: offreId },
             include: {
-            user: {
-                select: { id: true, name: true, email: true },
-            },
-            organisation: {
-                select: { id: true, nom: true, adresse: true, ville: true },
-            },
-            processus: {
-                include: {
-                questions: {
+                user: {
+                    select: { id: true, name: true, email: true },
+                },
+                organisation: {
+                    select: { id: true, nom: true, adresse: true, ville: true },
+                },
+                processus: {
                     include: {
-                    reponses: true,
+                        questions: {
+                            include: {
+                                reponses: true,
+                            },
+                        },
                     },
                 },
-                },
-            },
-            postulations: {
-                include: {
-                candidat: {
-                    select: { id: true, nom: true, email: true, telephone: true, image: true },
-                },
-                remarques: {
+                postulations: {
                     include: {
-                    admin: {
-                        select: { id: true, name: true },
-                    },
+                        candidat: {
+                            select: { id: true, nom: true, email: true, telephone: true, image: true },
+                        },
+                        remarques: {
+                            include: {
+                                admin: {
+                                    select: { id: true, name: true },
+                                },
+                            },
+                        },
+                        reponse_preselection: {
+                            include: {
+                                question: true,
+                                reponse: true,
+                                processus: true,
+                            }
+                        }
                     },
                 },
-                reponse_preselection: {
-                    include: {
-                        question: true,
-                        reponse: true,
-                        processus: true,
-                    }
-                }
-                },
-            },
             },
         });
     
@@ -549,8 +572,8 @@ exports.getOfferDetails = async (req, res) => {
         
         return res.status(200).json(offre);
     } catch (error) {
-      console.error("Erreur lors de la récupération des détails de l'offre:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de la récupération des détails de l'offre:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -563,22 +586,22 @@ exports.getOfferDetailsGuest = async (req, res) => {
             include: {
                 organisation: {
                     select: {
-                      id: true,
-                      nom: true,
-                      adresse: true,
-                      ville: true,
-                      postcarieres: true, 
+                        id: true,
+                        nom: true,
+                        adresse: true,
+                        ville: true,
+                        postcarieres: true, 
                     }
-                  },
-            processus: {
-                include: {
-                questions: {
+                },
+                processus: {
                     include: {
-                    reponses: true,
+                        questions: {
+                            include: {
+                                reponses: true,
+                            },
+                        },
                     },
                 },
-                },
-            },
             },
         });
     
@@ -588,15 +611,14 @@ exports.getOfferDetailsGuest = async (req, res) => {
         
         return res.status(200).json(offre);
     } catch (error) {
-      console.error("Erreur lors de la récupération des détails de l'offre:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de la récupération des détails de l'offre:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
-
-exports.bestMatchs = async (req, res)=>{
+exports.bestMatchs = async (req, res) => {
     try {
-        const offreId = parseInt(req.params.id)
+        const offreId = parseInt(req.params.id);
 
         const offre = await prisma.offre.findUnique({
             where: { id: offreId },
@@ -604,7 +626,7 @@ exports.bestMatchs = async (req, res)=>{
         });
 
         if (!offre) {
-            throw new Error('Offre non trouvée');
+            return res.status(404).json({ error: "Offre non trouvée" });
         }
 
         const nombreRequis = offre.nombre_requis;
@@ -625,11 +647,8 @@ exports.bestMatchs = async (req, res)=>{
         });
 
         return res.status(200).json(topPostulations);
-
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
-
-
+};

@@ -1,13 +1,7 @@
 const prisma = require("../config/prisma.config");
 
 class AdminAudit {
-    constructor(
-        id,
-        admin_id,
-        action,
-        label,
-        created_at
-    ) {
+    constructor(id, admin_id, action, label, created_at) {
         this.id = id;
         this.admin_id = admin_id;
         this.action = action;
@@ -25,10 +19,12 @@ class AdminAudit {
         );
     }
 
-    static async create(admin_id,action,label) {
-        data = {
-            admin_id, action,label
-        }
+    static async create(admin_id, action, label) {
+        const data = {
+            admin_id,
+            action,
+            label
+        };
         const newAudit = await prisma.adminAudit.create({ data });
         return AdminAudit.fromPrisma(newAudit);
     }
@@ -36,9 +32,7 @@ class AdminAudit {
     static async getById(id) {
         const audit = await prisma.adminAudit.findUnique({
             where: { id },
-            include: {
-                admin: true
-            }            
+            include: { admin: true }
         });
         return audit ? AdminAudit.fromPrisma(audit) : null;
     }
@@ -47,7 +41,6 @@ class AdminAudit {
         const audits = await prisma.adminAudit.findMany();
         return audits.map(AdminAudit.fromPrisma);
     }
-
 
     static async delete(id) {
         await prisma.adminAudit.delete({ where: { id } });

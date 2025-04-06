@@ -7,7 +7,6 @@ const TECH_SUPPORT_EMAIL = process.env.TECH_SUPPORT_EMAIL;
 
 module.exports.createAdminSupportRequest = async (req, res) => {
     const { sujet, contenu, emailSource } = req.body;
-  
     try {
       if (!sujet || !contenu || !emailSource) {
         return res.status(400).json({ error: 'Tous les champs (type, sujet, contenu, emailSource) sont requis' });
@@ -40,7 +39,7 @@ module.exports.createAdminSupportRequest = async (req, res) => {
           to: adminEmails.join(','),
           subject: `Nouvelle demande de support : ${sujet}`,
           type: existingType.supportClientToAdmin,
-          data: { type, sujet, contenu, emailSource },
+          data: { sujet, contenu, emailSource },
           saveToNotifications: true,
         });
       }

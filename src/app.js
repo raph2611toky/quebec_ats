@@ -19,6 +19,7 @@ const reponseRoute = require("./routes/reponse.routes");
 const organisation = require("./routes/organisation.routes");
 const postcarriere = require("./routes/postcarriere.route");
 const support = require("./routes/support.routes");
+const adminaudit = require("./routes/adminaudit.routes")
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/notifications", notifications)
 app.use("/api/organisations", organisation)
 app.use("/api/postcarrieres", postcarriere)
 app.use("/api/supports", support);
+app.use("/api/admin-audits",adminaudit);
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

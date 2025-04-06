@@ -267,7 +267,7 @@ const templates = {
         </div>
     `,
 
-    supportClientToAdmin: (type, sujet, contenu, emailSource) => `
+    supportClientToAdmin: ( sujet, contenu, emailSource) => `
     <div style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
         <div style="background: linear-gradient(135deg, #6b7280, #9ca3af); padding: 40px 20px; text-align: center;">
             <img src="https://via.placeholder.com/50/6b7280/ffffff?text=ATS" alt="ATS Logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
@@ -281,7 +281,6 @@ const templates = {
                 Une nouvelle demande de support a été soumise par <strong style="color: #6b7280;">${emailSource}</strong>.
             </p>
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Type :</strong> ${type === 'CANDIDAT' ? 'Candidat' : 'Responsable'}</p>
                 <p style="color: #1a2b49; font-size: 16px; margin: 0 0 10px;"><strong>Sujet :</strong> ${sujet}</p>
                 <p style="color: #1a2b49; font-size: 16px; margin: 0;"><strong>Contenu :</strong> ${contenu}</p>
             </div>
@@ -407,7 +406,7 @@ async function sendEmail({ to, subject, type, data, saveToNotifications = false 
             };
             break;
         case existingType.supportClientToAdmin:
-            htmlContent = templates.supportClientToAdmin(data.type, data.sujet, data.contenu, data.emailSource);
+            htmlContent = templates.supportClientToAdmin(data.sujet, data.contenu, data.emailSource);
             notificationData = {
                 titre: `Nouvelle demande de support - ${data.sujet}`,
                 contenu: `Une demande de support de type "${data.type}" a été soumise par ${data.emailSource}.`,

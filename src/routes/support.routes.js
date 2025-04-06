@@ -82,7 +82,6 @@ const {IsAuthenticated} = require("../middlewares/auth.middleware")
  *                 type: string
  *                 description: Email de l'expéditeur pour les réponses
  *             example:
- *               type: CANDIDAT
  *               sujet: "Problème avec ma candidature"
  *               contenu: "Je ne peux pas télécharger mon CV."
  *               emailSource: "candidat@example.com"
@@ -130,6 +129,8 @@ router.post('/admin/request', supportController.createAdminSupportRequest);
  *     summary: Créer une demande de support pour le support technique
  *     description: Envoie une demande de support directement au support technique sans la sauvegarder dans la base de données.
  *     tags: [Support]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -187,7 +188,7 @@ router.post('/admin/request', supportController.createAdminSupportRequest);
  *                   type: string
  *                   example: "Erreur lors de l’envoi de la demande"
  */
-router.post('/technical/request', supportController.createTechnicalSupportRequest);
+router.post('/technical/request', IsAuthenticated, supportController.createTechnicalSupportRequest);
 
 /**
  * @swagger

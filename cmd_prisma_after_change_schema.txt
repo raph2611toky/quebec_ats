@@ -1,5 +1,5 @@
 
-
+npx prisma migrate reset
 npx prisma format        # pour formater le schéma
 npx prisma validate      # pour valider le schéma
 npx prisma generate      # pour générer le client

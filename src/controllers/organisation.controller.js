@@ -1,16 +1,17 @@
 const Organisation = require("../models/organisation.model");
-const PostCarriere = require("../models/postcarriere.model")
+const PostCarriere = require("../models/postcarriere.model");
 const User = require("../models/user.model");
-const prisma = require("../config/prisma.config")
+const prisma = require("../config/prisma.config");
 const fs = require("fs").promises;
+const AdminAudit = require("../models/adminaudit.model.js");
 
 exports.createOrganisation = async (req, res) => {
     try {
+        const userId = parseInt(req.user.id);
+        const user = await User.getById(userId);
         const existingOrganisation = await Organisation.getUniqueOrganisation(req.body.nom, req.body.ville, req.body.adresse);
         if (existingOrganisation) {
-            return res.status(400).json({
-                error: "Une organisation avec le même nom, ville et adresse existe déjà."
-            });
+            return res.status(400).json({ error: "Une organisation avec le même nom, ville et adresse existe déjà." });
         }
 
         const admins = await User.getAlladmin();
@@ -19,12 +20,12 @@ exports.createOrganisation = async (req, res) => {
         }
 
         const adminIds = admins.map(admin => parseInt(admin.id));
-
         const newOrganisation = await Organisation.create({
             ...req.body,
             users: adminIds
         });
 
+        await AdminAudit.create(userId, "creation_organisation", `${user.name} a créé l'organisation "${newOrganisation.nom}"`);
         return res.status(201).json(newOrganisation);
     } catch (error) {
         console.error("Erreur lors de la création de l'organisation:", error);
@@ -34,19 +35,19 @@ exports.createOrganisation = async (req, res) => {
 
 exports.updateOrganisation = async (req, res) => {
     try {
-        const existingOrganisation = await Organisation.getById(parseInt(req.params.id));
+        const userId = parseInt(req.user.id);
+        const user = await User.getById(userId);
+        const organisationId = parseInt(req.params.id);
+        const existingOrganisation = await Organisation.getById(organisationId);
+
         if (!existingOrganisation) {
             return res.status(404).json({ error: "Organisation non trouvée" });
         }
 
         let updateData = { ...req.body };
-        // if (updateData.users) {
-        //     updateData.users = Array.isArray(updateData.users)
-        //         ? updateData.users.map(id => parseInt(id))
-        //         : [parseInt(updateData.users)];
-        // }
+        const updatedOrganisation = await Organisation.update(organisationId, updateData);
 
-        const updatedOrganisation = await Organisation.update(parseInt(req.params.id), updateData);
+        await AdminAudit.create(userId, "modification_organisation", `${user.name} a modifié l'organisation "${updatedOrganisation.nom}"`);
         return res.status(200).json(updatedOrganisation);
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'organisation:", error);
@@ -54,15 +55,19 @@ exports.updateOrganisation = async (req, res) => {
     }
 };
 
-
 exports.deleteOrganisation = async (req, res) => {
     try {
-        const organisation = await Organisation.getById(parseInt(req.params.id));
+        const userId = parseInt(req.user.id);
+        const user = await User.getById(userId);
+        const organisationId = parseInt(req.params.id);
+        const organisation = await Organisation.getById(organisationId);
+
         if (!organisation) {
             return res.status(404).json({ error: "Organisation non trouvée" });
         }
 
-        await Organisation.delete(parseInt(req.params.id));
+        await Organisation.delete(organisationId);
+        await AdminAudit.create(userId, "suppression_organisation", `${user.name} a supprimé l'organisation "${organisation.nom}"`);
         return res.status(200).json({ message: "Organisation supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'organisation:", error);
@@ -85,8 +90,8 @@ exports.getOrganisation = async (req, res) => {
 
 exports.getAllOrganisations = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const user = await User.getById(userId, details=true);
+        const userId = parseInt(req.user.id);
+        const user = await User.getById(userId, true);
         return res.status(200).json(user.organisations);
     } catch (error) {
         console.error("Erreur lors de la récupération des organisations:", error);
@@ -117,25 +122,14 @@ exports.getPostCarieresByOrganisation = async (req, res) => {
 exports.getUsersByOrganisation = async (req, res) => {
     try {
         const users = await Organisation.getUsersByOrganisation(parseInt(req.params.id));
-        res.status(200).json(users);
+        return res.status(200).json(users);
     } catch (error) {
-        console.error("Erreur lors de la récupération des utilisqteurs dans l'organisation:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de la récupération des utilisateurs dans l'organisation:", error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
 
-
-exports.getOffresByOrganisation = async (req, res) => {
-    try {
-        const users = await Organisation.getOffresByOrganisation(parseInt(req.params.id));
-        res.status(200).json(users);
-    } catch (error) {
-        console.error("Erreur lors de la récupération des offres dans l'organisation:", error);
-        res.status(400).json({ error: "Erreur interne du serveur" });
-    }
-};
-
-exports.getOrganisationDashboard = async(req, res) => {
+exports.getOrganisationDashboard = async (req, res) => {
     try {
         const organisationId = parseInt(req.params.id);
         if (isNaN(organisationId)) {
@@ -156,7 +150,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             return res.status(404).json({ error: "Organisation non trouvée" });
         }
 
-        // 1. Statistiques des utilisateurs
         const userStats = {
             total: organisation.users.length,
             moderators: organisation.users.filter(u => u.role === "MODERATEUR").length,
@@ -165,7 +158,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             verified: organisation.users.filter(u => u.is_verified).length
         };
 
-        // 2. Statistiques des offres
         const offreStats = await prisma.offre.aggregate({
             where: { organisation_id: organisationId },
             _count: { id: true },
@@ -194,7 +186,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             }
         });
 
-        // 3. Statistiques des postulations
         const postulationStats = await prisma.postulation.aggregate({
             where: { offre: { organisation_id: organisationId } },
             _count: { id: true },
@@ -222,7 +213,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             questionnaire: await prisma.processus.count({ where: { offre: { organisation_id: organisationId }, type: "QUESTIONNAIRE" } })
         };
 
-        // 5. Statistiques des postulations par source
         const postulationsBySource = {
             linkedin: await prisma.postulation.count({ where: { offre: { organisation_id: organisationId }, source_site: "LINKEDIN" } }),
             indeed: await prisma.postulation.count({ where: { offre: { organisation_id: organisationId }, source_site: "INDEED" } }),
@@ -236,7 +226,6 @@ exports.getOrganisationDashboard = async(req, res) => {
             quebecSite: await prisma.postulation.count({ where: { offre: { organisation_id: organisationId }, source_site: "QUEBEC_SITE" } })
         };
 
-        // 6. Statistiques des invitations
         const invitationStats = await prisma.queueInvitationOrganisation.aggregate({
             where: { organisation_id: organisationId },
             _count: { id: true }
@@ -249,13 +238,11 @@ exports.getOrganisationDashboard = async(req, res) => {
             }
         });
 
-        // 7. Statistiques des posts carrière
         const postCarriereStats = await prisma.postCarriere.aggregate({
             where: { organisation_id: organisationId },
             _count: { id: true }
         });
 
-        // Construction de la réponse
         const dashboardData = {
             id: organisation.id,
             name: organisation.nom,
@@ -288,12 +275,11 @@ exports.getOrganisationDashboard = async(req, res) => {
             totalPostCarriere: postCarriereStats._count.id
         };
 
-        res.status(200).json(dashboardData);
-
+        return res.status(200).json(dashboardData);
     } catch (error) {
         console.error("Erreur dans getOrganisationDashboard:", error);
-        res.status(500).json({ error: "Erreur serveur lors de la récupération des statistiques" });
+        return res.status(500).json({ error: "Erreur serveur lors de la récupération des statistiques" });
     }
-}
+};
 
 module.exports = exports;

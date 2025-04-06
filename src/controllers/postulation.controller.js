@@ -460,9 +460,7 @@ exports.removeRemarquePostulation = async (req, res)=> {
     try {
         const admin_id = parseInt(req.user.id);
         const remarque_id = parseInt(req.params.id)
-
         const remarque = await Remarque.getById(remarque_id)
-
         if(admin_id != remarque.admin_id){
             return res.status(400).json({message : "cett Remarque n'est pas la vôtre !"})
         }

@@ -1,21 +1,19 @@
 require("dotenv").config();
 const User = require("../models/user.model");
-
 const { generateToken, verifyToken } = require("../utils/securite/jwt");
 const bcrypt = require("../utils/securite/bcrypt");
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie");
 const cloudinary = require("../config/cloudinary.config");
-const { Role } = require("@prisma/client")
+const { Role } = require("@prisma/client");
 const fs = require("fs").promises;
 const { uploadDefaultProfileImage, deleteImageFromCloudinary } = require("../utils/cloudinary.utils");
-// const { PrismaClient } = require("@prisma/client");
-// const prisma = new PrismaClient();
 const prisma = require("../config/prisma.config");
 const { sendEmail, existingType } = require("../services/notifications/email");
-const createGoogleMeet = require("../services/meet/googleMeet.services")
+const createGoogleMeet = require("../services/meet/googleMeet.services");
+const AdminAudit = require("../models/adminaudit.model");
 
 const generateInvitationToken = () => {
-  return generateToken({ type: "invitation" }, "24h");
+    return generateToken({ type: "invitation" }, "24h");
 };
 const generateOtp = () => Math.floor(10000000 + Math.random() * 90000000).toString();
 
@@ -221,12 +219,10 @@ exports.loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        //const user = await User.findByEmail(email);
-
         const user = await prisma.user.findUnique({
             where: { email }
         });
-        
+
         if (!user || !(await User.comparePassword(password, user.password)) || !user.is_verified) {
             return res.status(401).json({ error: "Identifiants invalides ou compte non activé" });
         }
@@ -241,7 +237,7 @@ exports.loginAdmin = async (req, res) => {
 
 exports.getAdminProfileMe = async (req, res) => {
     try {
-        const user = await User.getById(parseInt(req.user.id), details=true);
+        const user = await User.getById(parseInt(req.user.id), true);
         if (!user) {
             return res.status(404).json({ error: "Profil non trouvé" });
         }
@@ -254,7 +250,7 @@ exports.getAdminProfileMe = async (req, res) => {
 
 exports.getAdminProfile = async (req, res) => {
     try {
-        const user = await User.getById(parseInt(req.params.id), details=true);
+        const user = await User.getById(parseInt(req.params.id), true);
         if (!user) {
             return res.status(404).json({ error: "Profil non trouvé" });
         }
@@ -274,8 +270,8 @@ exports.updateAdminProfile = async (req, res) => {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        if(updateData.role && updateData.role !== user.role){
-            return res.status(403).json({"erreur":"Vous ne pouvez pas "});
+        if (updateData.role && updateData.role !== user.role) {
+            return res.status(403).json({ "erreur": "Vous ne pouvez pas " });
         }
         if (updateData.organisations) {
             updateData.organisations = Array.isArray(updateData.organisations)
@@ -315,66 +311,59 @@ exports.sendInvitation = async (req, res) => {
     try {
         let { invitee_email, organisation_id, role } = req.body;
         const inviter_id = req.user.id;
-    
+
         const inviter = await prisma.user.findUnique({
-            where: {
-                id: inviter_id
-            },
-            include: {
-                organisations: true
-            }
-        })
-        const inviter_organisation_ids = inviter.organisations.map(org => org.id)
+            where: { id: inviter_id },
+            include: { organisations: true }
+        });
+        const inviter_organisation_ids = inviter.organisations.map(org => org.id);
         if (!inviter || inviter.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent inviter" });
-        }    
+        }
         let validatedOrganisationId = null;
-        role = inviter.role === Role.MODERATEUR ? Role.MODERATEUR : role
+        role = inviter.role === Role.MODERATEUR ? Role.MODERATEUR : role;
         if (role === Role.MODERATEUR) {
             if (!organisation_id) {
                 return res.status(400).json({ error: "L'organisation est requise pour un modérateur" });
-            }            
-            if ( ! inviter_organisation_ids.includes(organisation_id)){
-                return res.status(401).json({"erreur":"Vous n'avez de droit d'accès à cette organisation"})
+            }
+            if (!inviter_organisation_ids.includes(organisation_id)) {
+                return res.status(401).json({ "erreur": "Vous n'avez de droit d'accès à cette organisation" });
             }
             const organisation = await prisma.organisation.findUnique({
-            where: { id: organisation_id },
+                where: { id: organisation_id },
             });
             if (!organisation) {
                 return res.status(404).json({ error: "Organisation non trouvée" });
             }
             validatedOrganisationId = organisation_id;
         } else if (role === Role.ADMINISTRATEUR) {
-            // if (organisation_id) {
-            //     return res.status(400).json({ error: "L'organisation ne doit pas être spécifiée pour un administrateur" });
-            // }
         } else {
             return res.status(400).json({ error: "Rôle invalide" });
         }
-    
+
         const existingUser = await prisma.user.findUnique({
             where: { email: invitee_email },
         });
-    
+
         const token = generateInvitationToken();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    
+
         const invitation = await prisma.queueInvitationOrganisation.create({
             data: {
-            inviter_id,
-            invitee_email,
-            organisation_id: validatedOrganisationId,
-            role: role || Role.MODERATEUR,
-            token,
-            expires_at: expiresAt,
+                inviter_id,
+                invitee_email,
+                organisation_id: validatedOrganisationId,
+                role: role || Role.MODERATEUR,
+                token,
+                expires_at: expiresAt,
             },
         });
-    
+
         const baseUrl = process.env.FRONTEND_URL;
         let invitationLink;
         let emailType;
         let emailData;
-    
+
         if (existingUser) {
             invitationLink = `${baseUrl}/organisation/invite?token=${token}`;
             emailType = existingType.existingUserInvitation;
@@ -396,89 +385,91 @@ exports.sendInvitation = async (req, res) => {
                 role,
             };
         }
-    
+
         await sendEmail({
             to: invitee_email,
             subject: `Invitation à rejoindre ${emailData.organisationName}`,
             type: emailType,
             data: emailData,
         });
-    
+
+        await AdminAudit.create(inviter_id, "envoi_invitation", `${inviter.name} a envoyé une invitation à ${invitee_email} pour rejoindre ${emailData.organisationName} en tant que ${role}`);
         return res.status(201).json({ message: "Invitation envoyée avec succès" });
     } catch (error) {
-      console.error("Erreur lors de l'envoi de l'invitation:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de l'envoi de l'invitation:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.confirmInvitation = async (req, res) => {
     try {
-      const { token, email } = req.body;
-  
-      const invitation = await prisma.queueInvitationOrganisation.findUnique({
-        where: { token },
-        include: { organisation: true },
-      });
-  
-      if (!invitation || new Date() > invitation.expires_at) {
-        return res.status(400).json({ error: "Lien d'invitation invalide ou expiré" });
-      }
-      if (invitation.invitee_email !== email) {
-        return res.status(403).json({ error: "Vous n'êtes pas autorisé à accepter cette invitation" });
-      }
-  
-      const user = await User.findByEmail(email);
-      if (!user) {
-        return res.status(404).json({ error: "Utilisateur non trouvé" });
-      }
-  
-      let updateData;
-      if (invitation.role === Role.MODERATEUR) {
-        updateData = {
-          organisations: {
-            connect: { id: invitation.organisation_id },
-          },
-        };
-      } else if (invitation.role === Role.ADMINISTRATEUR) {
-        const allOrganisations = await prisma.organisation.findMany();
-        updateData = {
-          role: Role.ADMINISTRATEUR,
-          organisations: {
-            connect: allOrganisations.map(org => ({ id: org.id })),
-          },
-        };
-      }
-  
-      await prisma.user.update({
-        where: { id: user.id },
-        data: updateData,
-      });
-  
-      await prisma.queueInvitationOrganisation.delete({
-        where: { id: invitation.id },
-      });
-  
-      const orgName = invitation.role === Role.MODERATEUR ? invitation.organisation.nom : "toutes les organisations";
-      return res.status(200).json({ message: `Vous avez rejoint ${orgName} en tant que ${invitation.role}` });
+        const { token, email } = req.body;
+
+        const invitation = await prisma.queueInvitationOrganisation.findUnique({
+            where: { token },
+            include: { organisation: true },
+        });
+
+        if (!invitation || new Date() > invitation.expires_at) {
+            return res.status(400).json({ error: "Lien d'invitation invalide ou expiré" });
+        }
+        if (invitation.invitee_email !== email) {
+            return res.status(403).json({ error: "Vous n'êtes pas autorisé à accepter cette invitation" });
+        }
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        let updateData;
+        if (invitation.role === Role.MODERATEUR) {
+            updateData = {
+                organisations: {
+                    connect: { id: invitation.organisation_id },
+                },
+            };
+        } else if (invitation.role === Role.ADMINISTRATEUR) {
+            const allOrganisations = await prisma.organisation.findMany();
+            updateData = {
+                role: Role.ADMINISTRATEUR,
+                organisations: {
+                    connect: allOrganisations.map(org => ({ id: org.id })),
+                },
+            };
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: updateData,
+        });
+
+        await prisma.queueInvitationOrganisation.delete({
+            where: { id: invitation.id },
+        });
+
+        const orgName = invitation.role === Role.MODERATEUR ? invitation.organisation.nom : "toutes les organisations";
+        await AdminAudit.create(user.id, "confirmation_invitation", `${user.name} a confirmé son invitation pour rejoindre ${orgName} en tant que ${invitation.role}`);
+        return res.status(200).json({ message: `Vous avez rejoint ${orgName} en tant que ${invitation.role}` });
     } catch (error) {
-      console.error("Erreur lors de la confirmation de l'invitation:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de la confirmation de l'invitation:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.acceptInvitation = async (req, res) => {
     try {
         const { token, name, password, phone } = req.body;
-    
+
         const invitation = await prisma.queueInvitationOrganisation.findUnique({
             where: { token },
             include: { organisation: true },
         });
-    
+
         if (!invitation || new Date() > invitation.expires_at) {
             return res.status(400).json({ error: "Lien d'invitation invalide ou expiré" });
         }
-    
+
         let organisationConnect;
         if (invitation.role === Role.MODERATEUR) {
             organisationConnect = { connect: { id: invitation.organisation_id } };
@@ -488,33 +479,34 @@ exports.acceptInvitation = async (req, res) => {
         }
 
         const hashPassword = await bcrypt.hashPassword(password);
-    
+
         const newUser = await prisma.user.create({
             data: {
-            email: invitation.invitee_email,
-            name,
-            password: hashPassword,
-            phone,
-            role: invitation.role,
-            is_active: true,
-            is_verified: true,
-            organisations: organisationConnect,
+                email: invitation.invitee_email,
+                name,
+                password: hashPassword,
+                phone,
+                role: invitation.role,
+                is_active: true,
+                is_verified: true,
+                organisations: organisationConnect,
             },
         });
-    
+
         await prisma.queueInvitationOrganisation.delete({
             where: { id: invitation.id },
         });
-    
+
         const orgName = invitation.role === Role.MODERATEUR ? invitation.organisation.nom : "toutes les organisations";
-        const authToken = generateToken({ id: newUser.id , role: encryptAES(invitation.role)});
+        const authToken = generateToken({ id: newUser.id, role: encryptAES(invitation.role) });
+        await AdminAudit.create(newUser.id, "acceptation_invitation", `${newUser.name} a accepté une invitation pour rejoindre ${orgName} en tant que ${invitation.role}`);
         return res.status(201).json({
             message: `Compte créé et vous avez rejoint ${orgName} en tant que ${invitation.role}`,
             token: authToken,
         });
     } catch (error) {
-      console.error("Erreur lors de l'acceptation de l'invitation:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de l'acceptation de l'invitation:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
@@ -522,14 +514,14 @@ exports.removeFromOrganisation = async (req, res) => {
     try {
         const { user_id, organisation_id } = req.body;
         const admin_id = req.user.id;
-    
+
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
         if (!admin || admin.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent retirer des utilisateurs" });
         }
-    
+
         const user = await prisma.user.findUnique({
             where: { id: user_id },
             include: { organisations: true },
@@ -537,80 +529,81 @@ exports.removeFromOrganisation = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-    
+
         if (user_id === admin_id) {
             return res.status(400).json({ error: "Vous ne pouvez pas vous retirer vous-même" });
         }
-    
+
         let updatedOrganisations;
         if (user.role === Role.MODERATEUR) {
             if (!organisation_id) {
-            return res.status(400).json({ error: "L'ID de l'organisation est requis pour un modérateur" });
+                return res.status(400).json({ error: "L'ID de l'organisation est requis pour un modérateur" });
             }
             const organisation = await prisma.organisation.findUnique({
-            where: { id: organisation_id },
+                where: { id: organisation_id },
             });
             if (!organisation) {
-            return res.status(404).json({ error: "Organisation non trouvée" });
+                return res.status(404).json({ error: "Organisation non trouvée" });
             }
-    
+
             const isInOrganisation = user.organisations.some(org => org.id === organisation_id);
             if (!isInOrganisation) {
-            return res.status(400).json({ error: "L'utilisateur n'appartient pas à cette organisation" });
+                return res.status(400).json({ error: "L'utilisateur n'appartient pas à cette organisation" });
             }
-    
+
             updatedOrganisations = {
-            disconnect: { id: organisation_id },
+                disconnect: { id: organisation_id },
             };
         } else if (user.role === Role.ADMINISTRATEUR) {
             return res.status(400).json({ error: "Un administrateur ne peut pas etre detaché d'une organisation." });
         }
-    
+
         await prisma.user.update({
             where: { id: user_id },
             data: {
-            organisations: updatedOrganisations,
+                organisations: updatedOrganisations,
             },
         });
-    
+
         const message = user.role === Role.MODERATEUR
             ? `L'utilisateur a été retiré de l'organisation ${organisation_id}`
             : "L'utilisateur a été retiré de toutes les organisations";
-        
+
+        await AdminAudit.create(admin_id, "retrait_organisation", `${admin.name} a retiré ${user.name} de l'organisation ${organisation_id}`);
         return res.status(200).json({ message });
     } catch (error) {
-      console.error("Erreur lors du retrait de l'utilisateur de l'organisation:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors du retrait de l'utilisateur de l'organisation:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-  };
+};
 
 exports.listInvitationQueue = async (req, res) => {
     try {
         const admin_id = req.user.id;
-    
+
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
         if (!admin) {
             return res.status(403).json({ error: "Seuls les administrateurs peuvent voir la liste des invitations" });
         }
-        if (admin.role === Role.ADMINISTRATEUR){
+        if (admin.role === Role.ADMINISTRATEUR) {
             const invitations = await prisma.queueInvitationOrganisation.findMany({
                 where: {
                     expires_at: { gt: new Date() }
                 },
                 include: {
-                inviter: {
-                    select: { id: true, name: true, email: true },
-                },
-                organisation: {
-                    select: { id: true, nom: true },
-                },
+                    inviter: {
+                        select: { id: true, name: true, email: true },
+                    },
+                    organisation: {
+                        select: { id: true, nom: true },
+                    },
                 },
                 orderBy: { created_at: "desc" },
             });
             return res.status(200).json(invitations);
-        }else{
+        } else {
             const invitations = await prisma.queueInvitationOrganisation.findMany({
                 where: {
                     expires_at: { gt: new Date() },
@@ -620,26 +613,25 @@ exports.listInvitationQueue = async (req, res) => {
                     inviter: {
                         select: { id: true, name: true, email: true },
                     },
-                organisation: {
-                    select: { id: true, nom: true },
-                },
+                    organisation: {
+                        select: { id: true, nom: true },
+                    },
                 },
                 orderBy: { created_at: "desc" },
             });
             return res.status(200).json(invitations);
         }
-    
     } catch (error) {
-      console.error("Erreur lors de la récupération de la liste des invitations:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de la récupération de la liste des invitations:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
-  
+
 exports.cancelInvitation = async (req, res) => {
     try {
         const invitation_id = parseInt(req.params.invitation_id);
         const admin_id = req.user.id;
-    
+
         const admin = await prisma.user.findUnique({
             where: { id: admin_id },
         });
@@ -653,32 +645,32 @@ exports.cancelInvitation = async (req, res) => {
         if (!invitation) {
             return res.status(404).json({ error: "Invitation non trouvée" });
         }
-        if (admin.role === Role.MODERATEUR && invitation.inviter_id !== admin.id){
-            return res.status(401).json({"erreur":"vous n'avez pas l'autorisation pour cette action."})
+        if (admin.role === Role.MODERATEUR && invitation.inviter_id !== admin.id) {
+            return res.status(401).json({ "erreur": "vous n'avez pas l'autorisation pour cette action." });
         }
         if (new Date() > invitation.expires_at) {
             return res.status(400).json({ error: "L'invitation est déjà expirée" });
         }
-    
+
         await prisma.queueInvitationOrganisation.delete({
             where: { id: invitation_id },
         });
-    
+
         const orgName = invitation.role === Role.MODERATEUR && invitation.organisation
             ? invitation.organisation.nom
             : "toutes les organisations";
+        await AdminAudit.create(admin_id, "annulation_invitation", `${admin.name} a annulé l'invitation de ${invitation.invitee_email} pour rejoindre ${orgName}`);
         return res.status(200).json({
             message: `L'invitation pour ${invitation.invitee_email} à rejoindre ${orgName} a été annulée`,
         });
     } catch (error) {
-      console.error("Erreur lors de l'annulation de l'invitation:", error);
-      return res.status(500).json({ error: "Erreur interne du serveur" });
+        console.error("Erreur lors de l'annulation de l'invitation:", error);
+        return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
 
 exports.getDashboardStats = async (req, res) => {
     try {
-        // 1. Statistiques des utilisateurs
         const userStats = await prisma.user.aggregate({
             _count: {
                 id: true,
@@ -699,14 +691,12 @@ exports.getDashboardStats = async (req, res) => {
             where: { role: Role.MODERATEUR }
         });
 
-        // 2. Statistiques des organisations
         const orgStats = await prisma.organisation.aggregate({
             _count: {
                 id: true,
             }
         });
 
-        // 3. Statistiques des offres
         const offreStats = await prisma.offre.aggregate({
             _count: {
                 id: true,
@@ -719,7 +709,6 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
-        // 4. Top 3 organisations par nombre d'utilisateurs
         const topOrgsByUsers = await prisma.organisation.findMany({
             take: 3,
             orderBy: {
@@ -736,7 +725,6 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
-        // 5. Top 3 organisations par nombre d'offres
         const topOrgsByOffres = await prisma.organisation.findMany({
             take: 3,
             orderBy: {
@@ -753,14 +741,12 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
-        // 6. Statistiques des candidats
         const candidateStats = await prisma.candidat.aggregate({
             _count: {
                 id: true,
             }
         });
 
-        // 7. Min/Max candidats par offre
         const postulationStats = await prisma.offre.findMany({
             select: {
                 id: true,
@@ -775,7 +761,6 @@ exports.getDashboardStats = async (req, res) => {
         const minCandidatesPerOffer = Math.min(...postulationsPerOffer);
         const maxCandidatesPerOffer = Math.max(...postulationsPerOffer);
 
-        // 8. Top offres par nombre de postulations
         const topOffresByPostulations = await prisma.offre.findMany({
             take: 3,
             orderBy: {
@@ -792,12 +777,10 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
-        // 9. Moyenne de postulations par offre
-        const avgPostulations = postulationsPerOffer.length > 0 
-            ? postulationsPerOffer.reduce((a, b) => a + b, 0) / postulationsPerOffer.length 
+        const avgPostulations = postulationsPerOffer.length > 0
+            ? postulationsPerOffer.reduce((a, b) => a + b, 0) / postulationsPerOffer.length
             : 0;
 
-        // 10. Top candidats par nombre de postulations
         const topCandidatesByPostulations = await prisma.candidat.findMany({
             take: 3,
             orderBy: {
@@ -815,7 +798,6 @@ exports.getDashboardStats = async (req, res) => {
             }
         });
 
-        // Construction de la réponse
         const dashboardData = {
             users: {
                 total: userStats._count.id,
@@ -860,7 +842,6 @@ exports.getDashboardStats = async (req, res) => {
         };
 
         res.status(200).json(dashboardData);
-
     } catch (error) {
         console.error("Erreur dans getDashboardStats:", error);
         res.status(500).json({
@@ -868,9 +849,9 @@ exports.getDashboardStats = async (req, res) => {
             error: "Erreur serveur lors de la récupération des statistiques"
         });
     }
-}
+};
 
-exports.scheduleMeeting = async(req, res) => {
+exports.scheduleMeeting = async (req, res) => {
     try {
         const { users, candidats, start_time, start_date, duration } = req.body;
 
@@ -944,12 +925,11 @@ exports.scheduleMeeting = async(req, res) => {
             message: "Réunion planifiée et invitations envoyées avec succès",
             meetLink
         });
-
     } catch (error) {
         console.error("Erreur dans scheduleMeeting:", error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
+};
 
 exports.deleteAdmin = async (req, res) => {
     try {
@@ -957,9 +937,7 @@ exports.deleteAdmin = async (req, res) => {
         const currentUser = req.user;
 
         const adminToDelete = await prisma.user.findUnique({
-            where: { 
-                id: adminIdToDelete
-            }
+            where: { id: adminIdToDelete }
         });
 
         if (!adminToDelete) {
@@ -983,6 +961,7 @@ exports.deleteAdmin = async (req, res) => {
             where: { id: adminIdToDelete }
         });
 
+        await AdminAudit.create(currentUser.id, "suppression_admin", `${currentUser.name} a supprimé l'administrateur ${adminToDelete.name} (ID: ${adminIdToDelete})`);
         return res.status(200).json({ message: "Administrateur supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de l'administrateur:", error);
@@ -1001,19 +980,11 @@ exports.updateUserRole = async (req, res) => {
         if (requestingUser.role !== Role.ADMINISTRATEUR) {
             return res.status(403).json({ error: "Seuls les Administrateurs peuvent modifier les rôles" });
         }
-        
+
         const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
         if (!targetUser) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-        
-        // const firstAdmin = await prisma.user.findFirst({
-        //     where: { role: Role.ADMINISTRATEUR },
-        //     orderBy: { id: 'asc' }
-        // });
-        // if (firstAdmin && firstAdmin.id === targetUserId) {
-        //     return res.status(403).json({ error: "Le premier administrateur ne peut pas être supprimé" });
-        // }
 
         const newRole = req.body.role;
         if (!newRole || ![Role.ADMINISTRATEUR, Role.MODERATEUR].includes(newRole)) {
@@ -1034,8 +1005,7 @@ exports.updateUserRole = async (req, res) => {
             updateData.organisations = {
                 set: orgIds.map(id => ({ id })),
             };
-        }
-        else if (newRole === Role.ADMINISTRATEUR && targetUser.role === Role.MODERATEUR) {
+        } else if (newRole === Role.ADMINISTRATEUR && targetUser.role === Role.MODERATEUR) {
             const allOrgs = await prisma.organisation.findMany();
             const allOrgIds = allOrgs.map(org => ({ id: org.id }));
             updateData.organisations = {
@@ -1047,6 +1017,8 @@ exports.updateUserRole = async (req, res) => {
             where: { id: targetUserId },
             data: updateData,
         });
+
+        await AdminAudit.create(requestingUser.id, "modification_role", `${requestingUser.name} a modifié le rôle de ${targetUser.name} en ${newRole}`);
         return res.status(200).json(updatedUser);
     } catch (error) {
         console.error("Erreur lors de la modification du rôle :", error);
@@ -1054,27 +1026,21 @@ exports.updateUserRole = async (req, res) => {
     }
 };
 
-exports.contactSupportDev = async (req, res)=>{
+exports.contactSupportDev = async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: {
                 id: parseInt(req.params.id)
             },
-        })
-        
-        if(!user){
+        });
+
+        if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-
-
-
-        
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
-}
-
-
+};
 
 module.exports = exports;
