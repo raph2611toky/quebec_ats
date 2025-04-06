@@ -6,14 +6,14 @@ const { fermerProcessusExpirees } = require('./processus.job');
 
 const prisma = new PrismaClient();
 
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 0 * * *', async () => {
     console.log(`[${new Date().toISOString()}] Lancement de la fermeture des offres expirées...`);
     await fermerOffresExpirees(prisma);
 });
 
-cron.schedule('* * * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Lancement de la mise à jour des processus...`);
-    await fermerProcessusExpirees(prisma);
-});
+// cron.schedule('* * * * *', async () => {
+//     console.log(`[${new Date().toISOString()}] Lancement de la mise à jour des processus...`);
+//     await fermerProcessusExpirees(prisma);
+// });
 
 console.log('Tous les cron jobs sont démarrés.');
