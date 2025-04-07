@@ -269,8 +269,11 @@ exports.filterOffres = async (req, res) => {
             organisation_id
         } = req.query;
 
-        const filterConditions = {};
-
+        const filterConditions = {
+            NOT: {
+                status: Status.CREE
+            }
+        };
         if (status) filterConditions.status = status;
         if (minNombreRequis) filterConditions.nombre_requis = { gte: parseInt(minNombreRequis) };
         if (lieu) filterConditions.lieu = { contains: lieu, mode: "insensitive" };
