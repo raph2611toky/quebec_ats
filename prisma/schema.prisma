@@ -26,7 +26,6 @@ enum Status {
   FERME
 }
 
-
 enum EtapeActuelle {
   SOUMIS
   EN_REVISION
@@ -56,8 +55,6 @@ enum TypeProcessus {
   TACHE
   QUESTIONNAIRE
 }
-
-
 
 enum SupportRequestStatus {
   EN_ATTENTE
@@ -139,10 +136,10 @@ model Offre {
   nombre_requis   Int           @default(1)
   lieu            String
   pays            String
-  type_emploi     String    @default("CDD")
-  type_temps      String     @default("PLEIN_TEMPS")
+  type_emploi     String        @default("CDD")
+  type_temps      String        @default("PLEIN_TEMPS")
   salaire         Decimal
-  devise          String      @default("Euro")
+  devise          String        @default("Euro")
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
   postulations    Postulation[] @relation("OffrePostulations")
@@ -290,11 +287,11 @@ model AdminAudit {
 }
 
 model SupportSiteRequest {
-  id            Int                  @id @default(autoincrement())
-  sujet         String
-  contenu       String               
-  emailSource   String           
-  statut        SupportRequestStatus @default(EN_ATTENTE)
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
+  id          Int                  @id @default(autoincrement())
+  sujet       String
+  contenu     String
+  emailSource String
+  statut      SupportRequestStatus @default(EN_ATTENTE)
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
 }
