@@ -1,4 +1,4 @@
-const { Status, TypeEmploi } = require("@prisma/client");
+const { Status } = require("@prisma/client");
 const prisma = require("../config/prisma.config");
 const Processus = require("./processus.model");
 
@@ -20,10 +20,10 @@ class Offre {
         nombre_requis = 1,
         lieu,
         pays,
-        type_emploi = TypeEmploi.CDD,
+        type_emploi = "CDD",
         type_temps = "PLEIN_TEMPS",
         salaire,
-        devise,
+        devise = "Euro",
         created_at = null,
         updated_at = null,
         base_url = ""
@@ -163,10 +163,13 @@ class Offre {
                     status: Status.OUVERT,
                     OR: [
                         { titre: { contains: keyword, mode: "insensitive" } },
-                        { description: { contains: keyword, mode: "insensitive" } }
+                        { description: { contains: keyword, mode: "insensitive" } },
+                        { organisation: { nom: { contains: keyword, mode: "insensitive" } } }
                     ]
                 },
-                include: { organisation: true }
+                include: {
+                    organisation: true
+                }
             });
             return offres.map(offre => Offre.fromPrisma(offre, base_url));
         } catch (error) {
@@ -174,6 +177,7 @@ class Offre {
             throw error;
         }
     }
+    
 
     static async getAllProcessus(offre_id) {
         try {

@@ -1,7 +1,8 @@
 const Organisation = require("../models/organisation.model");
 const PostCarriere = require("../models/postcarriere.model")
 const User = require("../models/user.model");
-const prisma = require("../config/prisma.config")
+const prisma = require("../config/prisma.config");
+const Offre = require("../models/offre.model");
 const fs = require("fs").promises;
 
 exports.createOrganisation = async (req, res) => {
@@ -94,6 +95,16 @@ exports.getAllOrganisations = async (req, res) => {
     }
 };
 
+exports.getAllOrganisationsPublic = async (req, res) => {
+    try {
+        const organisations = await prisma.organisation.findMany({});
+        return res.status(200).json(organisations);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des organisations:", error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 exports.getOffresByOrganisation = async (req, res) => {
     try {
         const offres = await Organisation.getOffresByOrganisation(parseInt(req.params.id), req.base_url);
@@ -103,6 +114,21 @@ exports.getOffresByOrganisation = async (req, res) => {
         return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.getOffresByOrganisationPublic = async (req, res) => {
+    try {
+        const offres = await prisma.offre.findMany({
+            where: {
+                organisation_id: parseInt(req.params.id)
+            }
+        });
+        return res.status(200).json(offres);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des offres de l'organisation:", error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 
 exports.getPostCarieresByOrganisation = async (req, res) => {
     try {
