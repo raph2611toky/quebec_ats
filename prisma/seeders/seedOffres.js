@@ -1,4 +1,3 @@
-const { TypeTemps } = require("@prisma/client");
 const prisma = require("../../src/config/prisma.config");
 const Offre = require("../../src/models/offre.model");
 
@@ -33,7 +32,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDD",
-                type_temps: TypeTemps.PLEIN_TEMPS,
+                type_temps: "PLEIN_TEMPS",
                 salaire: "60000",
                 devise: "EURO",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
@@ -48,7 +47,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDI",
-                type_temps: TypeTemps.PLEIN_TEMPS,
+                type_temps: "PLEIN_TEMPS",
                 salaire: "50000",
                 devise: "EURO",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
@@ -63,7 +62,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDD",
-                type_temps: TypeTemps.PLEIN_TEMPS,
+                type_temps: "PLEIN_TEMPS",
                 salaire: "40000",
                 devise: "EURO",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
@@ -78,7 +77,7 @@ async function seedOffres() {
                 lieu: "Paris",
                 pays: "France",
                 type_emploi: "CDI",
-                type_temps: TypeTemps.PLEIN_TEMPS,
+                type_temps: "PLEIN_TEMPS",
                 salaire: "90000",
                 devise: "EURO",
                 user_id: userIds[Math.floor(Math.random() * userIds.length)],
