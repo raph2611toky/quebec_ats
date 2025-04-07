@@ -17,6 +17,7 @@ const processusRoute = require("./routes/processus.routes");
 const questionRoute = require("./routes/question.route");
 const reponseRoute = require("./routes/reponse.routes");
 const organisation = require("./routes/organisation.routes");
+const organisationPublic = require("./routes/orgnaisationpublic.routes");
 const postcarriere = require("./routes/postcarriere.route");
 const support = require("./routes/support.routes");
 const adminaudit = require("./routes/adminaudit.routes")
@@ -45,6 +46,7 @@ app.use("/api/postulations", postulations)
 app.use("/api/referents", referents)
 app.use("/api/notifications", notifications)
 app.use("/api/organisations", organisation)
+app.use("/api/organisations-all", organisationPublic)
 app.use("/api/postcarrieres", postcarriere)
 app.use("/api/supports", support);
 app.use("/api/admin-audits",adminaudit);

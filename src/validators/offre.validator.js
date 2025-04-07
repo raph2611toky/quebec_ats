@@ -40,9 +40,7 @@ const createOffreValidationRules = [
         .withMessage("Le salaire doit être un nombre"),
     body("devise")
         .notEmpty()
-        .withMessage("La devise est requise")
-        .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
-        .withMessage("Devise invalide"),
+        .withMessage("La devise est requise"),
     body("image_url")
         .optional()
         .isString()
@@ -79,9 +77,7 @@ const updateOffreValidationRules = [
         .isNumeric()
         .withMessage("Le salaire doit être un nombre"),
     body("devise")
-        .optional()
-        .isIn(["EURO", "DOLLAR", "DOLLAR_CANADIAN", "LIVRE", "YEN", "ROUPIE", "ARIARY"])
-        .withMessage("Devise invalide"),
+        .optional(),
     body("image_url")
         .optional()
         .isString()

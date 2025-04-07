@@ -26,15 +26,6 @@ enum Status {
   FERME
 }
 
-enum Devise {
-  EURO
-  DOLLAR
-  DOLLAR_CANADIAN
-  LIVRE
-  YEN
-  ROUPIE
-  ARIARY
-}
 
 enum EtapeActuelle {
   SOUMIS
@@ -66,16 +57,7 @@ enum TypeProcessus {
   QUESTIONNAIRE
 }
 
-enum TypeEmploi {
-  CDD
-  CDI
-  STAGE
-}
 
-enum TypeTemps {
-  PLEIN_TEMPS
-  TEMPS_PARTIEL
-}
 
 enum SupportRequestStatus {
   EN_ATTENTE
@@ -157,10 +139,10 @@ model Offre {
   nombre_requis   Int           @default(1)
   lieu            String
   pays            String
-  type_emploi     TypeEmploi    @default(CDD)
-  type_temps      TypeTemps     @default(PLEIN_TEMPS)
+  type_emploi     String    @default("CDD")
+  type_temps      String     @default("PLEIN_TEMPS")
   salaire         Decimal
-  devise          Devise
+  devise          String      @default("Euro")
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
   postulations    Postulation[] @relation("OffrePostulations")

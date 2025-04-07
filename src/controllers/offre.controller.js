@@ -277,18 +277,22 @@ exports.filterOffres = async (req, res) => {
         if (pays) filterConditions.pays = { contains: pays, mode: "insensitive" };
         if (type_emploi) filterConditions.type_emploi = { contains: type_emploi, mode: "insensitive" };
         if (salaire) filterConditions.salaire = { gte: parseFloat(salaire) };
-        if (devise) filterConditions.devise = devise;
+        if (devise) filterConditions.devise = { contains: devise, mode: "insensitive" };
         if (date_publication) filterConditions.created_at = { gte: new Date(date_publication) };
         if (organisation_id) filterConditions.organisation_id = parseInt(organisation_id);
         if (text) {
             filterConditions.OR = [
                 { titre: { contains: text, mode: "insensitive" } },
-                { description: { contains: text, mode: "insensitive" } }
+                { description: { contains: text, mode: "insensitive" } },
+                { organisation: { nom: { contains: text, mode: "insensitive" } } } 
             ];
         }
 
         const offres = await prisma.offre.findMany({
-            where: filterConditions
+            where: filterConditions,
+            include: {
+                organisation: true
+            }
         });
 
         return res.status(200).json(offres);
@@ -626,7 +630,7 @@ exports.bestMatchs = async (req, res) => {
         });
 
         if (!offre) {
-            return res.status(404).json({ error: "Offre non trouvée" });
+            return res.status(404).json({message: "Offre non trouver"});
         }
 
         const nombreRequis = offre.nombre_requis;
@@ -638,7 +642,6 @@ exports.bestMatchs = async (req, res) => {
             orderBy: {
                 note: 'desc',  
             },
-            take: nombreRequis,  
             include: {
                 candidat: true,
                 remarques: true,
