@@ -270,9 +270,7 @@ exports.filterOffres = async (req, res) => {
         } = req.query;
 
         const filterConditions = {
-            NOT: {
-                status: Status.CREE
-            }
+                status: "OUVERT"
         };
         if (status) filterConditions.status = status;
         if (minNombreRequis) filterConditions.nombre_requis = { gte: parseInt(minNombreRequis) };

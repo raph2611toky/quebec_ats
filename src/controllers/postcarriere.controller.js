@@ -3,6 +3,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
 const prisma = require("../config/prisma.config");
+const { Status } = require("@prisma/client");
 
 exports.createPostCarriere = async (req, res) => {
     try {
@@ -95,7 +96,10 @@ exports.getOffresOrganisationByPostCarriere = async (req, res) => {
         }
 
         const offres = await prisma.offre.findMany({
-            where: { organisation_id: postCarriere.organisation_id }
+            where: { 
+                organisation_id: postCarriere.organisation_id,
+                status: "OUVERT"
+            }                
         });
 
         return res.status(200).json(offres);
