@@ -7,7 +7,7 @@ const fs = require("fs").promises;
 const path = require("path");
 const { generateToken, verifyToken } = require("../utils/securite/jwt")
 const { encryptAES, decryptAES } = require("../utils/securite/cryptographie")
-const { sendEmail } = require("../services/notifications/email");
+const { sendEmail, existingType } = require("../services/notifications/email");
 const prisma = require("../config/prisma.config");
 const { EtapeActuelle, Status } = require("@prisma/client");
 const Remarque = require("../models/remarque.model");
@@ -330,7 +330,8 @@ exports.acceptPostulation = async (req, res) => {
                 id: parseInt(req.params.id),    
             },
             include: {
-                offre: true, 
+                offre: true,
+                candidat: true 
             },            
         });
 
@@ -354,17 +355,23 @@ exports.acceptPostulation = async (req, res) => {
             return res.status(400).json({ error: "Le nombre requis pour le post est déjà atteint." })
         }
         
-        if (postulation.etape_actuelle === EtapeActuelle.ACCEPTE) { // Vérifie si déjà accepté
+        if (postulation.etape_actuelle === EtapeActuelle.ACCEPTE) { 
             return res.status(400).json({ error: "Postulation déjà acceptée." });
         }
         
-        // Mise à jour de la postulation
         const updatedPostulation = await prisma.postulation.update({
             where: { id: postulation.id },
             data: { etape_actuelle: EtapeActuelle.ACCEPTE },
         });
 
         // TODO: Envoyer un email au candidat pour lui notifier l'acceptation
+        await sendEmail({
+            to: postulation.candidat.email,
+            subject: "Candidature Accepter",
+            type: existingType.hiring,
+            data: { candidatName: postulation.candidat.nom, offreTitre: postulation.offre.titre },
+            saveToNotifications: true
+        });
 
         return res.status(200).json({ message: `Candidat accepté pour le post : ${postulation.offre.titre}` });
 
@@ -404,6 +411,13 @@ exports.rejectPostulation = async (req, res) => {
         });
 
         // TODO: Envoyer un email au candidat pour lui notifier du rejet si la première fois
+        await sendEmail({
+            to: postulation.candidat.email,
+            subject: "Candidature Rejeter",
+            type: existingType.rejection,
+            data: { candidatName: postulation.candidat.nom, offreTitre: postulation.offre.titre },
+            saveToNotifications: true
+        });
 
         return res.status(200).json({ message: `Candidat rejeté pour le post : ${postulation.offre.titre}` });
         
