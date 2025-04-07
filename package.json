@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./src/server.js",
-    "start": "node ./src/app.js",
+    "start": "node ./src/server.js",
     "build": "prisma generate",
     "vercel-build": "prisma migrate deploy && prisma generate",
     "postinstall": "if [ -f prisma/schema.prisma ]; then prisma generate; fi",
