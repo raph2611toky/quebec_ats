@@ -2,6 +2,7 @@ const PostCarriere = require("../models/postcarriere.model");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
+const prisma = require("../config/prisma.config");
 
 exports.createPostCarriere = async (req, res) => {
     try {
@@ -79,6 +80,31 @@ exports.getPostCarriere = async (req, res) => {
         return res.status(400).json({ error: "Erreur interne du serveur" });
     }
 };
+
+exports.getOffresOrganisationByPostCarriere = async (req, res) => {
+    try {
+        const postCarriereId = parseInt(req.params.id);
+
+        const postCarriere = await prisma.postCarriere.findUnique({
+            where: { id: postCarriereId },
+            select: { organisation_id: true }
+        });
+
+        if (!postCarriere) {
+            return res.status(404).json({ error: "PostCarriere non trouvé" });
+        }
+
+        const offres = await prisma.offre.findMany({
+            where: { organisation_id: postCarriere.organisation_id }
+        });
+
+        return res.status(200).json(offres);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des offres via post carrière:", error);
+        return res.status(400).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 
 exports.getAllPostCarieres = async (req, res) => {
     try {

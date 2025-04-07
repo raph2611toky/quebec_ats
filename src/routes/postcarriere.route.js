@@ -252,4 +252,30 @@ router.get("/:id", postCarriereController.getPostCarriere);
  */
 router.get("/", postCarriereController.getAllPostCarieres);
 
+/**
+ * @swagger
+ * /api/postcarrieres/{id}/offres:
+ *   get:
+ *     summary: Récupérer Offres d'une organisation via post carrière par ID
+ *     tags: [PostCarriere]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID du post carrière
+ *     responses:
+ *       200:
+ *         description: Détails du post carrière
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Offre'
+ *       404:
+ *         description: Post carrière non trouvé
+ */
+router.get("/:id/offres", postCarriereController.getOffresOrganisationByPostCarriere);
+
+
 module.exports = router;
