@@ -12,7 +12,8 @@ const {
     loginWithGoogleLogic, getCandidatProcessus,
     loginDevWithGoogleLogic, getCandidatDashboard, getCandidatReferents, 
     googleCallbackDevLogic, getCandidatPostulation,
-    getPassedProcess, 
+    getPassedProcess,
+    getStatsCandidats, 
 } = require("../controllers/candidat.controller");
 const { googleCallback } = require('../middlewares/googleauthentication');
 // const { loginWithGoogle } = require("../services/google/authentication")
@@ -103,6 +104,78 @@ const { getActiveProcess } = require("../controllers/offre.controller");
  *               recommendation: "Excellent candidat"
  *               statut: "Manager"
  */
+
+
+/**
+ * @swagger
+ * /api/candidats/full-stats:
+ *   get:
+ *     summary: Récupérer les statistiques détaillées sur les candidats
+ *     tags: [Candidats]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistiques globales et détaillées des candidats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_candidats:
+ *                   type: integer
+ *                 moyenne_postulations_par_candidat:
+ *                   type: number
+ *                   format: float
+ *                 pourcentage_acceptes:
+ *                   type: string
+ *                 top_5_candidats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       nom:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       statut:
+ *                         type: string
+ *                       nombre_postulations:
+ *                         type: integer
+ *                 candidats_détaillés:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       nom:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       telephone:
+ *                         type: string
+ *                       statut:
+ *                         type: string
+ *                       nombre_postulations:
+ *                         type: integer
+ *                       date_creation:
+ *                         type: string
+ *                         format: date-time
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/full-stats", IsAuthenticatedAdmin, getStatsCandidats);
 
 
 /**

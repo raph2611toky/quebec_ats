@@ -1,4 +1,4 @@
-const Offre = require("../models/offre.model");
+const Offre = require("../models/offre.model.js");
 const fs = require("fs").promises;
 const path = require("path");
 const crypto = require("crypto");
@@ -656,3 +656,92 @@ exports.bestMatchs = async (req, res) => {
         return res.status(500).json({ error: "Erreur interne du serveur" });
     }
 };
+
+
+exports.getStatsOffres = async (req, res) => {
+  try {
+    const totalOffres = await prisma.offre.count();
+
+    const statusStats = await prisma.offre.groupBy({
+      by: ['status'],
+      _count: { status: true }
+    });
+
+    const totalPostulations = await prisma.postulation.count();
+    const moyennePostulations = totalOffres ? (totalPostulations / totalOffres) : 0;
+
+    const offresOuvertes = statusStats.find(s => s.status === 'OUVERT')?._count.status || 0;
+    const pourcentageOuvertes = totalOffres ? ((offresOuvertes / totalOffres) * 100).toFixed(2) : 0;
+
+    const topOffres = await prisma.offre.findMany({
+      orderBy: {
+        postulations: {
+          _count: 'desc'
+        }
+      },
+      take: 5,
+      select: {
+        id: true,
+        titre: true,
+        status: true,
+        postulations: {
+          select: { id: true }
+        },
+        organisation: {
+          select: { nom: true }
+        }
+      }
+    });
+
+    const offresDetaillees = await prisma.offre.findMany({
+      select: {
+        id: true,
+        titre: true,
+        status: true,
+        created_at: true,
+        organisation: {
+          select: { nom: true }
+        },
+        user: {
+          select: { name: true, email: true }
+        },
+        postulations: {
+          select: { id: true }
+        },
+        processus: {
+          select: { id: true }
+        }
+      }
+    });
+
+    const offresMap = offresDetaillees.map(offre => ({
+      id: offre.id,
+      titre: offre.titre,
+      status: offre.status,
+      organisation: offre.organisation.nom,
+      user: offre.user,
+      nombre_postulations: offre.postulations.length,
+      nombre_processus: offre.processus.length
+    }));
+
+    return res.json({
+      total_offres: totalOffres,
+      status_stats: statusStats,
+      moyenne_postulations_par_offre: Number(moyennePostulations.toFixed(2)),
+      pourcentage_ouvertes: `${pourcentageOuvertes}%`,
+      top_5_offres: topOffres.map(o => ({
+        id: o.id,
+        titre: o.titre,
+        status: o.status,
+        organisation: o.organisation.nom,
+        nombre_postulations: o.postulations.length
+      })),
+      offres_détaillées: offresMap
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erreur lors de la récupération des statistiques." });
+  }
+};
+

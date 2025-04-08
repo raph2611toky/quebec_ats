@@ -17,7 +17,8 @@ const {
     fermerOffre, getOfferDetails,
     getActiveProcess,
     bestMatchs,
-    getOfferDetailsGuest
+    getOfferDetailsGuest,
+    getStatsOffres
 } = require("../controllers/offre.controller");
 const { createOffreValidationRules, updateOffreValidationRules, postulerOffreValidationRules } = require("../validators/offre.validator");
 const validateHandler = require("../middlewares/error.handler");
@@ -301,6 +302,93 @@ router.get("/", getAllOffres);
  *                   example: "Erreur interne du serveur"
  */
 router.get("/available", getAvalaibleOffres);
+
+/**
+ * @swagger
+ * /api/offres/full-stats:
+ *   get:
+ *     summary: Récupérer les statistiques détaillées sur les offres d'emploi
+ *     tags: [Offres]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistiques globales des offres
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_offres:
+ *                   type: integer
+ *                 status_stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       status:
+ *                         type: string
+ *                       _count:
+ *                         type: object
+ *                         properties:
+ *                           status:
+ *                             type: integer
+ *                 moyenne_postulations_par_offre:
+ *                   type: number
+ *                   format: float
+ *                 pourcentage_ouvertes:
+ *                   type: string
+ *                 top_5_offres:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       titre:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       organisation:
+ *                         type: string
+ *                       nombre_postulations:
+ *                         type: integer
+ *                 offres_détaillées:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       titre:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       organisation:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                       nombre_postulations:
+ *                         type: integer
+ *                       nombre_processus:
+ *                         type: integer
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ */
+router.get("/full-stats", IsAuthenticatedAdmin, getStatsOffres);
 
 /**
  * @swagger

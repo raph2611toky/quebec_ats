@@ -607,3 +607,84 @@ exports.getCandidatProcessus = async(req, res) => {
 }
 
 
+exports.getStatsCandidats = async (req, res) => {
+    try {
+      const totalCandidats = await prisma.candidat.count();
+
+      const totalPostulations = await prisma.postulation.count();
+  
+      const moyennePostulations = totalCandidats ? (totalPostulations / totalCandidats) : 0;
+  
+      const topCandidats = await prisma.candidat.findMany({
+        orderBy: {
+          postulations: {
+            _count: 'desc'
+          }
+        },
+        take: 5,
+        select: {
+          id: true,
+          nom: true,
+          email: true,
+          postulations: {
+            select: { id: true }
+          }
+        }
+      });
+  
+      // Détails complets des candidats avec leurs postulations et référents
+      const candidatsDetaillees = await prisma.candidat.findMany({
+        select: {
+          id: true,
+          nom: true,
+          email: true,
+          telephone: true,
+          image: true,
+          created_at: true,
+          postulations: {
+            select: { id: true, date_soumission: true, offre: { select: { titre: true } } }
+          },
+          referents: {
+            select: { referent: { select: { nom: true, email: true } } }
+          }
+        }
+      });
+  
+      const candidatsMap = candidatsDetaillees.map(candidat => ({
+        id: candidat.id,
+        nom: candidat.nom,
+        email: candidat.email,
+        telephone: candidat.telephone,
+        image: candidat.image,
+        nombre_postulations: candidat.postulations.length,
+        nombre_referents: candidat.referents.length,
+        postulations: candidat.postulations.map(post => ({
+          id: post.id,
+          date_soumission: post.date_soumission,
+          titre_offre: post.offre.titre
+        })),
+        referents: candidat.referents.map(ref => ({
+          nom: ref.referent.nom,
+          email: ref.referent.email
+        }))
+      }));
+  
+      return res.json({
+        total_candidats: totalCandidats,
+        moyenne_postulations_par_candidat: Number(moyennePostulations.toFixed(2)),
+        top_5_candidats: topCandidats.map(c => ({
+          id: c.id,
+          nom: c.nom,
+          email: c.email,
+          nombre_postulations: c.postulations.length
+        })),
+        candidats_detailles: candidatsMap
+      });
+  
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erreur lors de la récupération des statistiques des candidats." });
+    }
+  };
+  
+
