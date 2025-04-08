@@ -5,32 +5,23 @@ async function seedUsers() {
     try {
         const users = [
             { 
-                name: "SuperAdmin1",
-                email: "a.angelo.mada@gmail.com", 
+                name: "Isaac Lamare",
+                email: "isaac.lamare@gmail.com", 
                 role: Role.ADMINISTRATEUR, 
                 password: "password123",
-                phone: "+261345992057",
+                phone: "+14184316999",
                 is_active: true, 
                 is_verified: true
             },
             { 
-                name: "SuperAdmin2",
-                email: "morningstar25angelo@gmail.com", 
+                name: "SuperAdmin",
+                email: "devcloudarmel@gmail.com", 
                 role: Role.ADMINISTRATEUR, 
                 password: "password123", 
-                phone: "+261345992057",
+                phone: "+14184316999",
                 is_active: true, 
                 is_verified: true 
-            },
-            { 
-                name: "SuperAdmin3",
-                email: "admin@example.com", 
-                role: Role.ADMINISTRATEUR, 
-                password: "password123", 
-                phone: "+261345992057",
-                is_active: true, 
-                is_verified: true 
-            },
+            }
             // { 
             //     name: "Moderateur",
             //     email: "moderator1@example.com", 
