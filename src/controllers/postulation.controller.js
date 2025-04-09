@@ -14,6 +14,9 @@ const Remarque = require("../models/remarque.model");
 const ReponsePreSelection = require("../models/reponsepreselection.model");
 const Processus = require("../models/processus.model");
 const Reponse = require("../models/reponse.model");
+const AdminAudit = require("../models/adminaudit.model");
+const Organisation = require("../models/organisation.model");
+const User = require("../models/user.model");
 
 exports.createPostulation = async (req, res) => {
     try {
@@ -168,6 +171,8 @@ exports.createPostulation = async (req, res) => {
             data: { candidatName: candidat.nom, offreTitre: offre.titre },
             saveToNotifications: true
         });
+        const organisation = await Organisation.getById(offre.organisation_id)
+        await AdminAudit.create(1, "postulation_offre", `${candidat.name} a postulé à l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}""`);
 
         return res.status(201).json(newPostulation);
     } catch (error) {
@@ -261,7 +266,14 @@ exports.deletePostulation = async (req, res) => {
         //     await fs.unlink(lettrePath).catch(() => {});
         // }
 
+        const user = req.user 
+        const candidat = await Candidat.getById(postulation.candidat_id)
+        const offre = await prisma.offre.findUnique({
+           where:  {id: postulation.offre_id}, include: { organisation: true }
+        })
         await Postulation.delete(postulation.id);
+
+        await AdminAudit.create(user.id, "suppression_candidature", `Suppression du candidature de ${candidat.name} sur l'offre intitulée "${offre.titre}" dans l'organisation "${offre.organisation.nom}""`);
         return res.status(200).json({ message: "Postulation supprimée avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression de la postulation:", error);
@@ -312,6 +324,8 @@ exports.confirmReferenceWithRecommendation = async (req, res) => {
             recommendation,
             statut: "APPROUVE"
         });
+
+        await AdminAudit.create(1, "confirme_referent", `Le referent ${referent.name} a été confirmé.`);
         
         return res.status(200).json({
             message: "Référence confirmée avec succès",
@@ -330,7 +344,11 @@ exports.acceptPostulation = async (req, res) => {
                 id: parseInt(req.params.id),    
             },
             include: {
-                offre: true,
+                offre: {
+                    include: {
+                        organisation: true
+                    }
+                },
                 candidat: true 
             },            
         });
@@ -373,6 +391,8 @@ exports.acceptPostulation = async (req, res) => {
             saveToNotifications: true
         });
 
+        const user = req.user
+        await AdminAudit.create(user.id, "accepter_postulation", `${user.name} a accepter la candidature de ${postulation.candidat.nom} sur l'offre intitulée "${postulation.offre.titre}" dans l'organisation "${postulation.offre.organisation.nom}""`);
         return res.status(200).json({ message: `Candidat accepté pour le post : ${postulation.offre.titre}` });
 
     } catch (error) {
@@ -389,7 +409,12 @@ exports.rejectPostulation = async (req, res) => {
                 id: parseInt(req.params.id),    
             },
             include: {
-                offre: true, 
+                offre: {
+                    include: {
+                        organisation: true
+                    }
+                }, 
+                candidat: true
             },            
         });
 
@@ -418,6 +443,9 @@ exports.rejectPostulation = async (req, res) => {
             data: { candidatName: postulation.candidat.nom, offreTitre: postulation.offre.titre },
             saveToNotifications: true
         });
+        const user = req.user
+        await AdminAudit.create(user.id, "rejeter_postulation", `${user.name} a rejeter la candidature de ${postulation.candidat.nom} sur l'offre intitulée "${postulation.offre.titre}" dans l'organisation "${postulation.offre.organisation.nom}""`);
+
 
         return res.status(200).json({ message: `Candidat rejeté pour le post : ${postulation.offre.titre}` });
         
@@ -431,17 +459,31 @@ exports.addRemarquePostulation = async (req,res ) => {
     try {
         const admin_id = req.user.id;
 
-        const postulation = await Postulation.getById(parseInt(req.params.id))
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include : {
+                candidat: true,
+                offre: {
+                    include: {
+                        organisation: true
+                    }
+                }
+            }
+        })
         if (!postulation) {
             return res.status(400).json({ error: "Aucune postulation trouvée." });
         }
-        const offre = await Offre.getById(postulation.offre_id)
         
         const remarque = await Remarque.create({
           admin_id,
           postulation_id: postulation.id,
           text: req.body.text
         })
+
+        const admin = await User.getById(admin_id)
+        await AdminAudit.create(admin_id, "note_postulation", `${admin.name} a ajouter une remarque sur la candidature de ${postulation.candidat.nom} sur l'offre intitulée "${postulation.offre.titre}" dans l'organisation "${postulation.offre.organisation.nom}""`);
 
         return res.status(200).json({ message: `Remarque ajouté sur le postulation du candidat à l'offre : ${offre.titre}` });
     } catch (error) {
@@ -474,6 +516,19 @@ exports.removeRemarquePostulation = async (req, res)=> {
         const admin_id = parseInt(req.user.id);
         const remarque_id = parseInt(req.params.id)
         const remarque = await Remarque.getById(remarque_id)
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: remarque.postulation_id
+            },
+            include: {
+                candidat: true,
+                offre: {
+                    include: {
+                        organisation: true
+                    }
+                }
+            }
+        })
         if(admin_id != remarque.admin_id){
             return res.status(400).json({message : "cett Remarque n'est pas la vôtre !"})
         }
@@ -483,6 +538,8 @@ exports.removeRemarquePostulation = async (req, res)=> {
                 id: remarque_id
             }
         })
+        const admin = await User.getById(admin_id)
+        await AdminAudit.create(admin_id, "note_postulation", `${admin.name} a supprimer sa remarque sur la candidature de ${postulation.candidat.nom} sur l'offre intitulée "${postulation.offre.titre}" dans l'organisation "${postulation.offre.organisation.nom}""`);
 
         return res.status(200).json({ message: `Remarque enlevé sur le postulation du candidat ` });
         
@@ -501,6 +558,20 @@ exports.updateRemarquePostulation = async (req, res)=> {
         const remarque_id = parseInt(req.params.id)
 
         const remarque = await Remarque.getById(remarque_id)
+        const postulation = await prisma.postulation.findUnique({
+            where: {
+                id: remarque.postulation_id
+            },
+            include: {
+                candidat: true,
+                offre: {
+                    include: {
+                        organisation: true
+                    }
+                }
+            }
+        })
+
 
         if(admin_id != remarque.admin_id){
             return res.status(400).json({message : "cett Remarque n'est pas la vôtre !"})
@@ -514,6 +585,8 @@ exports.updateRemarquePostulation = async (req, res)=> {
                 text: req.body.text
             }
         })
+        const admin = await User.getById(admin_id)
+        await AdminAudit.create(admin_id, "note_postulation", `${admin.name} a supprimer sa remarque sur la candidature de ${postulation.candidat.nom} sur l'offre intitulée "${postulation.offre.titre}" dans l'organisation "${postulation.offre.organisation.nom}""`);
 
         return res.status(200).json({ message: `Remarque mis à jour.` });       
 

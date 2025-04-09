@@ -44,10 +44,10 @@ module.exports.createAdminSupportRequest = async (req, res) => {
         });
       }
   
-      res.status(201).json({ message: 'Demande de support créée avec succès', supportRequest });
+      return res.status(201).json({ message: 'Demande de support créée avec succès', supportRequest });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Erreur lors de la création de la demande' });
+      return res.status(500).json({ error: 'Erreur lors de la création de la demande' });
     }
 };
   

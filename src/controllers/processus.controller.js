@@ -10,6 +10,7 @@ const prisma = require("../config/prisma.config");
 const { existingType, sendEmail } = require("../services/notifications/email")
 const fs = require("fs").promises;
 const cloudinary = require("../config/cloudinary.config.js")
+const AdminAudit = require("../models/adminaudit.model.js")
 
 
 exports.createProcessus = async (req, res) => {
@@ -19,12 +20,22 @@ exports.createProcessus = async (req, res) => {
             offre_id : parseInt(req.body.offre_id),
         };
   
-        const offre = await Offre.getById(processusData.offre_id)
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: processusData.offre_id
+            },
+            include: {
+                organisation: true
+            }
+        })
         if(offre.status != Status.CREE){
             return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
         const newProcessus = await Processus.create(processusData);
+        const admin = req.user
+        await AdminAudit.create(admin.id, "ajout_processus", `${admin.name} a ajouter une processus sur l'offre intitulée "${offre.titre}" dans l'organisation "${offre.organisation.nom}""`);
+
         return res.status(201).json(newProcessus);
     } catch (error) {
         console.error("Erreur lors de la création du processus:", error);
@@ -41,7 +52,14 @@ exports.updateProcessus = async (req, res) => {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
 
-        const offre = await Offre.getById(existingProcessus.offre_id)
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: existingProcessus.offre_id
+            },       
+            include: {
+                organisation: true
+            }
+        })
         if(offre.status != Status.CREE){
             return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
@@ -62,6 +80,9 @@ exports.updateProcessus = async (req, res) => {
             return res.status(400).json({ error: "Aucune donnée valide fournie pour la mise à jour" });
         }
 
+        const admin = req.user
+        await AdminAudit.create(admin.id, "modification_processus", `${admin.name} a modifier une processus sur l'offre intitulée "${offre.titre}" dans l'organisation "${offre.organisation.nom}""`);
+
         const updatedProcessus = await Processus.update(processusId, updateData);
         return res.status(200).json(updatedProcessus);
     } catch (error) {
@@ -77,13 +98,23 @@ exports.deleteProcessus = async (req, res) => {
             return res.status(404).json({ error: "Processus non trouvé" });
         }
 
-        const offre = await Offre.getById(processus.offre_id)
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: processus.offre_id
+            },       
+            include: {
+                organisation: true
+            }
+        })
         if(offre.status != Status.CREE){
             return res.status(401).json({ error: "Non autorisé. L'offre est déjà publier." });
         }
 
 
         await Processus.delete(parseInt(req.params.id));
+        const admin = req.user
+        await AdminAudit.create(admin.id, "ajout_processus", `${admin.name} a ajouter une processus sur l'offre intitulée "${offre.titre}" dans l'organisation "${offre.organisation.nom}""`);
+
         return res.status(200).json({ message: "Processus supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du processus:", error);

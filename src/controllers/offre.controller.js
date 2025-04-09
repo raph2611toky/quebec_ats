@@ -390,7 +390,15 @@ exports.publishOffre = async (req, res) => {
 
 exports.postulerOffre = async (req, res) => {
     try {
-        const offre = await Offre.getById(parseInt(req.params.id));
+        const offre = await prisma.offre.findUnique({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                organisation: true
+            }
+        })
+            
         let data = { ...req.body };
 
         if (!offre) {
@@ -433,6 +441,7 @@ exports.postulerOffre = async (req, res) => {
             }
         });
 
+        await AdminAudit.create(1, "postulation_offre", `${candidat.name} a postulé à l'offre intitulée "${offre.titre}" dans l'organisation "${organisation.nom}""`);
         return res.status(200).json({ message: "Postulation effectuée avec succès." });
     } catch (error) {
         console.error(error);

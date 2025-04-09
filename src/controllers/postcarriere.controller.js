@@ -4,11 +4,16 @@ const path = require("path");
 const crypto = require("crypto");
 const prisma = require("../config/prisma.config");
 const { Status } = require("@prisma/client");
+const Organisation = require("../models/organisation.model");
 
 exports.createPostCarriere = async (req, res) => {
     try {
         const images = [];
         
+        const organisation = await Organisation.getById(parseInt(req.body.organisation_id))
+        if(!organisation){
+            return res.status(400).json({message: "Organisation non trouvé."})
+        }
         const newPost = await PostCarriere.create({
             titre: req.body.titre,
             contenu: req.body.contenu,
@@ -16,13 +21,15 @@ exports.createPostCarriere = async (req, res) => {
             images, 
         }, req.base_url);
 
-        res.status(201).json({
+        const user= req.user
+        await AdminAudit.create(user.id, "creation_postcarriere", `${user.name} a créé un post carrière dans l'organisation "${organisation.nom}"`);
+        return res.status(201).json({
             message: "Post carrière créé avec succès",
             post: newPost,
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Erreur lors de la création du post carrière" });
+        return res.status(500).json({ message: "Erreur lors de la création du post carrière" });
     }
 };
 
@@ -34,12 +41,14 @@ exports.updatePostCarriere = async (req, res) => {
         }
 
         let updateData = { ...req.body };
-
+        const organisation = await Organisation.getById(parseInt(updateData.organisation_id))
+        
         if (updateData.organisation_id) {
             updateData.organisation_id = parseInt(updateData.organisation_id);
         }
-
+        const user= req.user;
         const updatedPostCarriere = await PostCarriere.update(parseInt(req.params.id), updateData, req.base_url);
+        await AdminAudit.create(user.id, "modification_postcarriere", `${user.name} a modifié un post carrière dans l'organisation "${organisation.nom}"`);
         return res.status(200).json(updatedPostCarriere);
     } catch (error) {
         console.error("Erreur lors de la mise à jour du post carrière:", error);
@@ -60,8 +69,10 @@ exports.deletePostCarriere = async (req, res) => {
                 await fs.unlink(imagePath).catch(() => {});
             }
         }
-
+        const organisation = await Organisation.getById(postCarriere.organisation_id)
+        const user= req.user
         await PostCarriere.delete(parseInt(req.params.id));
+        await AdminAudit.create(user.id, "suppresion_postcarriere", `${user.name} a supprimé un post carrière dans l'organisation "${organisation.nom}"`);
         return res.status(200).json({ message: "Post carrière supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du post carrière:", error);

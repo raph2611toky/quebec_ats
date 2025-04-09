@@ -1,4 +1,5 @@
 const Referent = require("../models/referent.model");
+const AdminAudit = require("../models/adminaudit.model")
 
 exports.getReferent = async (req, res) => {
     try {
@@ -31,6 +32,9 @@ exports.deleteReferent = async (req, res) => {
         }
 
         await Referent.delete(referent.id);
+        const admin = req.user
+        await AdminAudit.create(admin.id, "suppresion_referent", `${admin.name} a supprimer le referent ${referent.nom}"`);
+
         return res.status(200).json({ message: "Référent supprimé avec succès" });
     } catch (error) {
         console.error("Erreur lors de la suppression du référent:", error);
